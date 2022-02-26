@@ -1,0 +1,105 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 100;
+        let shapes = [];
+        let particle;
+        let glow = [];
+        function setUp() {
+            createCanvas(windowWidth, windowHeight, "black");
+            frameRate(FramesPerSecond);
+            for (var i = 0; i < 20; i++) {
+                let j = Random.rangeInt(2);
+                let x = Random.range(CanvasWidth);
+                let y = Random.range(CanvasHeight);
+                let size = Random.range(40, 60);
+                size -= (size / 2) * j
+                shapes.push(new Shape(x, y, j, size));
+            }
+            shapes[0] = new Shape(200, 200, 0, 50);
+            shapes[1] = new Shape(400, 300, 1, 60);
+            particle = new Particle();
+        }
+        function draw() {
+            backGround(35);
+            for (let shape of shapes) {
+                shape.show();
+            }
+            particle.update(shapes);
+        }
+        function Shape(x, y, t, s) {
+            if (t == 0) {
+                this.x = x;
+                this.y = y;
+                this.width = s;
+                this.height = s;
+                this.show = function () {
+                    fill(5);
+                    stroke(5);
+                    rect(this.x, this.y, this.width, this.height);
+                }
+                this.dist = function (x, y) {
+                    let pt = distance.rect3(x, y, this.x, this.y, this.width, this.height);
+                    return pt.dist;
+                }
+            } else if (t == 1) {
+                this.x = x;
+                this.y = y;
+                this.r = s;
+                this.show = function () {
+                    fill(5);
+                    stroke(5);
+                    circle(this.x, this.y, this.r);
+                }
+                this.dist = function (x, y) {
+                    let dst = distance.circle(x, y, this.x, this.y, this.r);
+                    return dst.dist;
+                }
+            }
+        }
+        class Particle {
+            constructor() {
+                this.dir = 45;
+                this.pos = createVector(100, 100);
+                this.speed = 5;
+            }
+            rotate(ang) {
+                this.dir += ang;
+            }
+            update(shapes) {
+                this.pos.x += GetAxis("horizontal", "arrow") * this.speed;
+                this.pos.y += GetAxis("vertical", "arrow") * this.speed;
+                this.dir = Math.floor(Vector.sub(mouse, this.pos).heading());
+                this.refract(this.pos.x, this.pos.y, shapes);
+            }
+            refract(x, y, shapes) {
+                let length = Infinity;
+                for (var i = 0; i < shapes.length; i++) {
+                    let len = shapes[i].dist(x, y);
+                    if (len < length) {
+                        length = len;
+                    }
+                }
+                stroke(255, 100);
+                fill(255, 5);
+                let v = Vector.add(createVector(x, y), Vector.AngleToVector(Math.floor(this.dir * 1000) / 1000, length));
+                console.log(Vector.sub(v, createVector(x, y)).heading(), this.dir);
+                //console.log(Vector.dir(v.x, v.y, v.x, v.y).heading(), this.dir);
+                circle(x, y, length);
+                line(x, y, v.x, v.y);
+                lineWidth(1.5);
+                point(v.x, v.y);
+                lineWidth(1);
+                if (length > 2 && length < CanvasHeight + CanvasWidth) {
+                    this.refract(v.x, v.y, shapes);
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

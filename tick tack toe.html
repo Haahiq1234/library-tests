@@ -1,0 +1,107 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <div></div>
+    <script src="Canvas.js"></script>
+    <script>
+        var grid;
+        var bgColor = "rgb(189, 177, 165)";
+        var width;
+        var height;
+        var cellPadding = 5;
+        let players = [
+            1,   // player x
+            2    // player o
+        ];
+        let possible = [
+            [0, 4, 8],
+            [2, 4, 6],
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8]
+        ];
+        let symbols = ["X", "O"];
+        let currentPlayer = Random.element(players);
+        var rows = 3;
+        var cols = 3;
+        let finished = false;
+        function setUp() {
+            createCanvas(400, 400, bgColor);
+            width = CanvasWidth / cols;
+            height = CanvasHeight / rows;
+            frameRate(60);
+            nofill();
+            lineWidth(2);
+            start();
+        }
+        function start() {
+            grid = new Array2D(cols, rows);
+            for (var x = 0; x < grid.width; x++) {
+                for (var y = 0; y < grid.height; y++) {
+                    grid.set(x, y, 0);
+                }
+            }
+        }
+        function check() {
+            for (var i = 0; i < possible.length; i++) {
+                if (grid.array[possible[i][0]] == grid.array[possible[i][1]] && grid.array[possible[i][1]] == grid.array[possible[i][2]] && grid.array[possible[i][0]] != 0) {
+                    console.log();
+                    console.log("player " + symbols[grid.array[possible[i][0]] - 1] + " wins!");
+                    noLoop();
+                    finished = true;
+                    break;
+                }
+            }
+        }
+        function draw() {
+            clear();
+            drawGrid();
+            check();
+        }
+        function drawGrid() {
+            let done = 0;
+            line(width, 0, width, CanvasHeight);
+            line(width * 2, 0, width * 2, CanvasHeight);
+            line(0, height, CanvasWidth, height);
+            line(0, height * 2, CanvasWidth, height * 2);
+            for (let i = 0; i < grid.width; i++) {
+                for (let j = 0; j < grid.height; j++) {
+                    let val = grid.get(i, j);
+                    let x = i * width + width / 2;
+                    let y = j * height + height / 2;
+                    let xr = width / 4;
+                    let yr = height / 4;
+                    if (val == players[0]) {
+                        line(x - xr, y - yr, x + xr, y + yr);
+                        line(x + xr, y - yr, x - xr, y + yr);
+                        done++;
+                    } else if (val == players[1]) {
+                        circle(x, y, (xr + yr) / 2);
+                        done++;
+                    }
+                }
+            }
+        }
+        function key_Press() {
+            if (finished) {
+                start();
+            }
+        }
+        function mouse_Down() {
+            let x = Math.floor(mouse.x / width);
+            let y = Math.floor(mouse.y / height);
+            if (x >= 0 && y >= 0 && x < cols && y < rows) {
+                if (grid.get(x, y) == 0) {
+                    grid.set(x, y, currentPlayer);
+                    currentPlayer = (currentPlayer == players[1]) ? players[0] : players[1];
+                }
+            }
+        }
+    </script>
+</body>
+</html>

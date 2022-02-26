@@ -1,0 +1,13 @@
+* {
+    box-sizing: border-box;
+    padding: 0;
+    outline: 0;
+    overflow: hidden;
+}
+canvas {
+    background-color: black;
+    border: solid 1px black;
+    position: absolute;
+    top: 0;
+    left: 0;
+}

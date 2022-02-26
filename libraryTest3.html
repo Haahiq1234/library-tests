@@ -1,0 +1,27 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <div></div>
+    <script>
+        var FramesPerSecond = 50;
+        var col;
+        var pos;
+        function setUp() {
+            createCanvas(400, 400, "black");
+            pos = new Vector2(0, 0);
+            frameRate(FramesPerSecond);
+        }
+        function draw() {
+            backGround(0, 10);
+            fill(255);
+            stroke(100);
+            noStroke();
+            circle(pos.x, pos.y, 10);
+            pos.x++;
+            pos.y++;
+        }
+    </script>
+    <script src="Canvas.js"></script>
+</body>
+</html>

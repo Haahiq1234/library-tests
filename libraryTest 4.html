@@ -1,0 +1,121 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <div></div>
+    <script>
+        var FramesPerSecond = 50;
+        let particles = [];
+        function setUp() {
+            createCanvas(400, 400, color(0));
+            frameRate(FramesPerSecond);
+            textSize(64);
+            var pos = textToPoints("Welcome", 100, 200);
+            for (var p of pos) {
+                particles.push(new Particle(100 + p.x, 200 + p.y));
+            }
+            for (var i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].show();
+            }
+            pos = getPixels(150, 150, 100, 100);
+            particles = [];
+            for (var i = 0; i < pos.length; i++) {
+                noStroke();
+                fill();
+                rect(150 + pos[i].x, 150 + pos[i].y, 1, 1);
+                particles.push(new Particle(pos[i].x, pos[i].y, color(pos[i][0], pos[i][1], pos[i][2])));
+            }
+            point(50, 50); 
+        }
+        function draw() {
+            backGround(0);
+            fill(255);
+            stroke(255);
+            for (var i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].show();
+            }
+        }
+        class Particle {
+            constructor(x, y, color) {
+                this.pos = new Vector2(x, y);
+                this.base = new Vector2(x, y);
+                this.color = color | "white";
+                this.reforming = false;
+                this.force = 4;
+            }
+            show() {
+                circle(this.pos.x, this.pos.y, 1);
+            }
+            update() {
+                //if (dist(this.pos.x, this.pos.y, mousePos.x, mousePos.y) < 100 && !this.reforming) {
+                //    let dst = dist(this.pos.x, this.pos.y, mousePos.x, mousePos.y) / 100;
+                //    let d = Vector.add(this.pos, mousePos).setMag(dst * this.force);
+                //    this.pos.add(d);
+                //} else if (mousePressed || true) {
+                //    if (dist(this.pos.x, this.pos.y, this.base.x, this.base.y) > 0) {
+                //        let d = Vector.sub(this.pos, this.base).limit(this.force);
+                //        this.pos.sub(d);
+                //    }
+                //}
+                if (mousePressed) {
+                    let d = Vector.sub(this.pos, mousePos).limit(this.force);
+                    this.pos.sub(d);
+                } else if (mousePressed || true) {
+                    if (dist(this.pos.x, this.pos.y, this.base.x, this.base.y) > 0) {
+                        let d = Vector.sub(this.pos, this.base).limit(this.force);
+                        this.pos.sub(d);
+                    }
+                }
+            }
+        }
+        function textToPoints(text, x1, y1) {
+            let img = ctx.getImageData(0, 0, CanvasWidth, CanvasHeight);
+            let sz = parseInt(ctx.font.split("px")[0]);
+            let i = 0;
+            let imp = 1;
+            //textSize(sz / 2);
+            let metrics = ctx.measureText(text);
+            ctx.clearRect(0, 0, CanvasWidth, CanvasHeight);
+            ctx.strokeStyle = color(255);
+            ctx.strokeText(text, 0, 0);
+            let img2 = ctx.getImageData(0, 0, metrics.width, metrics.width);
+            ctx.putImageData(img, 0, 0);
+            let positions = [];
+            for (let y = 0, y2 = img2.height; y < y2; y++) {
+                for (let x = 0, x2 = img2.width; x < x2; x++) {
+                    if (img2.data[(y * 4 * img2.width) + (x * 4) + 3] > 0) {
+                        if (i % imp == 0) {
+                            positions.push(new Vector2(x, y));
+                        }
+                        i++;
+                    }
+                }
+            }
+            return positions;
+        }
+        function getPixels(x, y, width, height) {
+            let img = ctx.getImageData(x, y, width, height);
+            let positions = [];
+            for (let y = 0, y2 = img.height; y < y2; y++) {
+                for (let x = 0, x2 = img.width; x < x2; x++) {
+                    positions.push({
+                        x: x,
+                        y: y,
+                        color: [img.data[(y * 4 * img.width) + (x * 4) + 3], img.data[(y * 4 * img.width) + (x * 4) + 4], img.data[(y * 4 * img.width) + (x * 4) + 5]]
+                    });
+                    //if (img2.data[(y * 4 * img2.width) + (x * 4) + 3]  > 0) {
+                    //    if (i % imp == 0) {
+                    //        positions.push(new Vector2(x, y));
+                    //    }
+                    //    i++;
+                    //}
+                }
+            }
+            return positions;
+        }
+    </script>
+    <script src="Canvas.js"></script>
+</body>
+</html>

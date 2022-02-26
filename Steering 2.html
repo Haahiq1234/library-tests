@@ -1,0 +1,51 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script>
+        var FramesPerSecond = 100;
+        let mover;
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(FramesPerSecond);
+            mover = new Mover(200, 200, 50, 30);
+        }
+        function draw() {
+            clear();
+            mover.update();
+            mover.show();
+        }
+        class Mover {
+            constructor(x, y, len, width) {
+                this.pos = new Vector2(x, y);
+                this.vel = new Vector2(0, 0);
+                this.acc = new Vector2(1, 1);
+                this.len = len;
+                this.angle = 0;
+                this.width = width;
+                this.speed = 2;
+            }
+            update() {
+                this.angle += GetAxis("horizontal", "arrow") * this.speed;
+                this.vel = Vector.AngleToVector(this.angle, -GetAxis("vertical", "arrow") * this.speed);
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                this.acc.reset();
+            }
+            show() {
+                translate(this.pos.x, this.pos.y);
+                point(0, 0);
+                fill(255, 100);
+                rotate(this.angle);
+                triangle(-this.len / 2, this.width / 2, -this.len / 2, -this.width / 2, this.len / 2, 0);
+                rotate(-this.angle);
+                translate(-this.pos.x, -this.pos.y);
+            }
+        }
+    </script>
+    <script src="Canvas.js">
+
+    </script>
+</body>
+</html>

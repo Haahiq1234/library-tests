@@ -1,0 +1,735 @@
+<html>
+<head>
+</head>
+<body>
+    <script>
+        var colliders = [];
+        var ctx, CanvasWidth, CanvasHeight, CanvasColor, mouseOverCanvas, drawEnabled, floor;
+        var fl = true;
+        var pi = Math.PI;
+        var drawEnabled = false;
+        var translated = new vector(0, 0);
+        var padding;
+        var angle = 0;
+        var space = " ";
+        var frameNo = 0;
+        var pressedKeys = {
+            a: false,
+            b: false,
+            c: false,
+            d: false,
+            e: false,
+            f: false,
+            g: false,
+            h: false,
+            i: false,
+            j: false,
+            k: false,
+            l: false,
+            m: false,
+            n: false,
+            o: false,
+            p: false,
+            q: false,
+            r: false,
+            s: false,
+            t: false,
+            u: false,
+            v: false,
+            w: false,
+            x: false,
+            y: false,
+            z: false,
+            1: false,
+            2: false,
+            3: false,
+            4: false,
+            5: false,
+            6: false,
+            7: false,
+            8: false,
+            9: false,
+            0: false,
+            " ": false
+        };
+        var floorHeight;
+        function GetAxis(TAxis, TKey) {
+            if (TAxis = "h") {
+                let xAxis = 0
+                if (TKey == "k") {
+                    if (pressedKeys["a"])
+                        xAxis--;
+                    else if (pressedKeys["d"])
+                        xAxis++;
+                }
+                if (TKey == "a") {
+                    if (pressedKeys[left])
+                        xAxis--;
+                    else if (pressedKeys[right])
+                        xAxis++;
+                }
+                return xAxis;
+            }
+            if (TAxis = "v") {
+                let yAxis = 0;
+                if (TKey == "k") {
+                    if (pressedKeys["w"])
+                        yAxis--;
+                    else if (pressedKeys["s"])
+                        yAxis++;
+                }
+                if (TKey == "a") {
+                    if (pressedKeys[up])
+                        yAxis--;
+                    else if (pressedKeys[down])
+                        yAxis++;
+                }
+                return yAxis;
+            }
+            return 0;
+        }
+        function GetKey(keyCode) {
+            if (keyCode in pressedKeys) {
+                return pressedKeys[keyCode];
+            } else {
+                return false;
+            }
+        }
+        function Collider(x, y, width, height, dirs) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.directions = dirs;
+            this.colliderId = colliders.length;
+            colliders.push(this);
+            this.Update = function (newX, newY, newWidth, newHeight) {
+                this.x = newX;
+                this.y = newY;
+                this.width = newWidth;
+                this.height = newHeight;
+            }
+        }
+        function lineWidth(w) {
+            ctx.lineWidth = w;
+        }
+        function triangle(x, y, x1, y1, x2, y2) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            x1 += padding[padding.length - 1];
+            y1 += padding[0];
+            x2 += padding[padding.length - 1];
+            y2 += padding[0];
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x, y);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function shape(xPositions, yPositions) {
+            ctx.beginPath();
+            xPositions[0] += padding[padding.length - 1];
+            yPositions[0] += padding[0];
+            ctx.moveTo(xPositions[0], yPositions[0]);
+            for (i = 1; i < xPositions.length; i++) {
+                xPositions[i] += padding[padding.length - 1];
+                yPositions[i] += padding[0];
+                ctx.lineTo(xPositions[i], yPositions[i]);
+            }
+            ctx.lineTo([yPositions], yPositions[0]);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function circle(x, y, r) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function fillRect(x, y, width, height) {
+            ctx.fillRect(x, y, width, height);
+        }
+        function create(elem, id, cl) {
+            var e = document.createElement(elem);
+            e.setAttribute("id", id);
+            e.setAttribute("class", cl);
+            document.body.appendChild(e);
+            return e;
+        }
+        function createSlider(min, max, step) {
+            let slider = document.createElement("input");
+            slider.type = "range";
+            slider.min = min;
+            slider.max = max;
+            slider.step = step;
+            document.body.appendChild(slider);
+            return slider;
+        }
+        function createCanvas(w, h, colour) {
+            var canvas = document.createElement("canvas");
+            canvas.width = w + padding[padding.length - 1] * 2;
+            console.log(canvas.width);
+            CanvasWidth = w;
+            CanvasHeight = h;
+            canvas.height = h + padding[0] * 2;
+            canvas.style.backgroundColor = colour;
+            document.body.appendChild(canvas);
+            ctx = canvas.getContext("2d");
+            CanvasColor = colour;
+            canvas.addEventListener("mouseover", function () { mouseOverCanvas = true; });
+            canvas.addEventListener("mouseout", function () { mouseOverCanvas = false; });
+            floor = CanvasHeight - floorHeight;
+        }
+        function clear() {
+            ctx.clearRect(-CanvasWidth * 5, -CanvasHeight * 5, CanvasWidth * 10, CanvasHeight * 10)
+        }
+        function rect(x, y, w, h) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            ctx.beginPath();
+            ctx.strokeRect(x, y, w, h);
+            ctx.closePath();
+            if (fl) {
+                ctx.fillRect(x, y, w, h);
+            }
+        }
+        var up = "ArrowUp";
+        var down = "ArrowDown";
+        var right = "ArrowRight";
+        var left = "ArrowLeft";
+        var keyCode;
+        if (window.setUp) {
+            setUp();
+        }
+        function save() {
+            ctx.save();
+        }
+        function restore() {
+            ctx.restore();
+        }
+        var lastKey = 1;
+        document.addEventListener("keydown", function (event) {
+            keyCode = event.key;
+            if (!keyCode in pressedKeys || !pressedKeys[keyCode]) {
+                if (window.key_Press) {
+                    key_Press();
+                }
+            }
+            pressedKeys[keyCode] = true;
+            if (window.key_Down) {
+                key_Down();
+            }
+        });
+        document.addEventListener("keyup", function (event) {
+            keyCode = event.key;
+            pressedKeys[keyCode] = false;
+            if (window.key_Up) {
+                key_Up();
+            }
+        });
+        var FPS = 1;
+        if (window.draw) {
+            draw();
+            drawEnabled = true;
+            drawInterval = setInterval(function () {
+                if (drawEnabled)
+                    draw();
+                frameNo += 1;
+
+            }, 1000 / FPS);
+        }
+
+        function frameRate(fps) {
+            clearInterval(0);
+            drawEnabled = true;
+            drawInterval = setInterval(function () {
+                if (drawEnabled)
+                    draw();
+                frameNo += 1;
+            }, 1000 / fps);
+            FPS = fps;
+        }
+        function line(x, y, x1, y1) {
+            x += padding[padding.length - 1];
+            x1 += padding[padding.length - 1];
+            y += padding[0];
+            y1 += padding[0];
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x1, y1);
+            ctx.closePath();
+            ctx.stroke();
+        }
+        function stroke(col) {
+            ctx.strokeStyle = col;
+        }
+        function nofill() {
+            fl = false;
+        }
+        function fill(col) {
+            fl = true;
+            ctx.fillStyle = col;
+        }
+
+        function rotate(deg) {
+            ctx.rotate(deg * Math.PI / 180);
+            angle = angle + parseInt(deg);
+            //console.log(angle);
+        }
+        function translate(x, y) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            ctx.translate(x, y);
+            translated.x += x;
+            translated.y += y;
+        }
+        function vector(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    </script>
+    <script>
+        var FramesPerSecond = 100;
+        padding = [0];
+        floorHeight = 0;
+        var cellSize = 40;
+        var cellsDone = 1;
+        var grid = [];
+        var stack = [];
+        var columns;
+        var lastDirection = 0;
+        var x = 0;
+        var y = 0;
+        var x1 = 0;
+        var y1 = 0;
+        var x2 = 0;
+        var y2 = 0;
+        var rows;
+        var cells = 0;
+        var done = false;
+        createCanvas(1000, 600, "#f1f1f1");
+        function setUp() {
+            frameRate(FramesPerSecond);
+            lineWidth(ctx.lineWidth);
+
+            columns = CanvasWidth / cellSize;
+            rows = CanvasHeight / cellSize;
+
+            for (var c = 0; c < columns; c++) {
+                grid.push([]);
+                for (var r = 0; r < rows; r++) {
+                    grid[c].push(new cell());
+                    cells++;
+                }
+            }
+            grid[0][0].visited = true;
+            console.log(grid);
+        }
+        function draw() {
+            if (!done) {
+                grid[x][y] = true;
+                var neighbourPos = chooseNeighbour(x, y);
+
+                if (neighbourPos.size > 1) {
+                    stack.unshift(new vector(x, y));
+                }
+
+
+                if (neighbourPos.chosen != undefined) {
+                    x1 = neighbourPos.chosen.x;
+                    y1 = neighbourPos.chosen.y;
+
+                    let xdir = x - x1;
+                    let xdir1 = x2 - x;
+                    let ydir = y - y1;
+                    let ydir1 = y2 - y;
+                    console.log("(" + xdir + ", " + ydir + ", " + xdir1, ", " + ydir1 + ")");
+
+                    stroke("black");
+                    if (!(ydir < 0) && !(ydir1 > 0))
+                        line(x * cellSize, y * cellSize, (x + 1) * cellSize, y * cellSize);
+
+                    if (!(xdir < 0) && !(xdir1 > 0))
+                        line((x + 1) * cellSize, y * cellSize, (x + 1) * cellSize, (y + 1) * cellSize);
+
+                    if (!(ydir > 0) && !(ydir1 < 0))
+                        line(x * cellSize, (y + 1) * cellSize, (x + 1) * cellSize, (y + 1) * cellSize);
+
+                    if (!(xdir > 0) && !(xdir1 < 0))
+                        line(x * cellSize, y * cellSize, x * cellSize, (y + 1) * cellSize);
+
+                    x2 = x;
+                    y2 = y;
+                    x = x1;
+                    y = y1;
+                    cellsDone++;
+                } else {
+                    drawCell();
+                    if (cellsDone >= cells) {
+                        done = true;
+                    } else {
+                        let loc = stack.pop();
+                        x = loc.x;
+                        y = loc.y;
+                    }
+                }
+            }
+        }
+        function drawCell() {
+
+        }
+        function chooseNeighbour(x, y) {
+            let neighbours = [];
+            if (grid[x][y - 1] != undefined) {
+                let top1 = grid[x][y - 1];
+                if (!top1.visited) {
+                    neighbours.push(new vector(x, y - 1));
+                }
+            }
+            if (grid[x + 1] != undefined) {
+                let right1 = grid[x + 1][y];
+                if (!right1.visited) {
+                    neighbours.push(new vector(x + 1, y));
+                }
+            }
+            if (grid[x][y + 1] != undefined) {
+                let bottom1 = grid[x][y + 1];
+                if (!bottom1.visited) {
+                    neighbours.push(new vector(x, y + 1));
+                }
+            }
+            if (grid[x - 1] != undefined) {
+                let left1 = grid[x - 1][y];
+                if (!left1.visited) {
+                    neighbours.push(new vector(x - 1, y));
+                }
+            }
+            var rand = Math.floor(Math.random() * neighbours.length);
+            return { chosen: neighbours[rand], size: neighbours.length };
+        }
+
+        function cell() {
+            this.xdir = undefined;
+            this.ydir = undefined;
+            this.visited = false;
+            this.xdir1 = undefined;
+            this.ydir1 = undefined;
+        }
+    </script>
+    <script>
+        var colliders = [];
+        var ctx, CanvasWidth, CanvasHeight, CanvasColor, mouseOverCanvas, drawEnabled, floor;
+        var fl = true;
+        var pi = Math.PI;
+        var drawEnabled = false;
+        var translated = new vector(0, 0);
+        var padding;
+        var angle = 0;
+        var space = " ";
+        var frameNo = 0;
+        var pressedKeys = {
+            a: false,
+            b: false,
+            c: false,
+            d: false,
+            e: false,
+            f: false,
+            g: false,
+            h: false,
+            i: false,
+            j: false,
+            k: false,
+            l: false,
+            m: false,
+            n: false,
+            o: false,
+            p: false,
+            q: false,
+            r: false,
+            s: false,
+            t: false,
+            u: false,
+            v: false,
+            w: false,
+            x: false,
+            y: false,
+            z: false,
+            1: false,
+            2: false,
+            3: false,
+            4: false,
+            5: false,
+            6: false,
+            7: false,
+            8: false,
+            9: false,
+            0: false,
+            " ": false
+        };
+        var floorHeight;
+        function GetAxis(TAxis, TKey) {
+            if (TAxis = "h") {
+                let xAxis = 0
+                if (TKey == "k") {
+                    if (pressedKeys["a"])
+                        xAxis--;
+                    else if (pressedKeys["d"])
+                        xAxis++;
+                }
+                if (TKey == "a") {
+                    if (pressedKeys[left])
+                        xAxis--;
+                    else if (pressedKeys[right])
+                        xAxis++;
+                }
+                return xAxis;
+            }
+            if (TAxis = "v") {
+                let yAxis = 0;
+                if (TKey == "k") {
+                    if (pressedKeys["w"])
+                        yAxis--;
+                    else if (pressedKeys["s"])
+                        yAxis++;
+                }
+                if (TKey == "a") {
+                    if (pressedKeys[up])
+                        yAxis--;
+                    else if (pressedKeys[down])
+                        yAxis++;
+                }
+                return yAxis;
+            }
+            return 0;
+        }
+        function GetKey(keyCode) {
+            if (keyCode in pressedKeys) {
+                return pressedKeys[keyCode];
+            } else {
+                return false;
+            }
+        }
+        function Collider(x, y, width, height, dirs) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.directions = dirs;
+            this.colliderId = colliders.length;
+            colliders.push(this);
+            this.Update = function (newX, newY, newWidth, newHeight) {
+                this.x = newX;
+                this.y = newY;
+                this.width = newWidth;
+                this.height = newHeight;
+            }
+        }
+        function lineWidth(w) {
+            ctx.lineWidth = w;
+        }
+        function triangle(x, y, x1, y1, x2, y2) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            x1 += padding[padding.length - 1];
+            y1 += padding[0];
+            x2 += padding[padding.length - 1];
+            y2 += padding[0];
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x, y);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function shape(xPositions, yPositions) {
+            ctx.beginPath();
+            xPositions[0] += padding[padding.length - 1];
+            yPositions[0] += padding[0];
+            ctx.moveTo(xPositions[0], yPositions[0]);
+            for (i = 1; i < xPositions.length; i++) {
+                xPositions[i] += padding[padding.length - 1];
+                yPositions[i] += padding[0];
+                ctx.lineTo(xPositions[i], yPositions[i]);
+            }
+            ctx.lineTo([yPositions], yPositions[0]);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function circle(x, y, r) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function fillRect(x, y, width, height) {
+            ctx.fillRect(x, y, width, height);
+        }
+        function create(elem, id, cl) {
+            var e = document.createElement(elem);
+            e.setAttribute("id", id);
+            e.setAttribute("class", cl);
+            document.body.appendChild(e);
+            return e;
+        }
+        function createSlider(min, max, step) {
+            let slider = document.createElement("input");
+            slider.type = "range";
+            slider.min = min;
+            slider.max = max;
+            slider.step = step;
+            document.body.appendChild(slider);
+            return slider;
+        }
+        function createCanvas(w, h, colour) {
+            var canvas = document.createElement("canvas");
+            canvas.width = w + padding[padding.length - 1] * 2;
+            console.log(canvas.width);
+            CanvasWidth = w;
+            CanvasHeight = h;
+            canvas.height = h + padding[0] * 2;
+            canvas.style.backgroundColor = colour;
+            document.body.appendChild(canvas);
+            ctx = canvas.getContext("2d");
+            CanvasColor = colour;
+            canvas.addEventListener("mouseover", function () { mouseOverCanvas = true; });
+            canvas.addEventListener("mouseout", function () { mouseOverCanvas = false; });
+            floor = CanvasHeight - floorHeight;
+        }
+        function clear() {
+            ctx.clearRect(-CanvasWidth * 5, -CanvasHeight * 5, CanvasWidth * 10, CanvasHeight * 10)
+        }
+        function rect(x, y, w, h) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            ctx.beginPath();
+            ctx.strokeRect(x, y, w, h);
+            ctx.closePath();
+            if (fl) {
+                ctx.fillRect(x, y, w, h);
+            }
+        }
+        var up = "ArrowUp";
+        var down = "ArrowDown";
+        var right = "ArrowRight";
+        var left = "ArrowLeft";
+        var keyCode;
+        if (window.setUp) {
+            setUp();
+        }
+        function save() {
+            ctx.save();
+        }
+        function restore() {
+            ctx.restore();
+        }
+        var lastKey = 1;
+        document.addEventListener("keydown", function (event) {
+            keyCode = event.key;
+            if (!keyCode in pressedKeys || !pressedKeys[keyCode]) {
+                if (window.key_Press) {
+                    key_Press();
+                }
+            }
+            pressedKeys[keyCode] = true;
+            if (window.key_Down) {
+                key_Down();
+            }
+        });
+        document.addEventListener("keyup", function (event) {
+            keyCode = event.key;
+            pressedKeys[keyCode] = false;
+            if (window.key_Up) {
+                key_Up();
+            }
+        });
+        var FPS = 1;
+        if (window.draw) {
+            draw();
+            drawEnabled = true;
+            drawInterval = setInterval(function () {
+                if (drawEnabled)
+                    draw();
+                frameNo += 1;
+
+            }, 1000 / FPS);
+        }
+
+        function frameRate(fps) {
+            clearInterval(0);
+            drawEnabled = true;
+            drawInterval = setInterval(function () {
+                if (drawEnabled)
+                    draw();
+                frameNo += 1;
+            }, 1000 / fps);
+            FPS = fps;
+        }
+        function line(x, y, x1, y1) {
+            x += padding[padding.length - 1];
+            x1 += padding[padding.length - 1];
+            y += padding[0];
+            y1 += padding[0];
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x1, y1);
+            ctx.closePath();
+            ctx.stroke();
+        }
+        function stroke(col) {
+            ctx.strokeStyle = col;
+        }
+        function nofill() {
+            fl = false;
+        }
+        function fill(col) {
+            fl = true;
+            ctx.fillStyle = col;
+        }
+
+        function rotate(deg) {
+            ctx.rotate(deg * Math.PI / 180);
+            angle = angle + parseInt(deg);
+            //console.log(angle);
+        }
+        function translate(x, y) {
+            x += padding[padding.length - 1];
+            y += padding[0];
+            ctx.translate(x, y);
+            translated.x += x;
+            translated.y += y;
+        }
+        function vector(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* {
+ padding:0;
+ margin:0;
+}
+canvas {
+}
+</style>
+</head>
+<body>
+
+
+
+<script>
+var layout,cur,w,l;
+var f = false;
+var t = true;
+var chars, numbers;
+function setUp() {
+  createCanvas(600,600,"black");
+  frameRate(10);
+  layout = [
+    [t,t,t,t,t,t,f],
+    [f,t,t,f,f,f,f],
+    [t,t,f,t,t,f,t],
+    [t,t,t,t,f,f,t],
+    [f,t,t,f,f,t,t],
+    [t,f,t,t,f,t,t],
+    [t,f,t,t,t,t,t],
+    [t,t,t,f,f,f,f],
+    [t,t,t,t,t,t,t],
+    [t,t,t,t,f,t,t],
+    [t,t,t,f,t,t,t]
+  ];
+  numbers = [0,1,2,3,4,5,6,7,8,9];
+  cur = layout[8];
+  w = 20;
+  l = 100;
+}
+function draw() {
+  clear();
+  number(width/2,height/2,cur);
+}
+function key_Down() {
+  var no = parseInt(keyCode);
+  if (numbers.includes(no)) {
+    cur = layout[no]
+  } 
+}
+function number(x,y,cu) {
+  fill("red");
+  if (cur[0]) { 
+    rect(x-l/2,y-(l+w+w/2),l,w);
+  }
+  if (cur[1]) { 
+    rect(x+l/2,y-(l+w/2),w,l);
+  }
+  if (cur[2]) { 
+    rect(x+l/2,y+w/2,w,l);
+  }
+  if (cur[3]) { 
+    rect(x-(l/2),y+l+w/2,l,w);
+  }
+  if (cur[4]) { 
+    rect(x-(l/2+w),y+w/2,w,l);
+  }
+  if (cur[5]) { 
+    rect(x-(w+l/2),y-(l+w/2),w,l);
+  }
+  if (cur[6]) { 
+    rect(x-l/2,y-(w/2),l,w);
+  }
+}
+
+
+
+
+
+
+var ctx, width, height;
+function createCanvas(w, h, color) {
+  var canvas = document.createElement("canvas");
+  canvas.width = w;
+  width = w;
+  height = h;
+  canvas.height = h;
+  canvas.style.backgroundColor = color;
+  document.body.appendChild(canvas);
+  ctx = canvas.getContext("2d");
+}
+function clear() {
+  fill(ctx.canvas.style.backgroundColor);
+  rect(0,0,width,height);
+  nofill();
+}
+function rect(x,y,w,h) {
+  if (!fl) {
+    ctx.strokeRect(x, y, w, h);
+  } else if (fl) {
+    ctx.fillRect(x, y, w, h);
+  }
+}
+var up ="ArrowUp";
+var down ="ArrowDown";
+var right ="ArrowRight";
+var left ="ArrowLeft";
+var keyCode;
+if (window.setUp) {
+  setUp();
+}
+if (window.key_Down) {
+  document.addEventListener("keydown",function (event) {
+    keyCode = event.key;
+    key_Down();
+  });
+}
+if (window.draw) {
+  drawInterval = setInterval(draw, 1000);
+}
+function frameRate(fps) {
+  if (window.draw) {
+    drawInterval = setInterval(draw, 1000/fps);
+  }
+}
+function line(x,y,x1,y1) {
+  ctx.moveTo(x,y);
+  ctx.lineTo(x1,y1);
+  ctx.stroke();
+}
+function stroke(col) {
+  ctx.strokeStyle = col;
+}
+function nofill() {
+  fl = false;
+}
+function fill(col) {
+  fl = true;
+  ctx.fillStyle = col;
+}
+</script>
+
+</body>
+</html>

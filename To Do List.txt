@@ -1,0 +1,20 @@
+﻿
+
+1.  Add better draw interval ✓
+2.  Add Delta Time  ✓︎
+3.  Distance:
+  triangle  ✓︎ 30-1-22
+4.  Collision:
+  shape
+  triangle  
+  circle  ✓︎  30-1-22
+  square  ✓︎  30-1-22
+5.  Turtle:  
+  moveTo
+  jumpTo
+  move
+  jump
+  rotate
+6.  Watch:
+  ratatuile
+     

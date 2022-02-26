@@ -1,0 +1,103 @@
+<html>
+<head>
+</head>
+<body>
+    <script>
+        var FramesPerSecond = 100;
+        var system = [];
+        var gravity;
+        var antiGravity;
+        function setUp() {
+            createCanvas(400, 400, "#f1f1f1");
+            frameRate(FramesPerSecond);
+            system = new ParticleSystem(200, 200, [color(255, 255, 0), color(255, 165, 0), color(255, 255, 0), color(255, 140, 0)]);
+            system.minAngle = -135;
+            system.maxAngle = -45;
+            system.maxParticles = 200;
+            system.minSpeed = 1;
+            system.maxSpeed = 2;
+            system.particleLifeTime = 2;
+            antiGravity = new Vector2(0, -0.1);
+        }
+        function draw() {
+            backGround(0);
+            system.addForce(antiGravity);
+            system.update();
+            system.show();
+        }
+        function Particle(x, y, size, color, acc) {
+            this.pos = new Vector2(x, y);
+            this.vel = new Vector2(0, 0);
+            this.size = size;
+            this.color = color;
+            this.acc = acc;
+            this.alpha = 255;
+            this.lifeTime = 1;
+            this.addForce = function (force) {
+                this.acc.add(force);
+            }
+            this.update = function () {
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                this.acc.reset();
+            }
+            this.show = function () {
+                lineWidth(this.size);
+                let c = this.color;
+                if (this.alpha > 0) {
+                    this.alpha -= 255 / (FramesPerSecond * this.lifeTime);
+                    c = addAlpha(this.color, this.alpha, RGB);
+                }
+                fill(c);
+                stroke(c);
+                point(this.pos.x, this.pos.y);
+            }
+            this.done = function () {
+                return (this.alpha <= 0);
+            }
+        }
+        class ParticleSystem {
+            constructor(x, y, colors) {
+                this.particles = [];
+                this.x = x;
+                this.y = y;
+                this.minAngle = 0;
+                this.maxAngle = 360;
+                this.minSize = 4;
+                this.maxSize = 8;
+                this.minSpeed = 4;
+                this.maxSpeed = 8;
+                this.maxParticles = 200;
+                this.colors = colors;
+                this.particleLifeTime = 1;
+            }
+
+            update() {
+                if (this.particles.length < this.maxParticles) {
+                    this.particles.push(new Particle(this.x, this.y, Random.range(this.minSize, this.maxSize), Random.element(this.colors), Vector.AngleToVector(Random.range(this.minAngle, this.maxAngle), Random.range(this.minSpeed, this.maxSpeed))));
+                    this.particles[this.particles.length - 1].lifeTime = this.particleLifeTime;
+                }
+                for (var i = 0; i < this.particles.length; i++) {
+                    this.particles[i].update();
+                    if (this.particles[i].done()) {
+                        this.particles.splice(i, 1);
+                        i--; console.log("ok");
+                    }
+                }
+            }
+            addForce(force) {
+                for (var p of this.particles) {
+                    p.addForce(force);
+                }
+            }
+            show() {
+                for (var p of this.particles) {
+                    p.show();
+                }
+            }
+        }
+    </script>
+    <script src="Canvas.js"></script>
+
+</body>
+</html>

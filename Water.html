@@ -1,0 +1,47 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <div></div>
+    <script>
+        var FramesPerSecond = 5;
+        let current;
+        let previous;
+        let rows;
+        let cols;
+        let size;
+        let dampening = 0.9;
+        function setUp() {
+            createCanvas(400, 400, "white");
+            redraw();
+            frameRate(FramesPerSecond);
+            rows = 40;
+            cols = 40;
+            size = CanvasWidth / rows;
+            current = create2DArray(cols, rows, 0);
+            previous = create2DArray(cols, rows, 0);
+
+            current[20][20] = 255;
+        }
+        function draw() {
+            clear();
+            for (var i = 1; i < cols - 1; i++) {
+                for (var j = 1; j < rows - 1; j++) {
+                    current[i][j] = (previous[i][j - 1] + previous[i][j + 1] + previous[i - 1][j] + previous[i + 1][j]) / 2 - current[i][j];
+                    current[i][j] = constraint(current[i][j] * dampening, 0, 255);
+                    fill(current[i][j]);
+                    noStroke();
+                    rect(i * size, j * size, size, size);
+                }
+            }
+            let temp = previous;
+            previous = current;
+            current = temp;
+        }
+        function key_Press() {
+
+        }
+    </script>
+    <script src="Canvas.js"></script>
+</body>
+</html>

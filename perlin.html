@@ -1,0 +1,25 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script src="noise.js"></script>
+    <script>
+        let height = 300;
+        let smoothness = 200;
+        let speed = 5;
+        function setUp() {
+            createCanvas(400, 400, "white");
+        }
+        function draw() {
+            clear();
+            for (var x = 0; x < CanvasWidth; x++) {
+                let ht = noise(x / smoothness + frameNo / smoothness * speed) * height;
+                ht = CanvasHeight - ht;
+                line(x, ht, x, CanvasHeight);
+            }
+        }
+    </script>
+</body>
+</html>
