@@ -1,0 +1,52 @@
+﻿
+<html>
+<head>
+</head>
+<body>
+    <div></div>
+    <script>
+        function setUp() {
+            console.log(findWeekDay(14, 3, 3022));
+        }
+        function findWeekDay(d1, m, y) {
+            m--;
+            let cent = (y - y % 100) / 100; // calculate the century
+            let yrs = y - cent * 100; // subtract century from date
+            let d3 = (yrs + (yrs - yrs % 4) / 4) % 7;  //find doomsday of subtracted date
+            let diff = -cent + 20; // difference in centurys;
+            let diff2 = 2 * diff - (diff - diff % 4) / 4; // calculating diffence in dooms day of centuries
+            let d2 = (2 + diff2) % 7; // calculating day from centuries
+            let table = [
+                (y % 4 == 0) ? 4 : 3,
+                (y % 4 == 0) ? 29 : 28,
+                14,
+                4,
+                9,
+                6,
+                11,
+                8,
+                5,
+                10,
+                7,
+                12
+            ]
+            let d4 = d1 - table[m % 12];
+            console.log(d2, d3, d4);
+            let d = (d2 + d3 + d4) % 7;
+            d = (d < 0) ? 7 + d : d;
+            let table2 = [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+            ]
+            return table2[d];
+        }
+        //r = 0, g = r, b = r, a = ((b == r && g == r) || ((g != r || b != r))) ? 255 : g
+    </script>
+    <script src="Canvas.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CSS Template</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding:0;
+}
+body {
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0px;
+  background-color: #E7E9EB;
+}
+.sih {
+  width: 50%;
+  padding: 10px;
+  position: fixed;
+  left: 25%;
+}
+.suit {
+  background-color: white;
+  position: fixed;
+  height: 60%;
+  width: 40%;
+  top: 20%;
+  left: 30%;
+  border: 1px solid;
+  border-radius: 20px;
+  
+}
+.un, .un:enabled {
+  background-color: white;
+  position: absolute;
+  height: 10%;
+  width: 66%;
+  left:17%;
+  top:34%;
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 5px;
+  padding:10px;
+  font-size: 15px;
+}
+.pw, .pw:focus {
+  position: absolute;
+  background-color: white;
+  height: 10%;
+  width: 66%;
+  left:17%;
+  top:45%;
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 5px;
+  padding:10px;
+  font-size: 15px;
+}
+
+.si {
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 10px;
+  position: absolute;
+  background-color: white;
+  width: 32%;
+  height: 10%;
+  left: 16%;
+  top: 59%;
+  font-size: 15px;
+}
+.su {
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 10px;
+  background-color: white;
+  position: absolute;
+  width: 32%;
+  height: 10%;
+  left: 52%;
+  top: 59%;
+  font-size: 15px;
+}
+.si:hover, .si:focus, .su:hover, .su:focus{
+  background-color: rgb(225, 225, 225);
+}
+.si:hover, .su:hover {
+  cursor: pointer;
+}
+.suit2 {
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 10px;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+}
+</style>
+</head>
+<body>
+<div id="signup" style="display:none">
+<div class="suit"><div class="suit2"></div>
+<input id='newusername' type="text" placeholder="New Username." class="un"><br>
+<input id='newpassword' Type="password" placeholder="New Password." class="pw"><br><br>
+<button type="button" onclick=create() class="si">Create</button>
+<button type="button" onclick=signout() class="su">Back</button>
+<p id="error"></p>
+</div><h1 style = "font-family:verdana;" class="sih"><center>SIGN UP</center></h1>
+</div>
+
+<script>
+
+</script>
+
+</body>
+</html>

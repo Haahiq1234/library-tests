@@ -20,6 +20,7 @@
         let finished = false;
         var rows = 5;
         var cols = 5;
+        let blankSpot = new Vector2(cols - 1, rows - 1);
         let textSizes = 48;
         function setUp() {
             createCanvas(80 * rows, 80 * cols, bgColor);
@@ -32,22 +33,18 @@
                 for (var y = 0; y < grid.height; y++) {
                     grid.set(x, y, grid.index(x, y));
                     designs.push(new Tile(y, x, grid.index(y, x) + 1));
-                    //console.table(designs);
                 }
             }
             grid.array[grid.array.length - 1] = -1;
-            grid = grid.transpose2();
-            //console.table(grid.grid());
-            //console.table(grid.transpose2().grid());
-            grid.shuffle();
-
+            shuffleTheGrid();
             update();
             //console.table(designs);
         }
         function finish() {
-            grid.array.sort((a, b) => { return a - b });
+            //grid.array.sort((a, b) => { return a - b });
             grid.array.push(grid.array.shift());
         }
+        
         function displayTime() {
             let tm = (frameNo / Time.frameRate);
             let seconds = Math.floor(tm % 60);
@@ -124,7 +121,7 @@
                     grid.array[grid.array.length - 1] = -1;
                     finished = false;
                 }
-                grid.shuffle();
+                //grid.shuffle();
                 //update();
             }
             if (keyCode == key.space) {
@@ -168,6 +165,22 @@
                     }
                 }
             }
+        }
+        function pickRandom(x, y) {
+            let options = [];
+            if (x - 1 >= 0) {
+                options.push(new Vector2(x - 1, y));
+            }
+            if (x + 1 < cols) {
+                options.push(new Vector2(x + 1, y));
+            }
+            if (y - 1 >= 0) {
+                options.push(new Vector2(x, y - 1));
+            }
+            if (y + 1 < rows) {
+                options.push(new Vector2(x, y + 1));
+            }
+            return options[Random.rangeInt(0, options.length)];
         }
         function mouse_Down() {
             if (selectionMode) {
@@ -227,6 +240,34 @@
             if (y + 1 < rows && grid.get(x, y + 1) == -1) {
                 grid.swap(x, y + 1, x, y);
 
+            }
+        }
+        function shuffleTheGrid() {
+            for (var i = 0; i < rows * cols * 10; i++) {
+                let cases = [];
+                if (blankSpot.x - 1 >= 0) {
+                    let pos = blankSpot.copy();
+                    pos.add(new Vector2(-1, 0));
+                    cases.push(pos);
+                }
+                if (blankSpot.x + 1 < cols) {
+                    let pos = blankSpot.copy();
+                    pos.add(new Vector2(1, 0));
+                    cases.push(pos);
+                }
+                if (blankSpot.y - 1 >= 0) {
+                    let pos = blankSpot.copy();
+                    pos.add(new Vector2(0, -1));
+                    cases.push(pos);
+                }
+                if (blankSpot.y + 1 < rows) {
+                    let pos = blankSpot.copy();
+                    pos.add(new Vector2(0, 1));
+                    cases.push(pos);
+                }
+                let cas = Random.element(cases);
+                grid.swap(cas.x, cas.y, blankSpot.x, blankSpot.y);
+                blankSpot = cas;
             }
         }
     </script>

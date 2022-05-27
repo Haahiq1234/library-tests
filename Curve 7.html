@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let gizmo;
+            let gizmo1;
+            let a = createVector(300, 100);
+            let b = createVector(100, 300);
+            let times = 30;
+            let r = Vector.dist(a, b) / times;
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                stroke(0);
+                frameRate(60);
+                gizmo = new Gizmos(
+                    new Vector2(200, 200),
+                    color(0, 255, 0)
+                );
+                gizmo1 = new Gizmos(
+                    new Vector2(200, 300),
+                    color(0, 255, 0)
+                );
+                //gizmo.constraintedA.y = CanvasHeight / 2;
+                //gizmo1.constraintedA.x = CanvasHeight / 2;
+                //gizmo.constraintedB.y = CanvasHeight / 2;
+                //gizmo1.constraintedB.x = CanvasHeight / 2;
+            }
+            function draw() {
+                clear();
+                for (var i = 0; i <= times; i++) {
+                    let pos = curve2(a, b, gizmo.position.copy(), i / times);
+                    //let pos1 = curve2(a, b, gizmo1.position.copy(), i / times);
+                    //let pos = Vector.avg(pos1, pos2);
+                    circle(pos.x, pos.y, 5);
+                }
+            }
+            function curve2(a, b, p, t) {
+                let mid = Vector.mid(a, b);
+                let ang = Vector.sub(b, a).heading();
+                let angRot = Vector.SideOfLine(a, b, p);
+                let intersection = distance.line(a.x, a.y, b.x, b.y, p.x, p.y);
+                let py = -intersection.dist * sign(angRot);
+                let c = intersection.point;
+                let nx, px;
+                px = Vector.dist(a, c);
+                nx = Vector.dist(b, c);
+                let pnt = Vector.AngleToEllipse(t * 180, px, py, ang + 180, nx, py);
+                pnt.add(c);
+                return pnt;
+            }
+            function ln(A, B) {
+                line(A.x, A.y, B.x, B.y);
+            }
+            function pt(P) {
+                circle(P.x, P.y, 2);
+            }
+            // first exponential
+        </script>
+    </body>
+</html>

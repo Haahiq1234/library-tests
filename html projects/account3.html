@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.fixed{
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  border: 3px solid;
+}
+.fixed2 {
+  background-color: white;
+  width: 400px;
+  border: 3px solid;
+  padding: 5px 5px 5px 5px;
+}
+.fixed4 {
+  position: relative;
+  background-color: lightblue;
+  width: 420px;
+  border: 3px solid;
+  padding: 5px 5px 5px 5px;
+}
+.fixed3 {
+  background-color: white;
+  width: 400px;
+  min-height: 300px;
+  border: 3px solid;
+  padding: 5px 5px 5px 5px;
+}
+</style>
+<title>Page Title</title>
+</head>
+<body>
+<div id="area">
+<h1 style = "font-family:verdana;"><center>SIGN IN</center></h1>
+UserName:<input id="username" type="text" onkeydown="func1()"><br>
+Password : <input id="password" Type="password" onkeydown="func2()"><br><br>
+<button type="button" onclick=signin() >Sign in</button>
+<p id="error"></p>
+</div>
+<script id = "accholders" >
+var Haahiq1234 = {
+scode: "<h1 style = 'font-family:verdana;'><center>Haahiq1234</center></h1>"+
+"<button class = 'fixed' type = 'button' onclick = 'signout()'> Sign Out </button>"+
+"<center><div class = 'fixed4'><div class = 'fixed3'>",
+texts: "",
+ecode: "</div><br><div class = 'fixed2'><input id='text' Type='text' size = '43px'>" +
+"<button type='button' onclick=send() >send</button></div></div></center>",
+password: 1234
+};
+var Hamzaahsan12 = {
+scode: "<h1 style = 'font-family:verdana;'><center>Hamzaahsan12</center></h1>"+
+"<button class = 'fixed' type = 'button' onclick = 'signout()'> Sign Out </button>"+
+"<center><div class = 'fixed4'><div class = 'fixed3'>",
+texts: "",
+ecode: "</div><br><div class = 'fixed2'><input id='text' Type='text' size = '43px'>" +
+"<button type='button' onclick=send() >send</button></div></div></center>",
+password: 4321 
+};
+</script>
+<script id="accaller">
+</script>
+<script>
+var accounts = document.getElementById("accholders");
+var acaller = document.getElementById("accaller");
+var un = document.getElementById("username");
+var pwd = document.getElementById("password");
+var asi = document.getElementById("area");
+var e = document.getElementById("error");
+var signinn = asi.innerHTML;
+function signin() {
+ un = document.getElementById("username");
+ pwd = document.getElementById("password");
+ username = un.value;
+ password = pwd.value;
+ username = eval(username);
+ pass = username.password;
+ if (password == pass) {
+  asi.innerHTML = username.scode + username.texts + username.ecode;
+ } else {
+  e.innerHTML = "UserName or password was incorrect.";
+ } 
+}
+function signout() {
+ asi.innerHTML = signinn;
+ document.getElementById("accaller").innerHTML= "alert('poop');"
+}
+</script>
+</body>
+</html>

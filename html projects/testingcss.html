@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.borderer {
+  border: 2px solid;
+  
+}
+.fixed{
+  position: fixed;
+  top: 0px;
+  right: 0px;
+  border: 3px solid;
+}
+.fixed2 {
+  background-color: white;
+  width: 550px;
+  border: 3px solid;
+  padding: 3px 3px 3px 3px;
+}
+.fixed4 {
+  background-color: lightblue;
+  width: 570px;
+  border: 3px solid;
+  padding: 5px 5px 5px 5px;
+  align-self: right;
+}
+.fixed3 {
+  background-color: white;
+  width: 550px;
+  min-height: 300px;
+  border: 3px solid;
+  padding: 5px 5px 5px 5px;
+}
+</style>
+<title>Page Title</title>
+</head>
+<body>
+<h1 style = "font-family:verdana;"><center>Account</center></h1>
+<button class = "fixed" type = 'button' onclick = 'signout()'> Sign Out </button>
+<div>
+<div class = "fixed4"><div class = "fixed3">
+
+</div><br><div class = "fixed2">
+<input id="name" Type="text" size = "15px" class ="borderer">
+<input id="text" Type="text" size = "43px" class="borderer">
+<button type="button" onclick=send() class = "borderer">send</button>
+</div></div></div>
+<script>
+
+</script>
+</body>
+</html>

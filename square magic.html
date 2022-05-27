@@ -1,0 +1,30 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var area = 10000;
+        let mid = createVector(200, 200);
+        function setUp() {
+            createCanvas(400, 400, "white");
+            frameRate(60);
+            
+        }
+        function draw() {
+            clear();
+            let vec = Vector.sub(mouse, mid);
+            let breadth = area / vec.mag();
+            console.log(breadth, vec.mag());
+            let a = mouse.copy();
+            let d = mid.copy();
+            vec.rotate(90);
+            vec.setMag(breadth);
+            let b = Vector.add(a, vec);
+            let c = Vector.add(d, vec);
+            shape.draw(a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y);
+            //console.log(a, b, c, d);
+        }
+    </script>
+</body>
+</html>

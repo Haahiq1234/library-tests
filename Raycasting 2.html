@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let a = new Gizmos(createVector(100, 100), color(0, 255, 0));
+        let b = new Gizmos(createVector(300, 300), color(0, 255, 0));
+        let rayOrigin = new Gizmos(createVector(300, 100), color(255, 0, 0));
+        let ray = new Gizmos(createVector(100, 300), color(255, 0, 0));
+        function setUp() {
+            createCanvas(800, 400, color(255));
+            frameRate(60);
+            stroke(0);
+        }
+        function draw() {
+            clear();
+            let av = a.position.copy();
+            let bv = b.position.copy();
+            ray.constraintToCircle(rayOrigin.position, 100);
+            let origin = rayOrigin.position;
+            let dir = Vector.sub(ray.position, rayOrigin.position)
+            let cast = RayCast.Vector.square1(origin, dir, 100, 100, 200);
+            nofill();
+            rect(100, 100, 200, 200);
+            if (cast.intersected) {
+                circle(cast.point.x, cast.point.y, 5);
+                //console.log(cast);
+            }
+            let cast1 = RayCast.Vector.line(origin, dir, av, bv);
+            line(av.x, av.y, bv.x, bv.y);
+            if (cast1.intersected) {
+                circle(cast1.point.x, cast1.point.y, 5);
+                //console.log(cast);
+            }
+            av.add(createVector(200, 0));
+            bv.add(createVector(200, 0));
+            line(origin.x, origin.y, );
+            let cast2 = RayCast.Vector.line(origin, dir, av, bv);
+            line(av.x, av.y, bv.x, bv.y);
+            if (cast2.intersected) {
+                circle(cast2.point.x, cast2.point.y, 5);
+                //console.log(cast);
+            }
+        }
+    </script>
+
+</body>
+</html>

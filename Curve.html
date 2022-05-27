@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let gizmo;
+            let gizmo1;
+            let a = createVector(300, 100);
+            let b = createVector(100, 300);
+            let times = 30;
+            let r = Vector.dist(a, b) / times;
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                frameRate(60);
+                gizmo = new Gizmos(
+                    new Vector2(200, 200),
+                    color(0, 255, 0)
+                );
+                gizmo1 = new Gizmos(
+                    new Vector2(200, 300),
+                    color(0, 255, 0)
+                );
+                //gizmo.constraintedA.y = CanvasHeight / 2;
+                //gizmo1.constraintedA.x = CanvasHeight / 2;
+                //gizmo.constraintedB.y = CanvasHeight / 2;
+                //gizmo1.constraintedB.x = CanvasHeight / 2;
+            }
+            function draw() {
+                clear();
+                for (var i = 0; i <= times; i++) {
+                    let pos = curve(Vector.interpolate(a, b, i / times), a, b, gizmo.position.copy());
+                    //let pos1 = curve(Vector.interpolate(a, b, i / times), a, b, gizmo1.position.copy());
+                    //let pos = Vector.avg(pos1, pos2);
+                    circle(pos.x, pos.y, 5);
+                }
+            }
+            function curve(p, a, b, con) {
+                let c = distance.line(a.x, a.y, b.x, b.y, con.x, con.y);
+                let len = c.dist;
+                let cp = c.point;
+                let tan = Vector.sub(con, cp).normalize();
+                let ada = Vector.dist(a, cp);
+                let bda = Vector.dist(b, cp);
+                let adb = Vector.dist(a, p);
+                let bdb = Vector.dist(b, p);
+                let dista = bda;
+                let distb = bdb;
+                if (adb <= ada) {
+                    dista = ada;
+                    distb = adb;
+                }
+                tan.setMag(
+                    distb / dista * len
+                );
+                p.add(tan);
+                return p;
+            }
+        </script>
+    </body>
+</html>

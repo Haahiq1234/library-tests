@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let gizmo;
+            let arr = [
+                createVector(0, 0),
+                createVector(5, 4)
+            ]
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                frameRate(60);
+                gizmo = new Gizmos(
+                    new Vector2(CanvasWidth / 2, CanvasHeight / 2),
+                    color(255, 0, 0)
+                );
+
+            }
+            function draw() {
+                clear();
+            }
+        </script>
+    </body>
+</html>

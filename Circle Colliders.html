@@ -43,7 +43,7 @@
             collide() {
                 for (var i = 0; i < balls.length; i++) {
                     if (balls[i] != this) {
-                        let coll = checkCircleCollision(this.pos.x, this.pos.y, balls[i].pos.x, balls[i].pos.y, this.r, balls[i].r);
+                        let coll = collision.circleToCircle(this.pos.x, this.pos.y, balls[i].pos.x, balls[i].pos.y, this.r, balls[i].r);
                         if (coll.collision) {
                             this.pos = coll.position1;
                             let temp = balls[i].vel.copy();

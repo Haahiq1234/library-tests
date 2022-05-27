@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Calculator</title>
+</head>
+<body>
+Number 1:<input id="in1" type="text" size="20" onkeydown="myFunction(event)"> x <br>
+Number 2:<input id="in2" type="text" size="20" onkeydown="myFunction2(event)"> y <br>
+Answer <b style="color:white;">ff</b>:<input id="ans" type="text" size="20">  <button type="button" onclick="funcmoveup()">Move up</button>
+<br><br>
+<button type="button" onclick="funcm()">Multiply x*y</button>
+<button type="button" onclick="funcd()">Divide x/y</button>
+<button type="button" onclick="funca()">Add x+y</button>
+<button type="button" onclick="funcs()">Subtract x-y</button>
+<button type="button" onclick="power()">Power x<sup>y</sup></button><br>
+<b id="p1">0</b><b id="sym">     </b><b id="p2">0</b><b> = </b><b id="p3"></b>
+<br><br>
+<button type="button" onclick="solve()"><b>Solve</b></button>
+<button type="button" onclick="reset()"><b>Reset</b></button>
+<script>
+var y=0;
+function myFunction(event) {
+  var x = event.key;
+  if (x=="Backspace") {
+   y=(y-(y%10))/10;
+   document.getElementById("p1").innerHTML= y;
+   x="q";
+  } 
+  if (x=="1") {
+   y=1+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="2") {
+   y=2+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="3") {
+   y=3+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="4") {
+   y=4+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="5") {
+   y=5+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="6") {
+   y=6+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="7") {
+   y=7+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="8") {
+   y=8+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+  }
+  if (x=="9") {
+   y=9+10*y;
+   x="q";
+   document.getElementById("p1").innerHTML = y;
+   }
+  if (x=="0") {
+    y=10*y;
+    x="q";
+    document.getElementById("p1").innerHTML = y;
+  }
+}
+var w=0;
+function funcd() {
+ document.getElementById("sym").innerHTML = "  /  ";
+ w=1;
+}
+function funcm() {
+ document.getElementById("sym").innerHTML = "  *  ";
+ w=2;
+}
+function funca() {
+ document.getElementById("sym").innerHTML = "  +  ";
+ w=3;
+}
+function funcs() {
+ document.getElementById("sym").innerHTML = "  -  ";
+ w=4;
+}
+function power() {
+ document.getElementById("sym").innerHTML = "  ^  ";
+ w=5;
+}
+var a = 0;
+function myFunction2(event) {
+ var z = event.key;
+ if (z=="Backspace") {
+  a = (a-(a%10))/10;
+  document.getElementById("p2").innerHTML = a;
+  z="q";
+ }
+ if (z=="1") {
+   a=1+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="2") {
+   a=2+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="3") {
+   a=3+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="4") {
+   a=4+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="5") {
+   a=5+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="6") {
+   a=6+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="7") {
+   a=7+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="8") {
+   a=8+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="9") {
+   a=9+10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+  if (z=="0") {
+   a=10*a;
+   z="q";
+   document.getElementById("p2").innerHTML = a;
+  }
+}
+var b = 0;
+function solve() {
+ if (w==1) {
+  b=y/a;
+  document.getElementById("p3").innerHTML = b;
+  document.getElementById("ans").value = b;
+ } else if (w==2) {
+  b=y*a;
+  document.getElementById("p3").innerHTML = b;
+  document.getElementById("ans").value = b;
+ } else if (w==3) {
+  b=y+a;
+  document.getElementById("p3").innerHTML = b;
+  document.getElementById("ans").value = b;
+ } else if (w==4) {
+  b=y-a;
+  document.getElementById("p3").innerHTML = b;
+  document.getElementById("ans").value = b;
+ } else if (w==5) {
+  b=y**a
+  document.getElementById("p3").innerHTML=b;
+  document.getElementById("ans").value = b;
+ } 
+} 
+var c=0;
+function reset() {
+ var c=
+ w=0;
+ y=0;
+ x="q";
+ z="q";
+ a=0;
+ document.getElementById("p1").innerHTML = 0;
+ document.getElementById("sym").innerHTML = "  ";
+ document.getElementById("p2").innerHTML = 0;
+ document.getElementById("p3").innerHTML = "";
+ document.getElementById("in1").value = "";
+ document.getElementById("in2").value = "";
+ document.getElementById("ans").value = "";
+}
+
+function funcmoveup() {
+ reset();
+ y = b;
+ document.getElementById("p1").innerHTML = y;
+ document.getElementById("in1").value = y;
+}
+</script>
+</body>
+</html>

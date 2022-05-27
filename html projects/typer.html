@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+</style>
+</head>
+<body>
+<div id="pass">
+<h1><center>typer</center></h1>
+</div>
+<p id="demo"></p>
+
+<script>
+var txt = "";
+document.addEventListener("keydown", function(event) {
+var k = event.key;
+if (k=="Backspace") {
+ txt = txt.slice(0,txt.length-1);
+ document.getElementById("demo").innerHTML = txt;
+k = "";
+}
+if (k =="Shift") {
+ k = "";
+}
+if (k =="CapsLock") {
+ k = "";
+}
+if (k =="Enter") {
+ k = "";
+ txt = txt + "  <br> ";
+}
+txt = txt + k;
+document.getElementById("demo").innerHTML = txt;
+});
+</script>
+
+</body>
+</html>

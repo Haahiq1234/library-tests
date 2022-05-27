@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* {
+ margin: 0;
+ padding: 0;
+}
+.game {
+  height:600px;
+  width:500px;
+  margin: auto;
+  border:1px solid;
+}
+.ball {
+ width:25px;
+ height:25px;
+ background-color: red;
+ border-radius: 50px;
+}
+</style>
+</head>
+<body>
+<div id = "game" class="game">
+  <div id="ball" class="ball"></div>
+</div>
+<script>
+var game = document.getElementById("game"); 
+var ball = document.getElementById("ball"); 
+function moveLeft(){
+    var left = parseInt(window.getComputedStyle(ball).getPropertyValue("left"));
+    if(left>0){
+        ball.style.left = left - 24 + "px";
+    }
+}
+moveleft()
+</script>
+</body>
+</html>

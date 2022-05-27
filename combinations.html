@@ -1,0 +1,43 @@
+﻿
+<html>
+<head>
+</head>
+<body>
+    <script>
+        function setUp() {
+            combinations("ABC");
+        }
+        function combinations(codes, found = false) {
+            let length = codes.length;
+            let possibleCombinations = factorial(length);
+            console.log(possibleCombinations);
+            for (var j = 0; j < possibleCombinations; j++) {
+                let lst = [...codes];
+                let pc = j;
+                let comb = "";
+                for (var i = length - 1; i >= 0; i--) {
+                    let fac = factorial(i);
+                    let no = int.div(pc, fac);
+                    pc = pc % fac;
+                    comb += lst[no];
+                    lst.splice(no, 1);
+                }
+                console.log(comb);
+            }
+        }
+        function factorial(no) {
+            let fac = 1;
+            for (var i = 1; i <= no; i++) {
+                fac *= i;
+            }
+            return fac;
+        }
+        const int = {
+            div: function (num, den) {
+                return (num - num % den) / den;
+            } 
+        }
+    </script>
+    <script src="Canvas.js"></script>
+</body>
+</html>

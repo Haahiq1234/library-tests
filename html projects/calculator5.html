@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Calculator: The Fourth</title>
+<style>
+.calbody {
+  background-color: rgb(255, 255, 255);
+  position: fixed;
+  border: 1px solid black;
+  width:50%;
+  left:25%;
+  min-height: 200px;
+  border-radius: 10px;
+  text-align: center;
+  padding: 10px 10px 10px 10px;
+}
+.holder {
+  position: absolute;
+  border: 1px solid black;
+  width: 90%;
+  left:3%;
+  height: 35px;
+  border-radius: 10px;
+  padding: 3px 10px 0px 0px;
+  font-size: 30px;
+}
+
+.rower {
+ width: 100%;
+}
+.nocell {
+  background-color: rgb(245, 245, 245);
+  border: 1px solid black;
+  width: 23%;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 20px;
+  display: block-inline;
+  font-size:30px;
+}
+.nocell:hover {
+  background-color: rgb(200, 200, 200);
+  cursor: pointer;
+}
+</style>
+</head>
+<body style="">
+<h1 style="font-family:verdana">
+  <center>Calculator: The Fourth version</center>
+</h1>
+
+<div class="calbody">
+  <div class="holder" style="text-align:right;">1010101</div>
+  <br><br><br>
+  <table style="width: 100%;">
+    <tr class ="rower">
+      <td class="nocell" onclick="no(1)">1</td>
+      <td class="nocell">2</td>
+      <td class="nocell">3</td>
+      <td class="nocell">+</td>
+    </tr>
+    <tr class ="rower">
+      <td class="nocell">4</td>
+      <td class="nocell">5</td>
+      <td class="nocell">6</td>
+      <td class="nocell">-</td>
+    </tr>
+    <tr class ="rower">
+      <td class="nocell">7</td>
+      <td class="nocell">8</td>
+      <td class="nocell">9</td>
+      <td class="nocell">×</td>
+    </tr>
+    <tr class ="rower">
+      <td class="nocell"></td>
+      <td class="nocell">0</td>
+      <td class="nocell"></td>
+      <td class="nocell">÷</td>
+    </tr>
+    <tr class ="rower">
+      <td class="nocell"></td>
+      <td class="nocell"></td>
+      <td class="nocell" colspan="2">=</td>
+    </tr>
+  </table>
+</div>
+
+<script>
+var x = 0;
+var y = 0;
+var set = 1;
+var a= 0;
+var s=0;
+document.addEventListener("keydown", function(event) {
+  var k = event.key;
+  var t = Number(k);
+  if (k=="r") {
+   document.getElementById("n1").innerHTML = 0;
+   document.getElementById("n2").innerHTML = 0;
+   document.getElementById("ans").innerHTML = 0;
+   document.getElementById("sym").innerHTML = " ";
+   x=0;
+   y=0;
+   a=0
+   set=1;
+   s=0;
+  }
+  if (k=="Enter") {
+   if (s==1) {
+    a=x/y;
+   } else if (s==2) {
+    a=x*y;
+   } else if (s==3) {
+    a=x-y;
+   } else if (s==4) {
+    a=x+y;
+   } else if (s==5) {
+    a=x**y;
+   }
+   document.getElementById("ans").innerHTML = a;
+  }
+  if (k=="ArrowRight") {
+   set = 2;
+  } else if (k=="ArrowLeft") {
+   set = 1;
+  }
+  if (k=="/") {
+   s=1;
+   set=2;
+   document.getElementById("sym").innerHTML = " / ";
+  } else if (k=="*") {
+   s=2;
+   set=2;
+   document.getElementById("sym").innerHTML = " * ";
+  } else if (k=="-") {
+   s=3;
+   set=2;
+   document.getElementById("sym").innerHTML = " - ";
+  } else if (k=="+") {
+   s=4;
+   set=2;
+   document.getElementById("sym").innerHTML = " + ";
+  } else if (k=="^") {
+   s=5;
+   set=2;
+   document.getElementById("sym").innerHTML = " ^ ";
+  }
+  if (set==1) {
+   if (t>-1) { 
+    x=t+(x*10);
+    document.getElementById("n1").innerHTML = x;
+   }
+   if (k=="Backspace") {
+    x=(x-(x%10))/10;
+    document.getElementById("n1").innerHTML = x;
+   }
+  } else if (set==2) {
+   if (t>-1) { 
+    y=t+(y*10);
+    document.getElementById("n2").innerHTML = y;
+   }
+   if (k=="Backspace") {
+    y=(y-(y%10))/10;
+    document.getElementById("n2").innerHTML = y;
+   }
+  } 
+});
+</script>
+</body>
+</html>

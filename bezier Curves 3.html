@@ -1,0 +1,69 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let curve;
+        function setUp() {
+            createCanvas(1350, 650, color(255));
+            //frameRate(FramesPerSecond);
+            curve = new BezierCurve(10);
+        }
+        function draw() {
+            clear();
+            curve.update();
+        }
+        function BezierCurve(times) {
+            //var ths = this;
+            this.gizmos = [];
+            for (var i = 0; i < times; i++) {
+                this.gizmos.push(new Gizmos(new Vector2(CanvasWidth / 2, CanvasHeight / 2), color(0, 255, 0)));
+            }
+            this.points = [];
+            this.t = 0;
+            this.inc = 0.01;
+            this.update = function () {
+                let positions = [];
+                for (var i = 0; i < this.gizmos.length; i++) {
+                    positions.push(this.gizmos[i].position);
+                }
+                stroke(0);
+                lineWidth(2);
+                fill(0);
+                for (var i = 1; i < positions.length; i++) {
+                    ln(positions[i], positions[i - 1]);
+                    //console.log(i);
+                }
+                for (var t = 0; t <= 1; t += this.inc) {
+                    let poss = [];
+                    for (var i = 0; i < positions.length; i++) {
+                        poss.push(positions[i].copy());
+                    }
+                    let iss = poss.length;
+                    for (var i = 0; i < iss; i++) {
+                        for (var j = 0; j < poss.length - 1; j++) {
+                            if (j + 1 < poss.length) {
+                                poss[j] = Vector.lerp(poss[j], poss[j + 1], t);
+                            }
+                            //poss.pop();
+                        }
+                        //ln(poss[0], poss[1]);
+                    }
+                    stroke(0);
+                    lineWidth(2);
+                    pt(poss[0]);
+                }
+            }
+        }
+        function ln(A, B) {
+            line(A.x, A.y, B.x, B.y);
+        }
+        function pt(P) {
+            circle(P.x, P.y, 5);
+        }
+    </script>
+
+</body>
+</html>

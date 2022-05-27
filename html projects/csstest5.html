@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>CSS Template</title>
+<meta charset="utf-8">font
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+.conn {
+  padding: 10px 0px 0px 50px;
+}
+.rm {
+  display: inline-block;
+  border:1px;
+  border-right-style: dotted;
+  border-bottom-style: dotted;
+  min-width: 10%;
+  background-color: white;
+  max-width: 60%;
+  padding: 5px 20px 5px 20px;
+  border-radius: 10px;
+  min-height: 10px;
+  word-wrap: break-word;
+}
+.sm {
+  display: inline-block;
+  border:1px;
+  border-right-style: dotted;
+  border-bottom-style: dotted;
+  min-width: 10%;
+  background-color: lightgreen;
+  max-width: 60%;
+  padding: 5px 20px 5px 20px;
+  border-radius: 10px;
+  min-height: 10px;
+  word-wrap: break-word;
+}
+.cont:hover {
+  background-color: #555;
+  cursor:pointer;
+  color: white;
+}
+.cont {
+  height:10%;
+  border:1px black;
+  border-bottom-style: dotted;
+  text-align: center;
+  padding: 15px 0px 20px 0px;
+  border-bottom-right-radius: 25px;
+  border-bottom-left-radius: 25px;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+}
+.adconh {
+  height: 10%;
+  border:1px dotted black;
+}
+.adcon {
+ position: relative;
+ top: 15%;
+ left:3%;
+ border-radius: 50px;
+ width: 80%;
+ height: 70%;
+ border: 0px;
+ padding:10px;
+}
+.addcon {
+  position:relative;
+  top: 15%;
+  left:3%;
+  border-radius: 50px;
+  width: 14%;
+  height: 70%;
+}
+.ahead {
+  border:1px black;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  position: absolute;
+  width: 30%;
+  height: 60px;
+  padding: 10px;
+}
+.back {
+ position:fixed;
+ background-color: #f1f1f1;
+ width: 100%;
+ height:100%;
+ top:0px;
+ left:0px;
+}
+.texted {
+  background-color: white;
+  position:absolute;
+  width: 80%;
+  height: 80%;
+  left: 10%;
+  top: 10%;
+  border-radius: 50px;
+  border: 0px;
+  padding: 10px;
+  word-wrap: break-word;
+}
+button {
+  cursor: pointer;
+}
+.sender {
+  position: absolute;
+  border: 2px solid;
+  border-radius: 20px;
+  width: 50px;
+  height: 80%;
+  left: 90%;
+  top: 10%;
+  cursor: pointer;
+}
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+header {
+  position: fixed;
+  left: 0%;
+  top:0%;
+  background-color: #555;
+  height: 60px;
+  text-align: center;
+  font-size: 35px;
+  color: white;
+  width:100%;
+}
+.fix2 {
+  position: fixed;
+  top: 60px;
+  left: 0px;
+  width: 30%;
+  height:100%;
+  background: #ccc;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0px 0px 80px 0px;
+}
+.fixed{
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  border: 2px solid;
+  cursor: pointer;
+}
+.article1 {
+  position: fixed;
+  top: 60px;
+  left: 30%;
+  width: 70%;
+  background-color: #f1f1f1;
+  height: 77%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding:10px;
+}
+
+.fixed2 {
+  position: fixed;
+  background-color: #666;
+  right: 0px;
+  bottom: 0px;
+  width: 70%;
+  min-height: 10%;
+  border: 3px solid #666;
+  
+}
+</style>
+</head>
+<body>
+
+<div align="right"><div class='sm'  align='right'>Test.letters.1</div></div><br><div class='rm'>Test.letters.2</div><br>
+
+<div class='back'></div><article id = 'art1' class='article1'></article><header><div class = 'fixed2'>
+<input id='text' Type='text' class='texted' placeholder='Type a message'>
+<button type='button' class='sender' onclick='send()'>/\</button></div>
+<button class = 'fixed' type = 'button' onclick = 'signout()'> Sign Out </button><div class='ahead'>
+
+</div> <div class='conn'></div></header> <div class='fix2'>
+<div class='adconh'><input type='text' placeholder='Add Contact' class='adcon'><button class='addcon' onclick='addcontact()'>Add</button></div>
+
+</div>
+<script>
+var art =  document.getElementById("art1");
+var textt = document.getElementById("text");
+function send() {
+  if (textt.value!="") {
+    art.innerHTML = art.innerHTML + "<div align='right'>" + "<div class='sm' align='right'>" + 
+    textt.value + 
+    "</div></div><br>";
+    text.value = "";
+  }
+}
+</script>
+</body>
+</html>

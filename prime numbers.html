@@ -1,0 +1,38 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <div></div>
+    <script>
+        var table = [];
+        table.push(or(2));
+        table.push(or(3));
+        function setUp() {
+            for (var n = 1; n <= 200; n++) {
+                let vals = [...p(n)];
+                for (var i = 0; i < vals.length; i++) {
+                    let ind = table.length;
+                    table.push(or(vals[i]));
+                }
+            }
+            console.table(table);
+        }
+        function p(n) {
+            let val1 = n * 6 - 1;
+            let val2 = n * 6 + 1;
+            let table = [];
+            if (factorize(val1).length == 2) {
+                table.push(val1);
+            }
+            if (factorize(val2).length == 2) {
+                table.push(val2);
+            }
+            return table;
+        }
+        function or(p) {
+            return { "(index)": table.length + 1, "Prime": p};
+        }
+    </script>
+    <script src="Canvas.js"></script>
+</body>
+</html>

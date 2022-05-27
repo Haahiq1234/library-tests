@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let gizmo;
+            let arr = [
+                createVector(0, 0),
+                createVector(5, 4)
+            ]
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                frameRate(60);
+                gizmo = new Gizmo2(
+                    new Vector2(CanvasWidth / 2, CanvasHeight / 2),
+                    color(0, 255, 0)
+                );
+                gizmo.setShape(GizmoShapes.square, 20, 20);
+                gizmo.setSelectedColor(color(255, 0, 0));
+            }
+            function draw() {
+                clear();
+            }
+        </script>
+    </body>
+</html>

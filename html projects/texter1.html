@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>CSS Template</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+@keyframes a1 {
+  from {opacity:1}
+  to {opacity:0}
+}
+.error {
+  position: fixed;
+  height: 6%;
+  border: 1px solid rgb(150,150,150);
+  width: 20%;
+  text-align: center;
+  color: red;
+  border-radius: 10px;
+  animation-name: a1;
+  animation-duration: 4s;
+  top: 65%;
+  left: 40%;
+  padding:10px;
+}
+.sih {
+  width: 50%;
+  padding: 10px;
+  position: fixed;
+  left: 25%;
+}
+.suit {
+  background-color: white;
+  position: fixed;
+  height: 60%;
+  width: 40%;
+  top: 20%;
+  left: 30%;
+  border: 1px solid;
+  border-radius: 20px;
+}
+.un {
+  background-color: white;
+  position: absolute;
+  height: 10%;
+  width: 66%;
+  left:17%;
+  top:34%;
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 5px;
+  padding:10px;
+  font-size: 15px;
+}
+.pw {
+  position: absolute;
+  background-color: white;
+  height: 10%;
+  width: 66%;
+  left:17%;
+  top:45%;
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 5px;
+  padding:10px;
+  font-size: 15px;
+}
+
+.si {
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 10px;
+  position: absolute;
+  background-color: white;
+  width: 32%;
+  height: 10%;
+  left: 16%;
+  top: 59%;
+  font-size: 15px;
+}
+.su {
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 10px;
+  background-color: white;
+  position: absolute;
+  width: 32%;
+  height: 10%;
+  left: 52%;
+  top: 59%;
+  font-size: 15px;
+}
+.si:hover, .su:hover {
+  background-color: rgb(225, 225, 225); 
+  cursor: pointer;
+}
+.suit2 {
+  border: 1px solid rgb(150, 150, 150);
+  border-radius: 10px;
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+}
+.conn {
+  padding: 10px 0px 0px 50px;
+}
+.rm {
+  display: inline-block;
+  border:1px;
+  border-right-style: dotted;
+  border-bottom-style: dotted;
+  min-width: 10%;
+  background-color: white;
+  max-width: 60%;
+  padding: 5px 20px 5px 20px;
+  border-radius: 10px;
+  min-height: 10px;
+  word-wrap: break-word;
+}
+.sm {
+  display: inline-block;
+  border:1px;
+  border-right-style: dotted;
+  border-bottom-style: dotted;
+  min-width: 10%;
+  background-color: lightgreen;
+  max-width: 60%;
+  padding: 5px 20px 5px 20px;
+  border-radius: 10px;
+  min-height: 10px;
+  word-wrap: break-word;
+}
+
+.cont {
+  height:10%;
+  width: 100%;
+  border:1px black;
+  border-bottom-style: dotted;
+  text-align: center;
+  padding: 15px 0px 20px 0px;
+  border-bottom-right-radius: 25px;
+  border-bottom-left-radius: 25px;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+  background: #ccc;
+}
+.cont:hover{
+  background-color: #555;
+  color: white;
+  cursor:pointer;
+}
+.adconh {
+  height: 10%;
+  border:1px dotted black;
+}
+.adcon {
+ position: relative;
+ top: 15%;
+ left:3%;
+ border-radius: 50px;
+ width: 80%;
+ height: 70%;
+ border: 0px;
+ padding:10px;
+}
+.addcon {
+  position:relative;
+  top: 15%;
+  left:3%;
+  border-radius: 50px;
+  width: 14%;
+  height: 70%;
+  background-color: #ccc;
+}
+.addcon:hover {
+  background-color: rgb(125,125,125);
+  color: white;
+}
+.ahead {
+  border:1px black;
+  border-right-style: solid;
+  border-bottom-style: solid;
+  position: absolute;
+  width: 30%;
+  height: 60px;
+  padding: 10px;
+}
+.back {
+ position:fixed;
+ background-color: #f1f1f1;
+ width: 100%;
+ height:100%;
+ top:0px;
+ left:0px;
+}
+.texted {
+  background-color: white;
+  position:absolute;
+  width: 80%;
+  height: 80%;
+  left: 10%;
+  top: 10%;
+  border-radius: 50px;
+  border: 0px;
+  padding: 10px;
+  word-wrap: break-word;
+}
+button {
+  cursor: pointer;
+}
+.sender {
+  position: absolute;
+  border: 2px solid;
+  border-radius: 20px;
+  width: 50px;
+  height: 80%;
+  left: 90%;
+  top: 10%;
+  cursor: pointer;
+}
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0px;
+  background-color: #E7E9EB;
+}
+header {
+  position: fixed;
+  left: 0%;
+  top:0%;
+  background-color: #555;
+  height: 60px;
+  text-align: center;
+  font-size: 35px;
+  color: white;
+  width:100%;
+}
+.fix2 {
+  position: fixed;
+  top: 60px;
+  left: 0px;
+  width: 30%;
+  height:100%;
+  background: #ccc;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0px 0px 80px 0px;
+}
+.fixed{
+  position: absolute;
+  top: 13px;
+  right: 8px;
+  border: 2px solid;
+  cursor: pointer;
+  width:34px;
+  height:34px;
+  border-radius:50px;
+  font-size:20px;
+  background-color: #ccc;
+}
+.fixed:hover {
+  background-color: rgb(125,125,125);
+  color: white;
+}
+.article1 {
+  position: fixed;
+  top: 60px;
+  left: 30%;
+  width: 70%;
+  background-color: #f1f1f1;
+  height: 77%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding:10px;
+}
+
+.fixed2 {
+  position: fixed;
+  background-color: #666;
+  right: 0px;
+  bottom: 0px;
+  width: 70%;
+  min-height: 10%;
+  border: 3px solid #666;
+}
+.menu {
+  position: fixed;
+  top: 30px;
+  right: 21px;
+  border: 1px solid;
+  width:25%;
+  min-height: 10%;
+  background-color: white;
+  border-radius: 10px;
+}
+.option {
+  border:1px;
+  border-bottom-style: solid;
+  border-color: grey;
+  width: 100%;
+  padding: 8px;
+  text-align:center;
+}
+.options {
+  border:1px;
+  border-bottom-style: solid;
+  border-color: grey;
+  width: 100%;
+  padding: 8px;
+  text-align:center;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 10px;
+}
+.optionf {
+  border:1px;
+  border-bottom-style: solid;
+  border-color: grey;
+  width: 100%;
+  padding: 8px;
+  text-align:center;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+.option:hover, .options:hover, .optionf:hover{
+  background-color: rgb(200,200,200);
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+<div id="area">
+</div>
+<div id="signin" style="display:none;">
+<h1 style = "font-family:verdana;" class="sih"><center>SIGN IN</center></h1>
+<div class="suit"><div class="suit2"></div>
+<input id="username" type="text" placeholder="Enter Username."class="un"><br>
+<input id="password" Type="password" placeholder="Enter Password." class="pw"><br><br>
+<button type="button" onclick=signin() class="si" >Sign in</button>
+<button type="button" onclick=signup() class="su" >Sign up</button></div></div>
+<div id="signup" style="display:none">
+<h1 style = "font-family:verdana;" class="sih"><center>SIGN UP</center></h1>
+<div class="suit"><div class="suit2"></div>
+<input id='newusername' type="text" placeholder="New Username." class="un"><br>
+<input id='newpassword' Type="password" placeholder="New Password." class="pw"><br><br>
+<button type="button" onclick=create() class="si">Create</button>
+<button type="button" onclick=signout() class="su">Back</button>
+</div></div>
+
+<div id="menu" class="menu" style="display:none;">
+  <div class="options" onclick="signout()">Sign out</div>
+  <div class="option" onclick="sina()">Sign into new account</div>
+  <div id="exo">
+    <div class="option"></div>
+  </div>
+  <div class="optionf" id="back" onclick="closemenu()">Close Menu</div>
+</div>
+<script>
+var menu = document.getElementById("menu");
+var actives = {
+  count: 0,
+  names: [],
+  accs: {},
+  access: "no"
+}
+function openmenu() {
+  menu.style.display="block";
+}
+function closemenu() {
+  menu.style.display="none";
+}
+function sina() {
+  actives.access = "yes";
+  asi.innerHTML = signinn;
+  menu.style.display="none";
+  actives.names.shift
+}
+</script>
+
+<script>
+function acoff() {
+  document.getElementById("newpassword").autocomplete="off";
+  document.getElementById("password").autocomplete="off";
+  document.getElementById("newusername").autocomplete="off";
+  document.getElementById("username").autocomplete="off";
+}
+</script>
+<script>
+var ad;
+var select;
+var mtab;
+var text;
+var text2;
+var active;
+function addcontact() {
+  ad = document.getElementById("ad");
+  if (accno.includes(ad.value)&&!active.contactts.includes(ad.value)) {
+    if (ad.value!=active.name) {
+      active.contacts = active.contacts + 
+      "<button class='cont' onclick=select(accounts."+ad.value+")>" 
+      + ad.value + "</button>";
+      
+      asi.innerHTML = active.top + active.contacts + active.end;
+      active.contactts.push(ad.value);
+      active.messagess[ad.value]="";
+      selected = accounts[ad.value];
+      selected.contacts = selected.contacts + 
+      "<div class='cont' onclick=select(accounts."+active.name+")>" 
+      + active.name + "</div>";
+      selected.contactts.push(active.name);
+      selected.messagess[active.name]="";
+      selected="";
+      asi.innerHTML = active.top + active.contacts + active.end;
+      ad.value = "";
+    }
+  }
+}
+function re() {
+  asi.innerHTML = active.top + active.contacts + active.end;
+}
+function select(sel) {
+  selected = sel;
+  mtab = document.getElementById("mtab");
+  text = document.getElementById("text");
+  mtab.innerHTML = active.messagess[selected.name];
+  conn = document.getElementById("conn");
+  conn.innerHTML = selected.name;
+}
+
+function send() {
+  text2 ="<div align='right'><div class='sm' align='right'>" + text.value 
+  + "</div></div><br>";
+  active.messagess[selected.name] += text2;
+  mtab.innerHTML = active.messagess[selected.name];  
+  text2 ="<div class='rm'>"+ text.value +"</div><br>";
+  selected.messagess[active.name] += text2;
+  text.value="";
+}
+</script>
+<script id = "accholders" >
+var accno = [];
+var accounts = {}; 
+function cracco(name, passss) {
+  this.name = name;
+  this.top = 
+  "<div class='back'></div><article id='mtab' class='article1'></article>" 
+  + "<header><div class = 'fixed2'>" + 
+  "<input id='text' Type='text' class='texted' placeholder='Type a message' autocomplete='off'>" + 
+  "<button type='button' class='sender' onclick='send()'>/\\</button></div>" 
+  + "<button class = 'fixed' type = 'button' onclick = 'openmenu()'>"+name.slice(0, 1)
++"</button><div class='ahead'>" + name +
+  "</div> <div class='conn' id='conn'></div></header> <div class='fix2'>" + 
+  "<div class='adconh'><input type='text' placeholder='Add Contact' autocomplete='off' class='adcon' id='ad'>"+
+  "<button class='addcon' onclick='addcontact()'>Add</button></div>";
+  this.contacts = "";
+  this.end = "</div>";
+  this.password = passss;
+  this.messagess = new Object();
+  this.contactts =[];
+  accno.push(this.name);
+  
+}
+accounts["Haahiq1234"] = new cracco('Haahiq1234', 1234);
+accounts["Haahiq2020"] = new cracco('Haahiq2020', 1234);
+accounts["Hamzaahsan12"] = new cracco('Hamzaahsan12', 4321);
+</script>
+<script>
+var signupp = document.getElementById("signup").innerHTML
++ "<div id='error' class='error' style='display:none'></div>";
+var conn = document.getElementById("conn");
+var un = document.getElementById("username");
+var pwd = document.getElementById("password");
+var un2 = document.getElementById("newusername");
+var pwd2 = document.getElementById("newpassword");
+var asi = document.getElementById("area");
+var e;
+var signinn = document.getElementById("signin").innerHTML 
++ "<div id='error' class='error' style='display:none'></div>";
+asi.innerHTML = signinn;
+var username;
+var password;
+var usename2;
+var password2;
+var time;
+function signin() {
+ un = document.getElementById("username");
+ pwd = document.getElementById("password");
+ username = un.value;
+ password = pwd.value;
+ if (accno.includes(username)) {
+   username = accounts[username];
+   pass = username.password;
+   if (password == pass) {
+     asi.innerHTML = username.top + username.contacts + username.end;
+     active = accounts[username.name];
+     actives.count +=1;
+   } else {
+     e = document.getElementById("error");
+     e.style.display = "block";
+     e.innerHTML = "Incorrect Password.";
+     time = setTimeout(cleare, 4000);
+   }
+ } else {
+   e = document.getElementById("error");
+   e.style.display = "block";
+   e.innerHTML = "Invalid Username.";
+   time = setTimeout(cleare, 4000);
+ }
+}
+function create() {
+ un2 = document.getElementById("newusername");
+ pwd2 = document.getElementById("newpassword");
+ if (!accno.includes(un2.value)) {
+   if (un2.value.length >= 8 && pwd2.value.length >= 4) {
+    username2 = un2.value;
+    password2 = pwd2.value;
+    accounts[username2] = new cracco(username2, password2);
+    username2 = accounts[username2];
+    asi.innerHTML = username2.top + username2.contacts + username2.end;
+    active = accounts[username2.name];
+    actives.count +=1;
+   }
+ } else {
+   e = document.getElementById("error");
+   e.style.display = "block";
+   e.innerHTML = "Username already exists.";
+   setTimeout(cleare, 4000);
+ }  
+} 
+function cleare() {
+  e.style.display = "none";
+  e.innerHTML = "";
+}
+function signup() {
+ asi.innerHTML = signupp;
+}
+function signout() {
+ selected="";
+ active="";
+ asi.innerHTML = signinn;
+ menu.style.display="none";
+ 
+ actives.count -=1;
+}
+</script>
+</body>
+</html>

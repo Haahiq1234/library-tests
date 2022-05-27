@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <div id="area">
+        <h1><center>Sign in</center></h1>
+        UserName:<input id="username" type="text" onkeydown="func1()"><br>
+        Password :<input id="password" Type="password" onkeydown="func2()"><br><br>
+        <button type="button" onclick=signin()>Sign in</button>
+        <p id="error"></p>
+    </div>
+    <script>
+        var un = document.getElementById("username");
+        var pwd = document.getElementById("password");
+        var asi = document.getElementById("area");
+        var e = document.getElementById("error");
+        var signinn = asi.innerHTML;
+        var ut = un.value;
+        var pt = pwd.value;
+        function signin() {
+            un = document.getElementById("username");
+            pwd = document.getElementById("password");
+            if (un.value == "Haahiq1234") {
+                if (pwd.value == 1234) {
+                    asi.innerHTML = "<small style></small><h1><center>Account</center></h1>" +
+                        "<p>Welcome Haahiq1234.</p>" +
+                        "<button type = 'button' onclick = 'signout()'> Sign Out </button>";
+                } else {
+                    e.innerHTML = "Password is incorrect.";
+                }
+            } else if (un.value == "Hamzaahsan12") {
+                if (pwd.value == 4321) {
+                    asi.innerHTML = "<small style></small><h1><center>Account</center></h1>" +
+                        "<p>Welcome Hamzaahsan12.</p>" +
+                        "<button type = 'button' onclick = 'signout()'> Sign Out </button>";
+                } else {
+                    e.innerHTML = "Password is incorrect.";
+                }
+            } else {
+                e.innerHTML = "UserName does not exist.";
+            }
+        }
+
+        function signout() {
+            asi.innerHTML = signinn;
+        }
+    </script>
+</body>
+</html>

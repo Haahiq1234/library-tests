@@ -1,0 +1,43 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let curve;
+        function setUp() {
+            //createCanvas(800, 400, "black");
+            console.log(arctan(16, 5) - arctan(4, 239), 16 * Math.atan(1 / 5) - 4 * Math.atan(2 / 239), Math.PI);
+        }
+        function sin(x) {
+            x = radians(x);
+            let ans = 0;
+            for (var i = 1; i < 20; i += 4) {
+                ans += ((x ** i) / factorial(i)) - ((x ** (i + 2)) / factorial(i + 2));
+                console.log((x ** (i + 2)) , factorial(i + 2));
+                console.log((x ** i) / factorial(i)) - ((x ** (i + 2)) / factorial(i + 2));
+            }
+            return ans;
+        }
+        function cos(x) {
+            let ans = 0;
+            for (var i = 0; i < 10; i += 4) {
+                ans += ((x ** i) / factorial(i)) - ((x ** (i + 2)) / factorial(i + 2));
+                console.log((x ** i) / factorial(i)) - ((x ** (i + 2)) / factorial(i + 2));
+            }
+            return ans;
+        }
+        function arctan(num, den) {
+            let val = 0n;
+            let multiplier = 100000000000000000000000000000000000000000000n;
+            for (var i = 1; i < 81; i += 4) {
+                val += BigInt(((multiplier * BigInt(num)) / BigInt((den ** i) * i)) - ((multiplier * BigInt(num)) / BigInt((den ** (i + 2)) * (i + 2))));
+                //print(val);
+            }
+            return val;
+        }
+    </script>
+
+</body>
+</html>

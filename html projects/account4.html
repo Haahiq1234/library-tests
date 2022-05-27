@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="area">
+<h1 style = "font-family:verdana;"><center>SIGN IN</center></h1>
+UserName:<input id="username" type="text"><br>
+Password : <input id="password" Type="password"><br><br>
+<button type="button" onclick=signin() >Sign in</button>
+<button type="button" onclick=signup() >Sign up</button>
+<p id="error"></p>
+</div>
+<script id = "accholders" >
+var accno = ["Haahiq1234", "Hamzaahsan12"];
+var signupp = "<h1 style='font-family:verdana;'><center>SIGN UP</center></h1>"
++ "UserName:<input id='newusername' type='text'><br>"
++ "Password : <input id='newpassword' type='password'><br><br>"
++ "<button type='button' onclick=create()>Create Account</button>"
++"<button type='button' onclick=signout()>Back</button>";
+var Haahiq1234 = {
+code: "<h1><center>Account</center></h1>"+"<p>Welcome Haahiq1234.</p>"+
+"<button type = 'button' onclick = 'signout()'> Sign Out </button>",
+password: 1234 
+};
+var Hamzaahsan12 = {
+code: "<h1><center>Account</center></h1>"+"<p>Welcome Hamzaahsan12.</p>"+
+"<button type = 'button' onclick = 'signout()'> Sign Out </button>",
+password: 4321 
+};
+</script>
+<script>
+var accounts = document.getElementById("accholders");
+var un = document.getElementById("username");
+var pwd = document.getElementById("password");
+var un2 = document.getElementById("newusername");
+var pwd2 = document.getElementById("newpassword");
+var asi = document.getElementById("area");
+var e = document.getElementById("error");
+var signinn = asi.innerHTML;
+var usename;
+var password;
+var usename2;
+var password2;
+function signin() {
+ un = document.getElementById("username");
+ pwd = document.getElementById("password");
+ username = un.value;
+ password = pwd.value;
+ username = eval(username);
+ pass = username.password;
+ if (password == pass) {
+  asi.innerHTML = username.code;
+ } else {
+  e.innerHTML = "UserName or password was incorrect.";
+ } 
+}
+function create() {
+ un2 = document.getElementById("newusername");
+ pwd2 = document.getElementById("newpassword");
+ if (accno.includes(un2.value)) {
+   alert("The username " + un2.value + " already exists.");
+ } else {
+   if (un2.value.length >= 8 && pwd2.value.length >= 4) {
+    username2 = un2.value;
+    password2 = pwd2.value;
+    accno.push(un2.value);
+    var info = {
+    code: "<h1><center>Account</center></h1>"+"<p>Welcome " + username2 +  
+    ". </p><button type = 'button' onclick = 'signout()'> Sign Out."+
+    "</button>", 
+    password: password2 
+    };
+    username2 = eval (username2 + "=info");
+    asi.innerHTML = username2.code;
+   }
+ }  
+} 
+function signup() {
+ asi.innerHTML = signupp;
+}
+function signout() {
+ asi.innerHTML = signinn;
+}
+</script>
+</body>
+</html>

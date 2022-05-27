@@ -1,0 +1,68 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let minRad = 2;
+        let maxRad = 4;
+        let w = 50;
+        let mid = 5;
+        let midVec = createVector(mid, mid);
+        function setUp() {
+            createCanvas(550, 550, "white");
+            for (var i = 0; i < CanvasWidth / w; i++) {
+                for (var j = 0; j < CanvasHeight; j++) {
+                    nofill();
+                    rect(i * w, j * w, w, w);
+                }
+            }
+            let up = mid - Random.rangeInt(minRad, maxRad);
+            let upVec = createVector(mid, up);
+            let down = mid + Random.rangeInt(minRad, maxRad);
+            let downVec = createVector(mid, down);
+            let right = mid + Random.rangeInt(minRad, maxRad);
+            let rightVec = createVector(right, mid);
+            let left = mid - Random.rangeInt(minRad, maxRad);
+            let leftVec = createVector(left, mid);
+            fill(255, 0, 0);
+            for (var y = up; y <= down; y++) {
+                if (y < mid) {
+                    let downleft = Vector.sub(leftVec, upVec);
+                    downleft.setY(y - up);
+                    downleft.x = Math.floor(downleft.x);
+                    downleft.add(midVec);
+                    //console.log(downleft);
+                    let downRight = Vector.sub(rightVec, upVec);
+                    downRight.setY(y - up);
+                    downRight.x = Math.floor(downRight.x);
+                    downRight.add(midVec);
+                    for (var x = downleft.x; x <= downRight.x; x++) {
+                        rect(x * w + 2, y * w + 2, w - 4, w - 4);
+                    }
+                } else if (y == mid) {
+                    for (var x = left; x <= right; x++) {
+                        rect(x * w + 2, y * w + 2, w - 4, w - 4);
+                    }
+                } else {
+                    let downleft = Vector.sub(downVec, rightVec);
+                    downleft.setY(y - mid);
+                    downleft.x = Math.floor(downleft.x);
+                    downleft.add(rightVec);
+                    //console.log(downleft);
+                    let downRight = Vector.sub(downVec, leftVec);
+                    downRight.setY(y - mid);
+                    downRight.x = Math.floor(downRight.x);
+                    downRight.add(leftVec);
+                    //.log(downRight.x, downleft.x);
+                    for (var x = downRight.x; x <= downleft.x; x++) {
+                        rect(x * w + 2, y * w + 2, w - 4, w - 4);
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

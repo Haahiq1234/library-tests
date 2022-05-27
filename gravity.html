@@ -1,0 +1,65 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js">
+
+    </script>
+    <script>
+        var FramesPerSecond = 100;
+        let movers = [];
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(FramesPerSecond);
+            movers.push(new Mover(100, 200, 0, -10, 10));
+            movers.push(new Mover(300, 200, 0, 10, 10));
+
+        }
+        function draw() {
+            backGround();
+            for (var mover of movers) {
+                for (var other of movers) {
+                    if (other != mover) {
+                        mover.attract(other);
+                    }
+                }
+                mover.update();
+                mover.show();
+            }
+        }
+        class Mover {
+            constructor(x, y, vx, vy, m) {
+                this.pos = new Vector2(x, y);
+                this.vel = new Vector2(vx, vy);
+                this.acc = new Vector2(1, 1);
+                this.m = m;
+                this.r = (this.m ** 0.5) * 4;
+            }
+            update() {
+                //this.vel = Vector.AngleToVector(this.angle, -GetAxis("vertical", "arrow") * this.speed);
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                this.acc.reset();
+            }
+            applyForce(force) {
+                force = Vector.div(force, this.m);
+                this.acc.add(force);
+            }
+            attract(mov) {
+                let force = Vector.sub(this.pos, mov.pos);
+                let ds = constraint(force.mag() ** 2, 25, 2500);
+                let G = 25;
+                let str = (G * mov.m * this.m) / ds;
+                force.setMag(str);
+                mov.applyForce(force);
+            }
+            show() {
+                nofill(255);
+                stroke(255);
+                circle(this.pos.x, this.pos.y, this.r);
+            }
+        }
+    </script>
+</body>
+</html>

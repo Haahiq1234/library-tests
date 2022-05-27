@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1><center>Button Function Changer</center></h1>
+<BUTTON id="b1" onclick="func1()">x</BUTTON>
+
+<div id="demo">Now the Button is x</div>
+
+<script>
+var x = document.getElementById("demo");
+var y = document.getElementById("b1");
+function func1() {
+ y.innerHTML = "y";
+ x.innerHTML = "Now the Button is y";
+ y.onclick = function() {
+   func2();
+ };
+ 
+}
+function func2() {
+ y.innerHTML = "x";
+ x.innerHTML = "Now the Button is x";
+ y.onclick = function() {
+   func1();
+ };
+} 
+</script>
+
+</body>
+</html>

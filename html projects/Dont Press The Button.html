@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1><center>Don't press the button</center></h1>
+<p> Please Do not Press The Button. </p>
+<button type="button" onclick="f1()"> Don't press me </button> 
+<br><br>
+<p id="p1" style="color:red;font-size:17px;">I SAID DON'T PRESS THE BUTTON! NOW CLICK THE NEXT BUTTON TO RESET IT!</p>
+<button id="b1" type="button" onclick="f2()">Click to reset</button>
+<script>
+document.getElementById("b1").style.display="none";
+document.getElementById("p1").style.display="none";
+function f1() {
+document.getElementById("p1").style.display="block"
+document.getElementById("b1").style.display="block";
+}
+function f2() {
+document.getElementById("p1").style.display="none";
+document.getElementById("b1").style.display="none";
+alert("Now Do Not Press The Button Again")
+}
+</script>
+</body>
+</html> 

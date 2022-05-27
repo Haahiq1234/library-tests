@@ -5,7 +5,7 @@
 <body>
     <script src="Canvas.js"></script>
     <script>
-        var FramesPerSecond = 100;
+        var FramesPerSecond = 60;
         let shapes = [];
         let particle;
         let glow = [];
@@ -73,7 +73,7 @@
             update(shapes) {
                 this.pos.x += GetAxis("horizontal", "arrow") * this.speed;
                 this.pos.y += GetAxis("vertical", "arrow") * this.speed;
-                this.dir = Math.floor(Vector.sub(mouse, this.pos).heading());
+                this.dir = Vector.sub(mouse, this.pos);
                 this.refract(this.pos.x, this.pos.y, shapes);
             }
             refract(x, y, shapes) {
@@ -86,8 +86,7 @@
                 }
                 stroke(255, 100);
                 fill(255, 5);
-                let v = Vector.add(createVector(x, y), Vector.AngleToVector(Math.floor(this.dir * 1000) / 1000, length));
-                console.log(Vector.sub(v, createVector(x, y)).heading(), this.dir);
+                let v = Vector.add(createVector(x, y), Vector.setMag(this.dir, length));
                 //console.log(Vector.dir(v.x, v.y, v.x, v.y).heading(), this.dir);
                 circle(x, y, length);
                 line(x, y, v.x, v.y);

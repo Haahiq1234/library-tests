@@ -1,0 +1,109 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 100;
+        var tentacle;
+        var segmentLength = 50;
+        var tentacle1;
+        function setUp() {
+            createCanvas(500, 500, "black");
+            frameRate(FramesPerSecond);
+            tentacle = new Tentacle(CanvasWidth / 2, CanvasHeight, segmentLength, 3);
+            tentacle1 = new Tentacle(CanvasWidth / 2, 0, 5, 70);
+        }
+        function draw() {
+            clear();
+            tentacle.followPosition(mouse);
+            tentacle.show();
+            tentacle1.followPosition(mouse);
+            tentacle1.show();
+        }
+        function segment(x, y, len) {
+            this.a = new Vector2(x, y);
+            this.len = len;
+            this.angle = 0;
+            this.b = Vector.AngleToVector(this.angle, this.len);
+            this.calB = function () {
+                this.b = Vector.add(Vector.AngleToVector(this.angle, this.len), this.a);
+            }
+            this.follow = function (ve) {
+                var vec = Vector.sub(ve, this.a);
+                this.angle = vec.heading();// - 90;
+                this.calB();
+
+                let vec1 = Vector.sub(ve, this.b);
+                this.a.add(vec1);
+            }
+            this.show = function () {
+                stroke("white");
+                lineWidth(2);
+                this.calB();
+                line(this.a.x, this.a.y, this.b.x, this.b.y);
+            }
+        }
+        function Tentacle(x, y, len, size) {
+            this.pos = new Vector2(x, y);
+            this.segs = [];
+            this.size = size;
+            this.len = len;
+            this.constraintDistance = this.size * (this.len + 1);
+            this.constraintangle = -45;
+            for (var i = 0; i < this.size; i++) {
+                this.segs.push(new segment(x, y - this.len * i, this.len));
+            }
+            this.followPosition = function (pos) {
+                let a = this.pos.copy();
+                let b = this.segs[this.segs.length - 1].b.copy();
+                let vec1a = Vector.sub(b, a);
+                let vec2b = vec1a.copy();
+                vec1a.mult(0.5);
+                vec2b.rotate(this.constraintangle);
+                vec2b.setMag(this.constraintDistance);
+                a.add(vec2b);
+                a.add(vec1a);
+                this.FK(a);
+                this.IK(pos);
+                this.IK(pos);
+                this.IK(pos);
+                this.IK(pos);
+            }
+            this.IK = function (obj) {
+
+
+
+                this.segs[this.size - 1].follow(obj);
+                for (var i = this.size - 2; i >= 0; i--) {
+                    this.segs[i].follow(this.segs[i + 1].a);
+                }
+                this.segs[0].a = this.pos.copy();
+                this.segs[0].calB();
+                for (var i = 1; i < this.size; i++) {
+                    this.segs[i].a = this.segs[i - 1].b.copy();
+                    this.segs[i].calB();
+                }
+            }
+            this.FK = function (pos) {
+                this.segs[0].follow(pos);
+                this.segs[0].calB();
+                for (var i = 1; i < this.segs.length; i++) {
+                    this.segs[i].a = this.segs[i - 1].b;
+                    this.segs[i].calB();
+                    this.segs[i].follow(pos);
+                    this.segs[i].a = this.segs[i - 1].b;
+                    this.segs[i].calB();
+                }
+            }
+            this.show = function () {
+                for (var i = 0; i < this.size; i++) {
+                    this.segs[i].show();
+
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

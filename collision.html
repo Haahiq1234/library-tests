@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        function setUp() {
+            createCanvas(400, 400, color(255));
+            frameRate(60);
+            nofill();
+        }
+        function draw() {
+            clear();
+            square.collide(100, 100, 200, 200);
+            rect(100, 100, 200, 200);
+            square.draw();
+        }
+        class Square {
+            constructor(x, y, s) {
+                this.gizmo = new Gizmos(x, y, color(0, 255, 0));
+                this.size = s;
+            }
+            get x() {
+                return this.a.x - this.size / 2;
+            }
+            get y() {
+                return this.a.y - this.size / 2;
+            }
+            get a() {
+                return this.gizmo.position;
+            }
+            set a(pos) {
+                this.gizmo.position.set(pos.x, pos.y);
+            }
+            set x(x) {
+                this.gizmo.position.x = x + this.size / 2;
+            }
+            set y(y) {
+                this.gizmo.position.y = y + this.size / 2;
+            }
+            draw() {
+                stroke(0);
+                rect(this.x , this.y, this.size, this.size);
+            }
+            collide(x, y, xs, ys) {
+                let coll = collision.RectToRect(this.x, this.y, this.size, this.size, x, y, xs, ys);
+                if (coll) {
+                    console.log(coll);
+                    this.a = coll.point;
+                }
+            }
+        }
+        collision.RectToRect = function (x, y, xs, ys, x1, y1, xs1, ys1) {
+            let a = createVector(x, y);
+            let b = createVector(x + xs, y);
+            let c = createVector(x + xs, y + ys);
+            let d = createVector(x, y + ys);
+            let a1 = createVector(x1, y1);
+            let b1 = createVector(x1 + xs1, y1 + ys1);
+            console.log("ok");
+            if (Vector.InSquare(a1, b1, a)) {
+                let pnt = distance.line(b.x, b.y, c.x, c.y, x, y);
+                return pnt;
+            }
+        }
+        let square = new Square(200, 200, 50);
+    </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* {
+ padding:0;
+ margin:0;
+}
+canvas {
+}
+</style>
+</head>
+<body>
+
+
+
+<script>
+let drawInterval = setInterval(draw, 100);
+document.body.addEventListener("load", setUp());
+
+function background(color) {
+}
+function frameRate(fps) {
+  drawInterval = setInterval(draw, 1000/fps);
+}
+function stroke(col) {
+}
+function rect() {
+  
+}
+function setUp() {
+  createCanvas(400, 400, "black");
+}
+function createCanvas(w, h, color) {
+  var canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  canvas.style.background-color = color;
+  document.body.appendChild(canvas);
+  var ctx = canvas.getContext("2d");
+}
+</script>
+
+</body>
+</html>

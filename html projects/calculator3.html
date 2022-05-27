@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Calculator: The second </title>
+</head>
+<body>
+<h1><center>Calculator</center></h1>
+Number 1 (x):<input id="in1" onkeydown="func1(event)"> <span id="n1"></span><br>Number 2 (y):<input id="in2" onkeydown="func2(event)"> <span id="n2"></span><br>
+Answer <b style="color:white;"> ffffff </b> :<input id="ans" value="0"><br>
+<button type="button" onclick="funcd()">Divide x/y </button>
+<button type="button" onclick="funcm()">Multiply x*y</button>
+<button type="button" onclick="funca()">Add x+y</button>
+<button type="button" onclick="funcs()">Subtract x-y</button>
+<button type="button" onclick="funcp()">Power x<sup>y</sup></button>   
+<span id="sym"></span><br><br>
+<button id="s1"type="button" onclick="solve()" >Solve</button><button type="button" onclick="reset()">Reset</button>
+<script>
+var y = 0;
+var x = 0;
+function func1(event) {
+ var k  = event.key;
+ if (k=="Backspace") {
+  y=(y-(y%10))/10;
+  document.getElementById("n1").innerHTML = "  ";
+  k="q";
+ }
+ var num = Number(k);
+ if (num>-1) {
+  y=num+10*y; 
+  document.getElementById("n1").innerHTML = "  ";
+  k="q";
+ }
+}
+function func2(event) {
+ var k  = event.key;
+ if (k=="Backspace") {
+  x=(x-(x%10))/10;
+  document.getElementById("n2").innerHTML = "  ";
+  k="q";
+ }
+ var num = Number(k);
+ if (num>-1) {
+  x=num+10*x; 
+  document.getElementById("n2").innerHTML = "  ";
+  k="q";
+ }
+}
+var s=0;
+function funcd() {
+ s=1;
+ document.getElementById("s1").innerHTML = " solve x/y ";
+}
+function funcm() {
+ s=2;
+ document.getElementById("s1").innerHTML = " solve x*y ";
+}
+function funca() {
+ s=3;
+ document.getElementById("s1").innerHTML = " solve x+y ";
+}
+function funcs() {
+ s=4;
+ document.getElementById("s1").innerHTML = " solve x-y ";
+}
+function funcp() {
+ s=5;
+ document.getElementById("s1").innerHTML = " solve x"+"<sup>"+"y"+"</sup>";
+}
+var ans=0;
+function solve() {
+ if (s==1) {
+  ans = y/x;
+  document.getElementById("ans").value =ans;
+ } else if (s==2) {
+  ans = y*x;
+  document.getElementById("ans").value =ans;
+ } else if (s==3) {
+  ans = y+x;
+  document.getElementById("ans").value =ans;
+ } else if (s==4) {
+  ans = y-x;
+  document.getElementById("ans").value =ans;
+ } else if (s==5) {
+  ans = y**x;
+  document.getElementById("ans").value =ans;
+ }
+}
+function reset() {
+ y=0;
+ x=0;
+ ans=0;
+ num=0;
+ s=0;
+ document.getElementById("ans").value=0;
+ document.getElementById("in1").value="";
+ document.getElementById("in2").value="";
+ document.getElementById("s1").innerHTML="solve";
+} 
+</script>
+</body>
+</html>
+

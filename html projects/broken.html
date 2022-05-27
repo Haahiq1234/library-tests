@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.game {
+  background-color: black;
+  box-sizing: border-box;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 502px;
+  height: 402px;
+  border: 1px solid rgb(150, 150, 150);
+}
+.food {
+  box-sizing: border-box;
+  position: absolute;
+  background-color: red;
+  width: 10px;
+  height: 10px;
+}
+.sclass {
+  background-color: white;
+  box-sizing: border-box;
+  position: absolute;
+  width: 10px;
+  height: 10px;
+}
+
+</style>
+</head>
+<body onkeydown=control(event)>
+
+<div class="game" id="game">
+</div>
+<script>
+var dir, u, u2;
+var snake = {x:0,y:0,c:0};
+var game = document.getElementById("game");
+var s = [];
+var dr = 0;
+s.push(document.createElement("div"));
+s[0].setAttribute("class", "sclass");
+game.appendChild(s[0]);
+function control(event) {
+  if (event.key=="ArrowDown") {
+    dir = "d";
+    move();
+  } else if (event.key=="ArrowUp") {
+    dir = "u";
+    move();
+  } else if (event.key=="ArrowRight") {
+    dir = "r";
+    move();
+  } else if (event.key=="ArrowLeft") {
+    dir = "l";
+    move();
+  } else if (event.key=="d") {
+    if (dr==0) {
+      dr=1;
+    } else if (dr==1) {
+      dr=0;
+    }
+  }
+}
+function move() {
+  if ((dir=="d")&&(snake.y<390)) {
+    snake.y = snake.y + 10;
+    if (dr==0) {
+      s[1].remove();
+    }
+    s.unshift(document.createElement("div"));
+    s[0].setAttribute("class", "sclass");
+    game.appendChild(s[0]);
+    s[0].style.top = snake.y +"px";
+    s[0].style.left =snake.x + "px";
+  } else if ((dir=="u")&&(snake.y>0)) {
+    snake.y = snake.y - 10;
+    if (dr==0) {
+      s[1].remove();
+    }
+    s.unshift(document.createElement("div"));
+    s[0].setAttribute("class", "sclass");
+    game.appendChild(s[0]);
+    s[0].style.top = snake.y +"px";
+    s[0].style.left= snake.x + "px";
+  } else if ((dir=="r")&&(snake.x<490)) {
+    snake.x = snake.x + 10;
+    if (dr==0) {
+      s[1].remove();
+    }
+    s.unshift(document.createElement("div"));
+    s[0].setAttribute("class", "sclass");
+    game.appendChild(s[0]);
+    s[0].style.left = snake.x +"px";
+    s[0].style.top = snake.y + "px";
+  } else if ((dir=="l")&&(snake.x>0)) {
+    snake.x = snake.x - 10;
+    if (dr==0) {
+      s[1].remove();
+    }
+    s.unshift(document.createElement("div"));
+    s[0].setAttribute("class", "sclass");
+    game.appendChild(s[0]);
+    s[0].style.left = snake.x +"px";
+    s[0].style.top = snake.y + "px";
+  }
+}
+</script>
+
+</body>
+</html>
