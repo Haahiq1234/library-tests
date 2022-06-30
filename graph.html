@@ -1,0 +1,26 @@
+﻿<html>
+<head>
+    <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        function setUp() {
+            createCanvas(600, 600);
+            frameRate(60);
+            //Canvas.flipX();
+            Canvas.flipY();
+            Canvas.setOrigin();
+            //for (var i = -CanvasWidth; i < CanvasWidth; i++) {
+            //    circle(i + CanvasWidth / 2, y(i), 2);
+            //    console.log(Canvas.x(i), y(i));
+            //}
+            circle(0, y(0.8119), 5);
+            console.log(y(0.8119000001));
+        }
+        function y(x) {
+            return x ** 5 + x ** 2 - x - 0.2;
+        }
+    </script>
+</body>
+</html>

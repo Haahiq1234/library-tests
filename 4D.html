@@ -1,0 +1,126 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let ds =6; // V
+        var points = [];
+        let pts = new Array(2 ** ds);
+        let ptds = ds;
+        let amount = 2 ** ptds;
+        for (var j = 0; j < amount; j++) {
+            pts[j] = [];
+            for (var i = 1; i <= ptds; i++) {
+                let mod = 2 ** i;
+                let modded = j % mod;
+                if (modded < mod / 2) {
+                    pts[j][i - 1] = -0.5;
+                } else if (modded >= mod / 2) {
+                    pts[j][i - 1] = 0.5;
+                }
+            }
+        }
+        for (var pt of pts) {
+            points.push(new VectorN(...pt.splice(0, ds)));
+        }
+        let slider;
+        let ang = 0;
+        let projected = [];
+        Camera.position.z = -4;
+        function VectorN(...ds) {
+            this.ds = ds;
+            this.n = ds.length;
+            this.transform = function (mat) {
+                let mat1 = Matrices.mult(mat, this.matrix());
+                this.ds = [...mat1.array];
+                this.ds.pop();
+                this.n = this.ds.length;
+                //console.log(mat, this.matrix());
+            }
+            this.matrix = function () {
+                return new Matrix(1, this.ds.length + 1, [...this.ds, 1]);
+            }
+            this.array = function () {
+                return [...this.ds];
+            }
+            this.copy = function () {
+                return new VectorN(...this.ds);
+            }
+            this.persp = function () {
+                let vec = this.copy();
+                for (var i = this.n; i > 3; i--) {
+                    let w = 1 / (slider.value - vec.ds[vec.n - 1]);
+                    if (w < 0) {
+                        w *= -CanvasHeight;
+                    }
+                    let proj = Matrices.scalar(i, w, i - 1);
+                    vec = vec.transformed(proj);
+                }
+                return new Vector3(...vec.ds);
+            }
+            this.transformed = function (mat) {
+                let vec = this.copy();
+                vec.transform(mat);
+                return vec;
+            }
+        }
+        var dSl;
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            let speed = 0.05;
+            Camera.setSpeed(speed, speed, speed);
+            slider = createSlider(0, 10, 1, 2, "Distance");
+            dSl = createSlider(0, ds, 1, ds, "Dimensions To Draw");
+            Canvas.setOrigin();
+            rotateY(-90);
+            //noLoop();
+        }
+        function cal() {
+            let mat1 = Matrices.identity(4);
+            mat1.set(2, 2, 3);
+            let mat2 = new Matrix(1, 4);
+            mat2.array = [0, 0, 1, 1];
+            console.log(Matrices.mult(mat1, mat2));
+        }
+        function draw() {
+            //return null; 
+            clear();
+            let pts = [];
+            //setRotationX(90);
+            for (var pt of points) {
+                let pt1 = pt.transformed(Rotation.matrix(ds, 0, 1, ang));
+                pt1.transform(Rotation.matrix(ds, 2, 3, ang));
+                pt1.transform(Rotation.matrix(ds, 4, 5, ang));
+                let pt2 = pt1.persp();
+                //let r = Camera.radiusP(3, pt2.z);// * 10 ** 17;
+                pt2 = pt2.persp().mult(400);
+                //console.log(pt2.x, pt2.y);
+                circle(pt2.x, pt2.y, 3);
+                pts.push(pt2);
+            }
+            projected = pts;
+            for (var d = 1; d <= dSl.value; d++) {
+                let times = 2 ** (ptds - d);
+                //console.log(times);
+                for (var i = 1; i <= times; i++) {
+                    let st = i * (2 ** d) - 2 ** (d - 1);
+                    let en = st + 2 ** (d - 1);
+                    for (var j = st; j < en; j++) {
+                        connect(0, j, j - 2 ** (d - 1));
+                    }
+                }
+            }
+            ang += 1;
+        }
+        function connect(off, a, b) {
+            let av = projected[off + a];
+            let bv = projected[off + b];
+            line(av.x, av.y, bv.x, bv.y);
+        }
+    </script>
+
+</body>
+</html>

@@ -9,10 +9,18 @@
     <body>
         <script src="Canvas.js"></script>
         <script>
-            let gizmo;
-            let gizmo1;
-            let gizmo2;
-            let gizmo3;
+            let gizmo = new Gizmo(200, 200);
+            let gizmo1 = new Gizmo(200, 200);
+            let gizmo2 = new Gizmo(200, 200);
+            let gizmo3 = new Gizmo(200, 200);
+            gizmo.setName("left");
+            gizmo1.setName("right");
+            gizmo2.setName("up");
+            gizmo3.setName("down");
+            gizmo.setConstraints(createVector(0, CanvasHeight / 2), createVector(CanvasWidth, CanvasHeight / 2));
+            gizmo1.setConstraints(createVector(0, CanvasHeight / 2), createVector(CanvasWidth, CanvasHeight / 2));
+            gizmo2.setConstraints(createVector(CanvasWidth / 2, 0), createVector(CanvasWidth / 2, CanvasHeight));
+            gizmo3.setConstraints(createVector(CanvasWidth / 2, 0), createVector(CanvasWidth / 2, CanvasHeight));
             let a = createVector(300, 100);
             let b = createVector(100, 300);
             let mid;
@@ -23,30 +31,6 @@
                 mid = createVector(CanvasWidth / 2, CanvasHeight / 2);
                 stroke(0);
                 frameRate(60);
-                gizmo = new Gizmos(
-                    new Vector2(200, 200),
-                    color(0, 255, 0)
-                );
-                gizmo1 = new Gizmos(
-                    new Vector2(200, 300),
-                    color(0, 255, 0)
-                );
-                gizmo2 = new Gizmos(
-                    new Vector2(200, 200),
-                    color(0, 255, 0)
-                );
-                gizmo3 = new Gizmos(
-                    new Vector2(200, 300),
-                    color(0, 255, 0)
-                );
-                gizmo.setName("left");
-                gizmo1.setName("right");
-                gizmo2.setName("up");
-                gizmo3.setName("down");
-                gizmo.setConstraints(createVector(0, CanvasHeight / 2), createVector(CanvasWidth, CanvasHeight / 2));
-                gizmo1.setConstraints(createVector(0, CanvasHeight / 2), createVector(CanvasWidth, CanvasHeight / 2));
-                gizmo2.setConstraints(createVector(CanvasWidth / 2, 0), createVector(CanvasWidth / 2, CanvasHeight));
-                gizmo3.setConstraints(createVector(CanvasWidth / 2, 0), createVector(CanvasWidth / 2, CanvasHeight));
             }
             function draw() {
                 clear();

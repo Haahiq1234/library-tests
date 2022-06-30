@@ -1,0 +1,101 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var points = [];
+        let eq = new LineEquation(1, 0);
+        function setUp() {
+            createCanvas(400, 400, "white");
+            frameRate(10);
+            var inputs = [-1, 0.5];
+            var guess = brain.guess(inputs);
+            for (var i = 0; i < 50; i++) {
+                points.push(new Point());
+            }
+        }
+        function getLabel(x, y) {
+            let y1 = eq.y(x);
+            return (y < y1) ? 1 : -1;
+        }
+        function draw() {
+            clear();
+            line(0, eq.y(0), CanvasWidth, eq.y(CanvasWidth));
+            for (var point of points) {
+                point.draw();
+                let guess = brain.guess(point.inputs);
+                if (guess == point.label) {
+                    fill(0, 255, 0)
+                } else {
+                    fill(255, 0, 0);
+                }
+                circle(point.x, point.y, 3);
+            }
+            mouse_Down();
+        }
+        function mouse_Down() {
+            console.log("ok");
+            for (var point of points) {
+                brain.train(point.inputs, point.label);
+            }
+        }
+        class Perceptron {
+            weights = [];
+            learningRate = 0.01;
+            constructor() {
+                for (var i = 0; i < 3; i++) {
+                    this.weights.push(Random.range(-1, 1));
+                }
+            }
+            guess(inputs) { // inputs: float[]
+                var sum = 0;
+                for (var i = 0; i < this.weights.length; i++) {
+                    sum += inputs[i] * this.weights[i];
+                }
+                sum = sign(sum);
+                if (sum == 0 || sum == NaN) {
+                    sum = 1;
+                }
+                return sum;
+            }
+            train(inputs, desired) {
+                let guess = this.guess(inputs);
+                let error = desired - guess;
+                for (var i = 0; i < this.weights.length; i++) {
+                    this.weights[i] += error * inputs[i] * this.learningRate;
+                }
+            }
+        }
+        class Point {
+            x;
+
+            y;
+
+            label;
+
+            bias = 1;
+            get inputs() {
+                return [this.x, this.y, this.bias];
+            }
+            constructor(x = Random.range(0, CanvasWidth), y = Random.range(0, CanvasHeight)) {
+                this.x = x;
+                this.y = y;
+                this.label = getLabel(x, y);
+                //if (x > y) {
+                //    this.label = 1;
+                //} else {
+                //    this.label = -1;
+                //}
+            }
+
+            draw() {
+                fill(122.5 * (1 + this.label));
+                circle(this.x, this.y, 5);
+            }
+        }
+        var brain = new Perceptron();
+    </script>
+</body>
+</html>

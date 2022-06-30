@@ -1,0 +1,49 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let eq;
+        let g1 = new Gizmos(100, 100);
+        let g2 = new Gizmos(300, 100);
+        let g3 = new Gizmos(300, 300);
+        let g4 = new Gizmos(100, 300);
+
+        function setUp() {
+            createCanvas(400, 400, color(255));
+            ////eq = Equation.line(100, 10, 50, 100);
+            ////for (var x = 0; x < 200; x++) {
+            ////    let y = eq.y(x);
+            ////    circle(x, y, 2);
+            ////}
+            //eq = Equation.circle(200, 200, 100);
+            //console.log(eq);
+            //for (var x = 100; x <= 300; x+=8) {
+            //    let y = eq.y(x);
+            //    //if (y >= 100 && y <= 300) {
+            //        console.log(y);
+            //    //}
+            //    circle(x, y[0], 5);
+            //    circle(x, y[1], 5);
+            //}
+        }
+        function draw() {
+            clear();
+            line(g1.position.x, g1.position.y, g2.position.x, g2.position.y);
+            line(g3.position.x, g3.position.y, g4.position.x, g4.position.y);
+            let pos = lineIntersection2(g1.position.x, g1.position.y, g2.position.x, g2.position.y, g3.position.x, g3.position.y, g4.position.x, g4.position.y);
+            if (pos) {
+                circle(pos.x, pos.y, 5);
+            }
+        }
+        function lineIntersection2(x, y, x1, y1, x2, y2, x3, y3) {
+            let eq1 = Equation.line(x, y, x1, y1);
+            let eq2 = Equation.line(x2, y2, x3, y3);
+            return eq1.intersects(eq2);
+        }
+    </script>
+
+</body>
+</html>

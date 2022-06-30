@@ -18,10 +18,10 @@
         function BezierCurve(x, y, x1, y1, x2, y2, x3, y3) {
             //var ths = this;
             this.P1 = createVector(x, y);
-            this.gizmo1 = new Gizmos(new Vector2(x, y), color(0, 255, 0));
-            this.gizmo2 = new Gizmos(new Vector2(x1, y1), color(0, 255, 0));
-            this.gizmo3 = new Gizmos(new Vector2(x2, y2), color(0, 255, 0));
-            this.gizmo4 = new Gizmos(new Vector2(x3, y3), color(0, 255, 0));
+            this.gizmo1 = new Gizmo(x, y);
+            this.gizmo2 = new Gizmo(x1, y1);
+            this.gizmo3 = new Gizmo(x2, y2);
+            this.gizmo4 = new Gizmo(x3, y3);
             this.P2 = createVector(x1, y1);
             this.P3 = createVector(x2, y2);
             this.P4 = createVector(x3, y3);

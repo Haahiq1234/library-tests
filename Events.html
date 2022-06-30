@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <button id="buTTon"></button>
+    <script src="Canvas.js"></script>
+    <button id="b">bbbbb</button>
+    <script>
+        let button;
+        let ev;
+
+        function setUp() {
+            //createCanvas(400, 400);
+            frameRate(60);
+            ev = new Event1();
+            ev.bind(function () {
+                console.log("Hello");
+            });
+            button = document.getElementById("b");
+            button.onclick = ev.getFire();
+            document.onclick = ev.getFire();
+        }
+        function arrayToGrid(arr, width) {
+            let grid = [];
+            for (var i = 0; i < arr.length; i += width) {
+
+            }
+        }
+        function key_Press() {
+            ev.Fire();
+        }
+    </script>    
+</body>
+</html>

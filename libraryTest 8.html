@@ -1,0 +1,21 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 100;
+        let dir;
+        function setUp() {
+            createCanvas(400, 400, "white");
+            console.log(...Matrices.transform2t2(new Vector2(2, 0), [0, -1, 1, 0]).array());
+            console.log(...Matrices.array.mult([0, -1, 1, 0], [2, 0], 2, 2, 1, 2).array);
+        }
+        function multMatrices2b2t2b1() {
+
+        }
+    </script>
+
+</body>
+</html>

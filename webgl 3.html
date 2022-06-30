@@ -1,0 +1,215 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+    <script src="Canvas.js"></script>
+    <script src="Webgl.js"></script>
+    <script src="gl-matrix.js"></script>
+    <script>
+        var angle = 0;
+        let vertices = [
+            1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0,
+            -1.0, -1.0, 1.0,
+            1.0, -1.0, 1.0,
+
+            -1.0, 1.0, -1.0,
+            1.0, 1.0, -1.0,
+            1.0, -1.0, -1.0,
+            -1.0, -1.0, -1.0,
+
+            1.0, -1.0, 1.0,
+            -1.0, -1.0, 1.0,
+            -1.0, -1.0, -1.0,
+            1.0, -1.0, -1.0,
+
+            1.0, 1.0, -1.0,
+            -1.0, 1.0, -1.0,
+            -1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+
+            -1.0, 1.0, 1.0,
+            -1.0, 1.0, -1.0,
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0, 1.0,
+
+            1.0, 1.0, -1.0,
+            1.0, 1.0, 1.0,
+            1.0, -1.0, 1.0,
+            1.0, -1.0, -1.0,
+        ];
+        let colors = [
+            1.0, 0.0, 0.15,
+            1.0, 0.0, 0.15,
+            1.0, 0.0, 0.15,
+            1.0, 0.0, 0.15,
+
+            0.5, 0.5, 0.5,
+            0.5, 0.5, 0.5,
+            0.5, 0.5, 0.5,
+            0.5, 0.5, 0.5,
+
+            0.5, 0.5, 1.0,
+            0.5, 0.5, 1.0,
+            0.5, 0.5, 1.0,
+            0.5, 0.5, 1.0,
+
+            0.0, 1.0, 0.15,
+            0.0, 1.0, 0.15,
+            0.0, 1.0, 0.15,
+            0.0, 1.0, 0.15,
+
+            0.25, 0.25, 0.75,
+            0.25, 0.25, 0.75,
+            0.25, 0.25, 0.75,
+            0.25, 0.25, 0.75,
+
+            0.75, 0.25, 0.5,
+            0.75, 0.25, 0.5,
+            0.75, 0.25, 0.5,
+            0.75, 0.25, 0.5
+        ];
+        let indices = [
+            0, 1, 2, //  f * 3 + 0 ,1 , 2
+            0, 2, 3,  // f * 3 + 0, 2, 3
+
+            4, 5, 6,
+            4, 6, 7,
+
+            8, 9, 10,
+            8, 10, 11,
+
+            12, 13, 14,
+            12, 14, 15,
+
+            16, 17, 18, 
+            16, 18, 19,
+
+            20, 21, 22, 
+            20, 22, 23
+        ];
+        let uvs = [
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0,
+
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0,
+
+            0.0, 0.9,
+            0.1, 0.9,
+            0.1, 1.0,
+            0.0, 1.0,
+
+            0.9, 0.0,
+            1.0, 0.0,
+            1.0, 0.1,
+            0.9, 0.1,
+
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0,
+
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0
+        ];
+        var box;
+        var texture = loadImage("Sprite Atlas.png");
+        var rotationSlider;
+        var scaleSlider;
+        var posSlider;
+        var uvmap;
+        function setUp() {
+            createGLCanvas(500, 500);
+            //createCanvas(500, 500);
+            gl.clearColor(0.75, 0.85, 0.8, 1.0);
+            scaleSlider = createVector3SLider(0, 4, 0, 4, 0, 4, 0.05, 1, 1, 1, "scale");
+            rotationSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "rotation");
+            posSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "position");
+
+
+            box = new Mesh();
+            box.vertices = vertices;
+            box.indices = indices;
+            box.uvs = uvs;
+            box.texture = texture;
+            //box.colors = colors;
+            program.use();
+            //uvmap = new UVMap(uvs, indices, texture);
+            box.build();
+            //loop();
+        }
+        function draw() {
+            gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
+
+            glCamera.rotateWorld(0, 1, 0);
+            glCamera.updateController();
+
+            //uvmap.buildUvs();
+            //box.uvs = uvmap.uvs;
+
+            box.transform.scale = scaleSlider.v;
+            box.transform.rotation = rotationSlider.vt.mult(360);
+            box.transform.position = posSlider.v;
+            box.bind();
+            box.draw();
+
+
+            //clear();
+            //uvmap.draw();
+        }
+        class UVMap {
+            uvgs = [];
+            uvs;
+            indices;
+            texture;
+            constructor(uvs, indices, texture) {
+                this.texture = texture;
+                this.indices = indices;
+                this.uvs = uvs;
+                this.buildMap();
+            }
+            buildMap() {
+                for (var i = 0; i < this.uvgs.length; i++) {
+                    this.uvgs[i].destroy();
+                }
+                this.uvgs = [];
+                for (var i = 0; i < this.uvs.length; i += 2) {
+                    this.uvgs[i / 2] = new Gizmo(this.uvs[i] * CanvasWidth, this.uvs[i + 1] * CanvasHeight);
+                }
+            }
+            buildUvs() {
+                this.uvs = [...Vector.array(...splitArray(this.uvgs).position)];
+                for (var i = 0; i < this.uvs.length; i += 2) {
+                    this.uvs[i] = this.uvs[i] / CanvasWidth;
+                    this.uvs[i + 1] = this.uvs[i + 1] / CanvasHeight;
+                }
+            }
+            draw() {
+                image(this.texture, 0, 0, this.texture.width, this.texture.height, 0, 0, CanvasWidth, CanvasHeight);
+                //console.log(this.uvgs, this.indices);
+                for (var i = 0; i < this.indices.length; i += 3) {
+                    //console.log(this.uvgs[this.indices[i + 0]]);
+                    //console.log(this.uvgs[this.indices[i + 1]]);
+                    //console.log(this.uvgs[this.indices[i + 2]]);
+                    let a = this.uvgs[this.indices[i + 0]].position;
+                    let b = this.uvgs[this.indices[i + 1]].position;
+                    let c = this.uvgs[this.indices[i + 2]].position;
+                    //console.log(...a.array());
+                    line(a.x, a.y, b.x, b.y);
+                    line(c.x, c.y, b.x, b.y);
+                    line(a.x, a.y, c.x, c.y);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

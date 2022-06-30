@@ -1,0 +1,56 @@
+﻿<html>
+<head>
+    <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 80;
+        let res = 100;
+        let a = new Gizmo(300, 300);
+        let b = new Gizmo(400, 300);
+        let ang = 0;
+        let angleVel = 1;
+        let shaped = [];
+        function setUp() {
+            createCanvas(600, 600, color(241));
+            frameRate(FramesPerSecond);
+            pos = new Vector2(200, CanvasHeight / 2);
+            lineWidth(2);
+            shaped.push(createVector(0, 0));
+            shaped.push(createVector(CanvasWidth, 0));
+            shaped.push(createVector(CanvasWidth, CanvasHeight));
+            shaped.push(createVector(0, CanvasHeight));
+        }
+        function draw() {
+            backGround(241);
+            let ap = a.position;
+            let bp = b.position;
+            line(ap.x, ap.y, bp.x, bp.y);
+            let ray = Vector.sub(bp, ap);
+            let cast = RayCast.Vector.shape(ap, Vector.sub(bp, ap), ...shaped);
+            if (cast.intersected) {
+                circle(cast.point.x, cast.point.y, 5);
+                //line(cast.point.x, cast.point.y, cast.point.x + cast.normal.x * 40, cast.point.y + cast.normal.y * 40);
+                line(cast.point.x, cast.point.y, ap.x, ap.y);
+                let v = Vector.reflect(ray, cast.normal);
+                //line(cast.point.x, cast.point.y, cast.point.x + v.x * 40, cast.point.y + v.y * 40);
+                Ray(Vector.add(cast.point, v), Vector.mult(v, 2), 20);
+            }
+        }
+        function Ray(orig, ray, maxRays) {
+            //console.log(orig, ray);
+            let cast = RayCast.Vector.shape(orig, ray, ...shaped);
+            if (cast.intersected && maxRays > 0) {
+                circle(cast.point.x, cast.point.y, 5);
+                //console.log(cast.point, maxRays)
+                line(cast.point.x, cast.point.y, orig.x, orig.y);
+                let v = Vector.reflect(ray, cast.normal);
+                Ray(Vector.add(cast.point, v), Vector.mult(v, 2), maxRays - 1);
+            } else {
+                //console.log(cast);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let scaleSl;
+        let smoothness;
+        let gizmo = new Gizmo(0, 0);
+        function setUp() {
+            createCanvas(600, 400);
+            frameRate(60);
+            //noLoop();
+            //graphing.ytext = false;
+            setGraph(5, 1);
+            scaleSl = createSlider(50, 200, 1, 100, "Scale");
+            smoothness = createSlider(1, 10, 0.1, 1, "Smoothness");
+            graphing.xtext = false;
+            graphing.ytext = false;
+        }
+        function draw() {
+            clear();
+            drawGraph();
+            graph(fs);
+        }
+        function fs(x) {
+            return Math.sin(radians(x / smoothness.value)) * scaleSl.value * 2;
+        }
+        function setGraph(xstep = 1, xdstep = 1, ystep = xstep, ydstep = xdstep) {
+            graphing.xstep = xstep;
+            graphing.xdstep = xdstep;
+            graphing.ystep = ystep;
+            graphing.ydstep = ydstep;
+            Canvas.flipY();
+            Canvas.setOrigin(CanvasWidth / 2, CanvasHeight / 2);
+        }
+        function key_Press() {
+            console.log(mouse);
+        }
+        const graphing = {
+            lineLength: 5,
+            textSize: 10,
+            ytext: true,
+            xtext: true,
+            xstep: 1,
+            ystep: 1,
+            xdstep: 1,
+            ystepd: 1,
+            y: function (y) {
+                return y / this.ystep * this.ydstep;
+
+            },
+            x: function (x) {
+                return x / this.xstep * this.xdstep;
+            },
+            ix: function (x) {
+                return x / this.xdstep * this.xstep;
+            },
+            iy: function (y) {
+                return y / this.ydstep * this.ystep;
+            }
+        }
+
+        // nx = x / xs * xd
+        // nx / xd * xs = x
+        function drawGraph() {
+            let xdstep = graphing.xdstep;
+            let xstep = graphing.xstep;
+            let ydstep = graphing.ydstep;
+            let ystep = graphing.ystep;
+            line(-CanvasWidth / 2, 0, CanvasWidth / 2, 0);
+            line(0, -CanvasHeight / 2, 0, CanvasHeight / 2);
+            let xsteps = (CanvasWidth / 2) / xdstep;
+            textSize(graphing.textSize);
+            textAlign(TEXT.CENTER, Text.MIDDLE);
+            for (var x = floor(-xsteps); x < xsteps; x++) {
+                let xp = x * xdstep;
+                if (x != 0 && graphing.xtext) {
+                    line(xp, -graphing.lineLength, xp, graphing.lineLength);
+                    text(x * xstep, xp, -graphing.lineLength * 2);
+                }
+            }
+            if (graphing.xtext || graphing.ytext) {
+                text(0, graphing.lineLength, graphing.lineLength * 2);
+            }
+            textAlign(TEXT.LEFT, TEXT.MIDDLE);
+            let ysteps = (CanvasHeight / 2) / ydstep;
+            for (var y = floor(-ysteps); y < ysteps; y++) {
+                let yp = y * ydstep;
+                if (y != 0 && graphing.ytext) {
+                    line(-graphing.lineLength, yp, graphing.lineLength, yp);
+                    text(y * ystep, graphing.lineLength * 2, yp);
+                }
+            }
+        }
+        function graph(f) {
+            let xdstep = graphing.xdstep;
+            let xstep = graphing.xstep;
+            //let ydstep = graphing.ydstep;
+            let xsteps = (CanvasWidth / 2) / xdstep;
+            for (var x = -CanvasWidth / 2; x < CanvasWidth / 2; x++) {
+                let xp = graphing.ix(x);
+                let y = graphing.y(f(xp));
+                circle(x, y, 1);
+            }
+            
+        }
+        function graphAt(x) {
+            let xp = graphing.ix(x);
+            let y = graphing.y(f(xp));
+            circle(x, y, 1);
+        }
+    </script>
+
+</body>
+</html>

@@ -9,9 +9,9 @@
             "precision mediump float;",
             "attribute vec3 vertPosition;",
             "attribute vec3 vertColor;",
-            "uniform mat4 mProj",
-            "uniform mat4 mView",
-            "uniform mat4 mWorld",
+            "uniform mat4 mProj;",
+            "uniform mat4 mView;",
+            "uniform mat4 mWorld;",
             "varying vec3 fragColor;",
             "void main()",
             "{",
@@ -75,13 +75,13 @@
             let s = 0.5;
             var triangleVertices =
                 [ // x    y   z
-                    0.0 * s, 0.5 * s, z, 1.0, 1.0, 0.0,
-                    -0.5 * s, -0.5 * s, z, 0.7, 0.0, 1.0,
-                    0.5 * s, -0.5 * s, z, 0.1, 1.0, 0.6,
+                    0.0, 0.5, z, 1.0, 1.0, 0.0,
+                    -0.5, -0.5, z, 0.7, 0.0, 1.0,
+                    0.5, -0.5, z, 0.1, 1.0, 0.6
                     
-                    s*(x + 0.0), s * (y + 0.5), z, 0.0, 0.0, 1,
-                    s*(x + -0.5), s * (y - 0.5), z, 1, 0.0, 0.0,
-                    s*(x + 0.5), s *  (y -0.5), z, 0.0, 1, 0.0
+                    //0.0, 0.5, z, 0.0, 0.0, 1,
+                    //-0.5, 0.5, z, 1, 0.0, 0.0,
+                    //0.5, -0.5, z, 0.0, 1, 0.0
                 ];
 
             var triangleBuffer = gl.createBuffer();
@@ -112,10 +112,10 @@
 
             gl.useProgram(program);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
+            //console.log("ok");
         }
         setUp();
     </script>
-    <script src="gl-matrix.js"></script>
 
 </body>
 </html>

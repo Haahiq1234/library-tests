@@ -8,12 +8,15 @@
         var FramesPerSecond = 100;
         let dir;
         function setUp() {
-            createCanvas(400, 400, "white");
+            createCanvas(400, 400);
             console.log(factorize(200));
             console.log(factorize(20));
             console.log(factorize(456));
             console.log(factorize(345));
+            storeItem("key", new Vector2(5, 5));
+            console.log(getItem("key"));
         }
+        
     </script>
 
 </body>

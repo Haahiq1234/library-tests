@@ -9,28 +9,16 @@
     <body>
         <script src="Canvas.js"></script>
         <script>
-            let gizmo;
-            let gizmoA;
-            let gizmoB;
             let a = createVector(300, 100);
             let b = createVector(100, 300);
+            let gizmo = new Gizmo(200, 200);
+            let gizmoA = new Gizmo(a.x, a.y, color(255, 255, 0));;
+            let gizmoB = new Gizmo(b.x, b.y, color(255, 255, 0));
             let times = 30;
             let r = Vector.dist(a, b) / times;
             function setUp() {
                 createCanvas(400, 400, color(255));
                 frameRate(60);
-                gizmo = new Gizmos(
-                    new Vector2(200, 200),
-                    color(0, 255, 0)
-                );
-                gizmoA = new Gizmos(
-                    a,
-                    color(255, 255, 0)
-                );
-                gizmoB = new Gizmos(
-                    b,
-                    color(255, 255, 0)
-                );
             }
             function draw() {
                 clear();
@@ -45,7 +33,7 @@
                 aCon.add(Vector.mid(a, b));
                 bCon.add(Vector.mid(a, b));
                 //ln(aCon, bCon);
-                gizmo.constraintToLine(aCon, bCon);
+                //gizmo.constraintToLine(aCon, bCon);
                 for (var i = 0; i <= times; i++) {
                     let pos = curve(Vector.interpolate(a, b, i / times), a, b, gizmo.position.copy());
                     circle(pos.x, pos.y, 5);

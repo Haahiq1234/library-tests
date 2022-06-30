@@ -1,0 +1,78 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let m = createVector(200, 200);
+        var a = Vector.add(m, Vector.AngleToVector(270, 120));
+        var b = Vector.add(m, Vector.AngleToVector(30, 120));
+        var c = Vector.add(m, Vector.AngleToVector(150, 120));
+
+        var ac = color(255, 0, 0);
+        var bc = color(0, 255, 0);
+        var cc = color(0, 0, 255);
+        let re = 1;
+        function setUp() {
+            createCanvas(400, 400);
+            noLoop();
+            pixelsIntriangle(a, b, c, pixel, re);
+            nofill();
+            triangle(a.x, a.y, b.x, b.y, c.x, c.y);
+        }
+        function pixel(x, y) {
+            let p = createVector(x, y);
+            let dpa = Vector.dist(p, a);
+            let dpb = Vector.dist(p, b);
+            let dpc = Vector.dist(p, c);
+
+            let mx = dpa + dpb + dpc;
+            dpa = mx - dpa;
+            dpb = mx - dpb;
+            dpc = mx - dpc;
+
+            mx = dpa + dpb + dpc;
+            dpa = dpa / mx;
+            dpb = dpb / mx;
+            dpc = dpc / mx;
+
+            let col = Colors.weighted(ac, dpa, bc, dpb, cc, dpc);
+            col = Color.mult(col, 2);
+            //console.log(p.x, p.y, re, re);
+            noStroke();
+            fill(col);
+            rect(p.x, p.y, re, re);
+
+        }
+        function pixelsIntriangle(a, b, c, func, res = 1) {
+            //console.log(max(a.y, b.y, c.y));
+            let mny = floor(min(a.y, b.y, c.y), res);
+            let mxy = floor(max(a.y, b.y, c.y), res);
+            //fill(255, 0, 0);
+            console.log(min(a.y, b.y, c.y), max(a.y, b.y, c.y));
+            for (var y = mny; y < mxy; y += res) {
+                let o = createVector(0, y);
+                let r = createVector(100, 0);
+                //nofill();
+                //line(o.x, o.y, o.x + r.x, o.y + r.y);
+                let cast = RayCast.v2.Vector.shape(o, r, a, b, c);
+                //console.log(cast.points);
+                if (cast.points.length > 0) {
+                    let ap = cast.points[0];
+                    let bp = cast.points[cast.points.length - 1];
+                    mnx = floor(min(ap.x, bp.x), res);
+                    mxx = floor(max(ap.x, bp.x), res);
+                    //console.log(mnx, mxx);
+                    for (var x = mnx; x < mxx; x += res) {
+                        //console.log(x, y);
+                        //rect(x, y, res, res);
+                        func(x, y);
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

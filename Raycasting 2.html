@@ -8,44 +8,56 @@
 <body>
     <script src="Canvas.js"></script>
     <script>
-        let a = new Gizmos(createVector(100, 100), color(0, 255, 0));
-        let b = new Gizmos(createVector(300, 300), color(0, 255, 0));
-        let rayOrigin = new Gizmos(createVector(300, 100), color(255, 0, 0));
-        let ray = new Gizmos(createVector(100, 300), color(255, 0, 0));
+        let a = new Gizmo(100, 100);
+        let b = new Gizmo(300, 300);
+        let rayOrigin = new Gizmo(300, 100, color(255, 0, 0));
+        let ray = new Gizmo(100, 300, color(255, 0, 0));
+        ray.setParent(rayOrigin, true);
+        //rayOrigin.setParent(ray);
+        //a.setChild(rayOrigin);
+        //ray.setChild(b);
+        //a.setParent(ray, true);
+        //b.setParent(ray, true);
+        
         function setUp() {
             createCanvas(800, 400, color(255));
-            frameRate(60);
+            //frameRate(60);
             stroke(0);
         }
         function draw() {
             clear();
             let av = a.position.copy();
             let bv = b.position.copy();
-            ray.constraintToCircle(rayOrigin.position, 100);
+            //ray.constraintToCircle(rayOrigin.position, 100);
             let origin = rayOrigin.position;
             let dir = Vector.sub(ray.position, rayOrigin.position)
-            let cast = RayCast.Vector.square1(origin, dir, 100, 100, 200);
+            let cast = RayCast.v2.Vector.square1(origin, dir, 100, 100, 200);
+            arrowVector(origin, dir);
             nofill();
             rect(100, 100, 200, 200);
             if (cast.intersected) {
-                circle(cast.point.x, cast.point.y, 5);
-                //console.log(cast);
+                for (var c of cast.points) {
+                    circle(c.x, c.y, 5);
+                }
             }
             let cast1 = RayCast.Vector.line(origin, dir, av, bv);
             line(av.x, av.y, bv.x, bv.y);
             if (cast1.intersected) {
                 circle(cast1.point.x, cast1.point.y, 5);
-                //console.log(cast);
             }
-            av.add(createVector(200, 0));
-            bv.add(createVector(200, 0));
-            line(origin.x, origin.y, );
-            let cast2 = RayCast.Vector.line(origin, dir, av, bv);
-            line(av.x, av.y, bv.x, bv.y);
-            if (cast2.intersected) {
-                circle(cast2.point.x, cast2.point.y, 5);
-                //console.log(cast);
-            }
+        }
+        function arrowVector(o, d, width = 5, ang = 45) {
+            let a = o.copy();
+            saveLineWidth();
+            lineCap('round');
+            lineWidth(width);
+            let b = Vector.add(o, d);
+            let c = d.copy().rotate(180 - ang).setMag(30).add(b);
+            let e = d.copy().rotate(-180 + ang).setMag(30).add(b);
+            //line(a.x, a.y, b.x, b.y);
+            line(b.x, b.y, c.x, c.y);
+            line(b.x, b.y, e.x, e.y);
+            loadLineWidth();
         }
     </script>
 

@@ -27,51 +27,6 @@
         function draw() {
             //clear();
         }
-        /*
-         * y = mx + c
-         * c = y - mx
-         * x = (y - c) / m
-        */
-        /*
-         * x^2 + y^2 = r ^ 2
-         */
-        const Equation = {
-            line: function (x1, y1, x2, y2) {
-                return new (class {
-                    constructor(x1, y1, x2, y2) {
-                        this.a = createVector(x1, y1);
-                        this.b = createVector(x2, y2);
-                        this.m = (x2 - x1) / (y2 - y1);
-                        this.c = y1 - m * x1;
-                    }
-                    x(y) {
-                        return (y - this.c) / this.m;
-                    }
-                    y(x) {
-                        return this.c + this.m * x;
-                    }
-                })(x1, y1, x2, y2);
-            },
-            circle: function (x, y, r) {
-                return new (class {
-                    constructor(x, y, r) {
-                        this.cx = x;
-                        this.cy = y;
-                        this.r = r;
-                    }
-                    x(y) {
-                        y -= this.cy;
-                        let x = (this.r ** 2 - y ** 2) ** 0.5;
-                        return [x + this.cx, -x + this.cx];
-                    }
-                    y(x) {
-                        x -= this.cx;
-                        let y = (this.r ** 2 - x ** 2) ** 0.5;
-                        return [y + this.cy, -y + this.cy];
-                    }
-                })(x, y, r);
-            }
-        }
     </script>
 
 </body>

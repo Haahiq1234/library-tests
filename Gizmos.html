@@ -17,11 +17,14 @@
             function setUp() {
                 createCanvas(400, 400, color(255));
                 frameRate(60);
+                Canvas.flipY();
                 gizmo = new Gizmos(
-                    new Vector2(CanvasWidth / 2, CanvasHeight / 2),
+                    CanvasWidth / 2,
+                    CanvasHeight / 2,
                     color(255, 0, 0)
                 );
-
+                gizmo.setShape(GizmoShapes.square, 20);
+                gizmo.setConstraints(createVector(), createVector(CanvasWidth, CanvasHeight));
             }
             function draw() {
                 clear();

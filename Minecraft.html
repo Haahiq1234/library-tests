@@ -1,0 +1,65 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+    <script src="Canvas.js"></script>
+    <script src="Webgl.js"></script>
+    <script src="Minecraft.js"></script>
+    <script src="gl-matrix.js"></script>
+    <script src="noise.js"></script>
+    <script>
+        var angle = 0;
+        let vertices = [
+            1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0,
+            -1.0, -1.0, 1.0,
+            1.0, -1.0, 1.0,
+
+            -1.0, 1.0, -1.0,
+            1.0, 1.0, -1.0,
+            1.0, -1.0, -1.0,
+            -1.0, -1.0, -1.0,
+
+            1.0, -1.0, 1.0,
+            -1.0, -1.0, 1.0,
+            -1.0, -1.0, -1.0,
+            1.0, -1.0, -1.0,
+
+            1.0, 1.0, -1.0,
+            -1.0, 1.0, -1.0,
+            -1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0,
+
+            -1.0, 1.0, 1.0,
+            -1.0, 1.0, -1.0,
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0, 1.0,
+
+            1.0, 1.0, -1.0,
+            1.0, 1.0, 1.0,
+            1.0, -1.0, 1.0,
+            1.0, -1.0, -1.0,
+        ];
+        var controller;
+        function setUp() {
+            setAxis("xRotation", "h", "g");
+            createGLCanvas(500, 500);
+            program.use();
+            gl.clearColor(0.75, 0.85, 0.8, 1.0);
+            controller = new Controller();
+
+
+            controller.addChunk(0, 0);
+        }
+        function draw() {
+            gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
+            glCamera.rotate(GetAxis("xRotation") * 5, 0, 0);
+            //glCamera.rotateWorld(0, 1, 0);
+            glCamera.updateController();
+            controller.draw();
+        }
+    </script>
+</body>
+</html>

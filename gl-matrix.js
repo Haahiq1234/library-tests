@@ -25,7 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 */
-let matr4;
+var matr4;
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
         typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -7861,4 +7861,6 @@ let matr4;
     Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
+var mat4 = this.mat4;
+//export mat4;
 

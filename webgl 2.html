@@ -4,8 +4,8 @@
 </head>
 
 <body>
+    <script src="Canvas.js"></script>
     <script>
-        const { mat4, mat2 } = require("./gl-matrix");
         let vertexShaderText = [
             "precision mediump float;",
             "attribute vec3 vertPosition;",
@@ -30,15 +30,17 @@
             "}",
             ""
         ].join("\n");
+        let gl;
+        let matWorldUniformLocation;
         function setUp() {
             let canvas = document.createElement("canvas");
             document.body.appendChild(canvas);
+            frameRate(60);
             canvas.width = 500;
             canvas.height = 500;
             console.log(canvas);
-            let gl = canvas.getContext("webgl");
+            gl = canvas.getContext("webgl");
             gl.clearColor(0.75, 0.85, 0.8, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
 
             var vertexShader = gl.createShader(gl.VERTEX_SHADER);
             var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -59,6 +61,7 @@
             gl.attachShader(program, vertexShader);
             gl.attachShader(program, fragmentShader);
             gl.linkProgram(program);
+
             if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
                 console.error("error linking program", gl.getProgramInfoLog(program));
                 return;
@@ -100,30 +103,39 @@
                 6 * Float32Array.BYTES_PER_ELEMENT,
                 0
             );
+            //gl.enable(gl.CULL_FACE);
+            //gl.cullFace(gl.FRONT);
             gl.enableVertexAttribArray(positionAttribLocation);
             gl.enableVertexAttribArray(colorAttribLocation);
 
             gl.useProgram(program);
-            let matWorldUniformLocation = gl.getUniformLocation(program, "mWorld");
+            matWorldUniformLocation = gl.getUniformLocation(program, "mWorld");
             let matViewUniformLocation = gl.getUniformLocation(program, "mView");
             let matProjUniformLocation = gl.getUniformLocation(program, "mProj");
 
-            var worldMatrix = new Float32Array(16);
-            var viewMatrix = new Float32Array(16);
-            var projMatrix = new Float32Array(16);
 
-            mat4.identity(worldMatrix);
-            mat4.identity(viewMatrix);
-            mat4.identity(projMatrix);
+            let identity = Matrices.identity(4);
+            //console.log(identity);
+            let worldMatrix = identity.Float32Array;
+            let projMatrix = identity.Float32Array;
+            let viewMatrix = identity.Float32Array;
 
             gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
             gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
             gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
 
 
-            gl.drawArrays(gl.TRIANGLES, 0, 3);
         }
-        setUp();
+        let angle = 0;
+        function draw() {
+            let yRot = Rotation.matrix(4, 0, 2, angle);
+            let xRot = Rotation.matrix(4, 1, 2, angle);
+            let mat = Matrices.mult(xRot, yRot);
+            gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, mat.Float32Array);
+            gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+            angle += 1;
+        }
     </script>
     <script src="gl-matrix.js"></script>
 

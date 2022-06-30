@@ -2,9 +2,9 @@
 <head>
 </head>
 <body>
-    <div></div>
+    <script src="Canvas.js"></script>
     <script>
-        var FramesPerSecond = 200;
+        var FramesPerSecond = 150;
         let res = 80;
         let grid;
         let cellSize;
@@ -23,10 +23,11 @@
             grid = create2DArray(res, res, 0)
             setGrid(1);
             console.table(grid);
-            grid[res - 1][res - 1] = 5000;
+            grid[res - 1][res - 1] = 1000;
             noStroke();
-            grid[res / 2][res / 2] = 20000;
-            grid[0][0] = 1500;
+            grid[res / 2][res / 2] = 500;
+            grid[0][0] = 140;
+            //noLoop();
         }
         function setRow(row, no) {
             for (var i = 0; i < grid.length; i++) {
@@ -64,6 +65,17 @@
                 }
             }
         }
+        function key_Down() {
+            if (keyCode == key.backSpace) {
+                noLoop();
+            }
+            if (keyCode == key.enter) {
+                loop();
+            }
+            if (keyCode == key.space) {
+                redraw();
+            }
+        }
         function topple() {
             var pile = create2DArray(res, res, 0);
             for (var i = 0; i < res; i++) {
@@ -95,6 +107,5 @@
             grid = pile;
         }
     </script>
-    <script src="Canvas.js"></script>
 </body>
 </html>

@@ -10,38 +10,37 @@
     <script>
         let walls = [];
         let particle;
-        let padding = 30;
+        let padding = 3;
         let width = 400;
         let height = 400;
         let scene = [];
         function setUp() {
-            particle = new Particle();
             createCanvas(800, 400, "black");
             frameRate(50);
-            for (var i = 0; i < 5; i++) {
-                walls.push(new boundary(Random.range(width), Random.range(height), Random.range(width), Random.range(height)));
-            }
+            particle = new Particle();
+            //for (var i = 0; i < 5; i++) {
+               // walls.push(new boundary(Random.range(width), Random.range(height), Random.range(width), Random.range(height)));
+            //}
             walls.push(new boundary(-padding, -padding, width + padding, -padding));
             walls.push(new boundary(-padding, height + padding, width + padding, height + padding));
             walls.push(new boundary(width + padding, -padding, width + padding, height + padding));
             walls.push(new boundary(-padding, -padding, -padding, height + padding));
+            walls.push(new boundary(40, 40, 360, 40,));
+            walls.push(new boundary(40, 40, 40, 60,));
+            walls.push(new boundary(40, 60, 360, 60,));
+            walls.push(new boundary(360, 40, 360, 60,));
+            walls.push(new boundary(40, 360, 360, 360));
+            walls.push(new boundary(40, 340, 360, 340));
+            walls.push(new boundary(40, 340, 40, 360));
+            walls.push(new boundary(40, 340, 40, 360));
+            walls.push(new boundary(40, 340, 40, 360));
+            walls.push(new boundary(360, 340, 360, 360));
         }
         function draw() {
             clear();
             particle.rotate(GetAxis("horizontal", "arrow") * 2);
             particle.update();
-            scene = particle.look(walls);
-            push();
-            translate(width + padding, 0);
-            let w = (CanvasWidth - width - padding) / scene.length;
-            for (let i = 0; i < scene.length; i++) {
-                fill(map(scene[i], 0, width, 255, 0));
-                noStroke();
-                let h = map(scene[i], 0, width, height, 0);
-                let y = (height - h) / 2;
-                rect(i * w - 1, y, w + 1, h);
-            }
-            pop();
+            particle.look(walls);
             for (let wall of walls) {
                 wall.show();
             }
@@ -49,105 +48,85 @@
         class Particle {
             constructor() {
                 this.pos = createVector();
-                this.rays = [];
-                for (var i = 0; i < 45; i += 0.25) {
-                    this.rays.push(new Ray(i));
-                }
-                this.offsetAngle = this.rays.length / 8;
+                this.fovSlider = createSlider(30, 120, 0.5, 60, "FOV");
+                this.resSlider = createSlider(2, 16, 0.5, 8, "RES");
+                this.angle = 0;
             }
             rotate(ang) {
-                for (var i = 0; i < this.rays.length; i += 1) {
-                    this.rays[i].b.rotate(ang);
-                }
-                this.offsetAngle += ang;
+                this.angle += ang;
             }
             update() {
-                let vel = Vector.AngleToVector(this.offsetAngle, GetAxis("vertical", "arrow") * 3);
-                this.pos.add(vel.mult(-1));
+                let vel = Vector.AngleToVector(this.angle, -GetAxis("vertical", "arrow") * 3);
+                this.pos.add(vel.mult(1));
                 this.pos.x = constraint(this.pos.x, 0, width);
                 this.pos.y = constraint(this.pos.y, 0, height);
             }
+            get fov() {
+                return this.fovSlider.value;
+            }
+            get res() {
+                return this.resSlider.value;
+            }
+            get x() {
+                return this.pos.x;
+            }
+            get y() {
+                return this.pos.y;
+            }
             look(walls) {
                 let scene = [];
-                let tan1 = Vector.AngleToVector(this.offsetAngle - 90, 1000);
+                let tan1 = Vector.AngleToVector(this.angle - 90, 1000);
                 tan1.add(this.pos);
-                let tan2 = Vector.AngleToVector(this.offsetAngle + 90, 1000);
+                let tan2 = Vector.AngleToVector(this.angle + 90, 1000);
                 tan2.add(this.pos);
-                line(tan1.x, tan1.y, tan2.x, tan2.y);
-                for (var i = 0; i < this.rays.length; i++) {
-                    this.rays[i].update(this.pos.copy());
-                    let nPos;
+                let scanlines = 400 / this.res;
+                let ang = -this.fov / 2;
+                let cast2;
+                for (var i = 0; i < scanlines; i++) {
+                    let p = createVector();
+                    let p2;
                     let length = Infinity;
                     let length2 = Infinity;
-                    let cast;
                     for (let wall of walls) {
-                        let nPos1 = this.rays[i].cast(wall);
-                        if (nPos1) {
-                            let len = Vector.sub(nPos1, this.rays[i].a).mag();
-                            if (len < length) {
-                                nPos = nPos1;
-                                length = len;
-                                //let ang = this.rays[i].b.heading() - this.offsetAngle;
-                                let len2 = distance.InfiniteLine(tan1.x, tan1.y, tan2.x, tan2.y, nPos.x, nPos.y);
+                        let ray = Vector.AngleToVector(this.angle + ang, 5);
+                        let cast1 = RayCast.Vector.line(this.pos, ray, wall.a, wall.b);
+                        if (cast1.intersected) {
+                            let dist = Vector.dist(cast1.point, this.pos)
+                            if (dist < length) {
+                                p = cast1.point;
+                                length = dist;
+                                let len2 = distance.line(tan1.x, tan1.y, tan2.x, tan2.y, p.x, p.y);
                                 length2 = len2.dist;
-                                cast = len2;
+                                p2 = len2.point;
+                                cast2 = len2;
+                                //console.log(p);
                             }
                         }
                     }
-                    line(nPos.x, nPos.y, cast.point.x, cast.point.y);
-                    circle(nPos.x, nPos.y, 2);
-                    scene[i] = length2;
-                    this.rays[i].show(nPos);
+                    let h = 4000 / (length2);
+                    let x = width + padding + i * this.res;
+                    let y = CanvasHeight / 2 - h / 2;
+                    //console.log(cast2);
+                    fill(255 / (length2 / 20));
+                    stroke(255 / (length2 / 20));
+                    rect(x, y, this.res, h * 2);
+                    line(p.x, p.y, this.x, this.y);
+
+                    ang += this.fov / scanlines;
                 }
                 return scene;
             }
         }
-        class Ray {
-            constructor(dir) {
-                this.a = createVector();
-                this.b = Vector.AngleToVector(dir, (width + height) * 2);
-            }
-            update(pos) {
-                this.a = pos.copy();
-            }
-            show(b) {
-                stroke(255);
-                if (!b) {
-                    b = Vector.add(this.a, this.b);
-                }
-                lineWidth(0.5);
-                line(this.a.x, this.a.y, b.x, b.y);
-            }
-            cast(wall) {
-                let x1 = wall.a.x;
-                let y1 = wall.a.y;
-                let x2 = wall.b.x;
-                let y2 = wall.b.y;
-
-                let x3 = this.a.x;
-                let y3 = this.a.y;
-                let x4 = this.a.x + this.b.x;
-                let y4 = this.a.y + this.b.y;
-
-                //let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-                //let u = ((x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)) / d;
-                //let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d;
-                //if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
-                //    let x = x1 + t * (x2 - x1);
-                //    let y = y1 + t * (y2 - y1);
-                //    return createVector(x, y);
-                //}
-
-                let intersection = lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4);
-                if (intersection.intersected) {
-                    return intersection.point;
-                }
-            }
-        }
         class boundary {
             constructor(x, y, x1, y1) {
-                this.a = createVector(x, y);
-                this.b = createVector(x1, y1);
+                this.ag = new Gizmo(x, y);
+                this.bg = new Gizmo(x1, y1);
+            }
+            get a() {
+                return this.ag.position;
+            }
+            get b() {
+                return this.bg.position;
             }
             show() {
                 stroke(255);

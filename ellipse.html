@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ellipse</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let eq;
+        let as;
+        let bs;
+        function setUp() {
+            createCanvas(400, 400);
+            //frameRate(60);
+            eq = new EllipseEquation(200, 200, 100, 100);
+            //noLoop();
+            as = createSlider(1, 200, 1, 100, "a");
+            bs = createSlider(1, 200, 1, 100, "b");
+        }
+        function draw() {
+            clear();
+            eq.a = as.value;
+            eq.b = bs.value;
+            for (var x = 200 - eq.a; x < 200 + eq.a; x += 1) {
+                let ys = eq.y(x);
+                //console.log(ys);
+                circle(x, ys[0], 2);
+                circle(x, ys[1], 2);
+            }
+        }
+        class EllipseEquation {
+            n = 2;
+
+            constructor(x, y, a, b) {
+                this.cx = x;
+                this.cy = y;
+                this.a = a;
+                this.b = b;
+            }
+            x(y) {
+                y -= this.cy;
+                y /= this.b;
+                let x = ((1 - y ** this.n) ** (1 / this.n)) * this.b;
+                return [x + this.cx, -x + this.cx];
+            }
+            y(x) {
+                x -= this.cx;
+                x /= this.a;
+                let y = ((1 - x ** this.n) ** (1 / this.n)) * this.b;
+                return [y + this.cy, -y + this.cy];
+            }
+        }
+    </script>    
+</body>
+</html>

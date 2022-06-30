@@ -1,24 +1,28 @@
 ﻿<html>
 <head>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <script src="Canvas.js"></script>
     <script>
+        // using [Input]
         var FramesPerSecond = 100;
         var tentacle;
         var segmentLength = 50;
         var tentacle1;
         function setUp() {
             createCanvas(500, 500, "black");
-            frameRate(FramesPerSecond);
-            tentacle = new Tentacle(CanvasWidth / 2, CanvasHeight, segmentLength, 3);
-            tentacle1 = new Tentacle(CanvasWidth / 2, 0, 5, 70);
+            frameRate(FramesPerSecond); //
+            //Canvas.flipY();
+            tentacle = new Tentacle(CanvasWidth / 2, CanvasHeight, 50, 30);
+            tentacle1 = new Tentacle(CanvasWidth / 2, 0, 5, 150);
         }
         function draw() {
-            clear();
-            tentacle.follow(mouse);
+            backGround(0, 10);
+            Canvas.flipY();
+            tentacle.follow(mouse2);
             tentacle.show();
-            tentacle1.follow(mouse);
+            tentacle1.follow(mouse2);
             tentacle1.show();
         }
         function segment(x, y, len) {
