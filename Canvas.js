@@ -259,14 +259,14 @@ function createVector3(x = 0, y = 0, z = 0) {
     return new Vector3(x, y, z);
 }
 const Vector = {
-    fromIndex: function (str) {
-        let arr = str.split(":");
-        let x = arr[0];
-        let y = arr[1];
-        let z = arr[2];
-        return new Vector3(x, y, z);
-    }
 };
+Vector.fromIndex = function (str) {
+    let arr = str.split(":");
+    let x = arr[0];
+    let y = arr[1];
+    let z = arr[2];
+    return new Vector3(x, y, z);
+}
 Vector.array = function (...vecs) {
     let ans = [];
     for (var vec of vecs) {
@@ -819,6 +819,25 @@ function redraw(timeStamp) {
 // #endregion
 
 // #region Math
+function avg(...ns) {
+    let n = ArrayMath.number(ns);
+    n /= ns.length;
+    return n;
+}
+function round(n, r = 1) {
+    return Math.round(n / r) * r;
+}
+const mod = {
+    neut: function (n, modu) {
+        return n % modu;
+    },
+    pos: function (n, modu) {
+        return ((n % modu) + modu) % modu;
+    },
+    neg: function (n, modu) {
+        return ((n % modu) - modu) % modu;
+    },
+}
 function sin(ang) {
     return Math.sin(getAngle(ang));
 }
@@ -892,21 +911,36 @@ const distance = {
         circle: function (p, a, r) {
             return distance.circle(p.x, p.y, a.x, a.y, r);
         },
-        line: function (a, b, p) {
-            return distance.line(a.x, a.y, b.x, b.y, p.x, p.y);
+        line2: function (a, b, p) {
+            return distance.line2(a.x, a.y, b.x, b.y, p.x, p.y);
         },
         Infiniteline: function (a, b, p) {
-            return distance.InfiniteLine(a.x, a.y, b.x, b.y, p.x, p.y);
+            let bo = Vector.sub(b, a);
+            let po = Vector.sub(p, a);
+            let prod = Vector.dotProduct(po, bo) / bo.mag();
+            let pt = Vector.add(Vector.setMag(bo, prod), a)
+            return {
+                point: pt,
+                dist: Vector.dist(p, pt),
+                t: prod / bo.mag(),
+                normal: Vector.normal(a, b, p)
+            };
         },
-        line2: function (a, b, p) {
+        line: function (a, b, p) {
             let bo = Vector.sub(b, a);
             let po = Vector.sub(p, a);
             let prod = constraint(Vector.dotProduct(po, bo) / bo.mag(), 0, bo.mag());
-            return Vector.add(Vector.setMag(bo, prod), a);
+            let pt = Vector.add(Vector.setMag(bo, prod), a)
+            return {
+                point: pt,
+                dist: Vector.dist(p, pt),
+                t: prod / bo.mag(),
+                normal: Vector.normal(a, b, p)
+            };
         }
     },
-    line2: function (ax, ay, bx, by, px, py) {
-        return this.Vector.line2(createVector(ax, ay), createVector(bx, by), createVector(px, py));
+    line: function (ax, ay, bx, by, px, py) {
+        return this.Vector.line(createVector(ax, ay), createVector(bx, by), createVector(px, py));
     },
     rect2: function (x, y, x1, y1, w, h) {
         if (w < 0) {
@@ -989,7 +1023,7 @@ const distance = {
             dist: dst
         }
     },
-    line: function (x1, y1, x2, y2, x3, y3) {
+    line2: function (x1, y1, x2, y2, x3, y3) {
         let A = createVector(x1, y1);
         let B = createVector(x2, y2);
         let C = createVector(x3, y3);
@@ -998,10 +1032,6 @@ const distance = {
         let Dst = (Vector.sub(A, C).mag() + Vector.sub(B, C).mag()) / 2; //length of raycasting
         let A1 = Vector.sub(C, Vector.AngleToVector(Dir, Dst));
         let B1 = Vector.add(C, Vector.AngleToVector(Dir, Dst));
-        //console.log(t);
-        //line(A1.x, A1.y, B1.x, B1.y);
-        //line(A.x, A.y, C.x, C.y);
-        //line(B.x, B.y, C.x, C.y);
 
         let coll = lineIntersection(A.x, A.y, B.x, B.y, A1.x, A1.y, B1.x, B1.y);
         let t = constraint(coll.t, 0, 1);
@@ -1014,28 +1044,7 @@ const distance = {
         }
     },
     InfiniteLine: function (x1, y1, x2, y2, x3, y3) {
-        let A = createVector(x1, y1);
-        let B = createVector(x2, y2);
-        let C = createVector(x3, y3);
-        let D = Vector.sub(B, A);
-        let Dir = D.heading() + 90; // direction of raycasting
-        let Dst = (Vector.sub(A, C).mag() + Vector.sub(B, C).mag()) / 2; //length of raycasting
-        let A1 = Vector.sub(C, Vector.AngleToVector(Dir, Dst));
-        let B1 = Vector.add(C, Vector.AngleToVector(Dir, Dst));
-
-        //line(A1.x, A1.y, B1.x, B1.y);
-        //line(A.x, A.y, C.x, C.y);
-        //line(B.x, B.y, C.x, C.y);
-
-        let coll = lineIntersection(A.x, A.y, B.x, B.y, A1.x, A1.y, B1.x, B1.y);
-        let t = coll.t;
-        let pos = Vector.add(A, Vector.sub(B, A).mult(t));
-        //line(pos.x, pos.y, C.x, C.y);
-        return {
-            point: pos,
-            dist: Vector.dist(pos, C),
-            normal: Vector.normal(A, B, C)
-        }
+        return this.Vector.Infiniteline(createVector(x1, y1), createVector(x2, y2), createVector(x3, y3));
     },
     shape: function () {
         let xPositions = [];
@@ -1172,7 +1181,7 @@ const RayCast = {
     v2: {
         Vector: {
             shape: function (origin, dir, ...verts) {
-                console.log(...Vector.array(...verts));
+                //console.log(...Vector.array(...verts));
                 return RayCast.v2.shape(origin.x, origin.y, dir.x, dir.y, ...Vector.array(...verts));
             },
             rect: function (origin, dir, a, bx, by) {
@@ -1525,15 +1534,240 @@ function interpolateArray(arr, index) {
     }
     return ans;
 }
+const Shapes = {
+    line: {
+        vertices: {
+            get: function (ax, ay, bx, by) {
+                return [createVector(ax, ay), createVector(bx, by)];
+            },
+            get2: function (a, b) {
+                return [a.x, a.y, b.x, b.y];
+            },
+            points: function (ax, ay, bx, by, res = 1) {
+                let a = createVector(ax, ay);
+                let b = createVector(bx, by);
+                let dist = Vector.dist(a, b);
+                let off = 0;
+                if (dist % res == 0) {
+                    off = -1;
+                }
+                let vs = [];
+                res = parseInt(res);
+                for (var i = 0; i < dist + off; i += res) {
+                    vs.push(Vector.interpolate(a, b, i / dist));
+                }
+                vs.push(b.copy());
+                return vs;
+            }
+        }
+    },
+    circle: {
+        vertices: {
+            get: function (x, y, r, res = 1) {
+                let times = this.perimeter(r);
+                let o = createVector(x, y);
+                let vs = [];
+                for (var i = 0; i < times; i += res) {
+                    let v = Vector.add(o, Vector.AngleToVector(map(i, 0, times, 0, 360)));
+                    vs.push(v);
+                }
+                return vs;
+            },
+            get2: function (x, y, r, res = 1) {
+                let vs = this.get(x, y, r, res);
+                let verts = Shapes.shape.vertices.get2(vs);
+                return verts;
+            },
+            rotate: function (ox, oy, ang, x, y, r, res = 1) {
+                let vs = this.get(x, y, r, res);
+                let o = createVector(ox, oy);
+                for (var v of vs) {
+                    v.sub(o).rotate(ang).add(o);
+                }
+                return Shapes.shape.vertices.get2(vs);
+            },
+            points: function (x, y, r, res = 1) {
+                return this.get(x, y, r, res);
+            }
+        },
+        perimeter: {
+            get: function (r) {
+                return 2 * Math.PI * r;
+            },
+            point: function (l, x, y, r, res = 1) {
+                let verts = Shapes.circle.vertices.get2(x, y, r, res);
+                return Shapes.shape.perimeter.point(l, verts);
+            },
+            interpolate: function (t, x, y, r, res = 1) {
+                t *= this.get(r);
+                return this.point(t, x, y, r, res);
+            }
+        }
+    },
+    rect: {
+        vertices: {
+            get: function (x, y, w, h) {
+                let vs = [
+                    createVector(x, y),
+                    createVector(x + w, y),
+                    createVector(x + w, y + h),
+                    createVector(x, y + h)
+                ];
+                return vs;
+            },
+            get2: function (x, y, w, h) {
+                let vs = this.get(x, y, w, h);
+                let verts = Shapes.shape.vertices.get2(vs);
+                return verts;
+            },
+            rotate: function (ox, oy, ang, x, y, w, h) {
+                let vs = this.get(x, y, w, h);
+                let o = createVector(ox, oy);
+                for (var v of vs) {
+                    v.sub(o).rotate(ang).add(o);
+                }
+                return Shapes.shape.vertices.get2(vs);
+            },
+            points: function (x, y, w, h, res = 1) {
+                let verts = this.get(x, y, w, h);
+                let vs = Shapes.shape.vertices.points(verts, res);
+                return vs;
+            }
+        },
+        perimeter: {
+            get: function (w, h) {
+                return 2 * w + 2 * h;
+            },
+            point: function (l, x, y, w, h) {
+                let verts = Shapes.rect.vertices.get2(x, y, w, h);
+                return Shapes.shape.perimeter.point(l, verts);
+            },
+            interpolate: function (t, x, y, w, h) {
+                t *= this.get(w, h);
+                return this.point(t, x, y, w, h);
+            }
+        }
+    },
+    shape: {
+        forPixel: function (func, res = 1, ...vs) {
+            let o = splitArray(vs);
+            let mny = floor(min(...o.y), res) - res;
+            let mxy = floor(max(...o.y), res) + res;
+            for (var y = mny; y < mxy; y += res) {
+                let or = createVector(-500, y);
+                let r = createVector(100, 0);
+                let cast = RayCast.v2.Vector.shape(or, r, ...vs);
+                if (cast.points.length > 0) {
+                    let o2 = splitArray(cast.points);
+                    let mnx = floor(min(...o2.x), res);
+                    let mxx = floor(max(...o2.x), res);
+                    //console.log(mnx, mxx, ...o2.x);
+                    for (var x = mnx; x < mxx; x += res) {
+                        func(x, y);
+                    }
+                }
+            }
+        },
+        vertices: {
+            get: function (verts) {
+                let vs = [];
+                for (var i = 0; i < verts.length; i += 2) {
+                    vs.push(createVector(verts[i], verts[i + 1]));
+                }
+                return vs;
+            },
+            get2: function (vs) {
+                let verts = [];
+                for (var v of vs) {
+                    verts.push(v.x, v.y);
+                }
+                return verts;
+            },
+            rotate: function (ox, oy, ang, verts) {
+                //console.log(ang);
+                let vs = this.get(verts);
+                let o = createVector(ox, oy);
+                for (var v of vs) {
+                    v.sub(o).rotate(ang).add(o);
+                }
+                return Shapes.shape.vertices.get2(vs);
+            },
+            setOrigin: function (ox, oy, verts) {
+                let vs = this.get(verts);
+                let o = createVector(ox, oy);
+                for (var v of vs) {
+                    v.sub(o);
+                }
+                return vs;
+            },
+            points: function (verts, res = 1) {
+                let per = Shapes.shape.perimeter.get(verts);
+                //console.log(per);
+                res = parseInt(res);
+                let vs = [];
+                for (var i = 0; i < per; i += res) {
+                    //console.log(i);
+                    vs.push(Shapes.shape.perimeter.point(i, verts));
+                }
+                return vs;
+            }
+        },
+        perimeter: {
+            get: function (verts) {
+                let ans = 0;
+                let vs = Shapes.shape.vertices.get(verts);
+                for (var i = 0; i < vs.length; i++) {
+                    let ai = i;
+                    let bi = (i + 1) % vs.length;
+                    let dist = Vector.dist(vs[ai], vs[bi]);
+                    ans += dist;
+                }
+                return ans;
+            },
+            point: function (t, verts) {
+                let vs = Shapes.shape.vertices.get(verts);
+                let a;
+                let b;
+                let pt;
+                let per = this.get(verts)
+                t = t % per;
+                let v = [];
+                for (var i = 0; i < vs.length; i++) {
+                    let ai = i;
+                    let bi = (i + 1) % vs.length;
+                    let a = vs[ai];
+                    let b = vs[bi];
+                    let dist = Vector.dist(vs[ai], vs[bi]);
+                    if (dist < t) {
+                        t -= dist;
+                    } else {
+                        pt = Vector.interpolate(a, b, t / Vector.dist(a, b));
+                        break;
+                    }
+                }
+                return pt;
+            },
+            interpolate: function (t, verts) {
+                return this.point(t * this.get(verts), verts);
+            }
+        }
+    }
+}
 // #endregion
 
 // #region color
 var fl = true;
 var st = true;
+function brightness(rgb) {
+    if (typeof (rgb) == "object") return avg(...rgb.slice(0, 3));
+}
 function addAlpha(col, al, mode) {
     if ("RGB" == mode) {
         return col.replace("b(", "ba(").replace(")", ", " + al / 255 + ")")
     }
+}
+function alpha(al) {
+    ctx.globalAlpha = al / 255;
 }
 function colorMode(mode) {
     Canvas.colorMode = mode;
@@ -1615,6 +1849,14 @@ const Colors = {
         let col = this.add(...cols);
         return col;
     },
+    interpolate: function (a, b, t) {
+        return Colors.weighted(a, t, b, 1 - t);
+     },
+    avg: function (...cols) {
+        let col = this.add(...cols);
+        col = Color.mult(col, 1 / cols.length);
+        return col;
+    }
 };
 const Color = {
     mult: function (col, t) {
@@ -2218,7 +2460,7 @@ function createCanvas(w = windowWidth, h = windowHeight, col = "rgb(255, 255, 25
     CanvasHeight = h;
     Canvas.enabled = true;
     canvas.style.backgroundColor = col;
-    document.body.appendChild(canvas);
+    document.body.insertBefore(canvas, document.body.childNodes[0]);
     ctx = canvas.getContext("2d");
     Canvas.lineWidth = ctx.lineWidth;
     Canvas.fillStyle = ctx.fillStyle;
@@ -2280,7 +2522,7 @@ function translate(x, y) {
 {
     let savedTransforms = [];
     function push() {
-        let t = ctx.getTransform()
+        let t = ctx.getTransform();
         savedTransforms.push(t);
         return t;
     }
@@ -2582,14 +2824,15 @@ class Event1 {
         let slider = document.createElement("input");
         slider.type = "range";
         slider.min = min;
-        slider.value = val;
+        //console.log(val);
         slider.max = max;
         slider.step = step;
+        slider.value = val;
         let input = document.createElement("input");
-        input.type = "text";
-        input.value = val;
+        input.type = "float";
+        input.value = parseFloat(val);
         input.oninput = function () {
-            console.log(this.value);
+            //console.log(this.value);
             this.value = this.value.replace(/[^0-9.]/g, '');
         }
         input.onchange = function () {
@@ -2602,7 +2845,9 @@ class Event1 {
         }
         div.appendChild(slider);
         div.appendChild(input);
+        console.log(slider.value);
         let cls = new Slider(slider, input, div);
+        console.log(slider.value);
         return cls;
     }
     class Slider {
@@ -2616,6 +2861,7 @@ class Event1 {
             this.events = [];
         }
         get value() {
+            console.log(this.slider.value);
             return parseFloat(this.slider.value);
         }
         set value(value) {
@@ -2636,45 +2882,127 @@ class Event1 {
 // #endregion
 
 // #region Image
-function image(...args) {
-    //args[0].crossOrigin = "";
-    ctx.drawImage(...args);
-}
-let pushedImages = [];
-function pushImage() {
-    pushedImages.push(getImage());
-}
-function getImage() {
-    let img = new Image();
-    img.src = ctx.canvas.toDataURL();
-    return img;
-}
-function createImage(w, h) {
-    return new Image(w, h);
-}
-function popImage() {
-    ctx.drawImage(pushedImages.pop());
-}
-function loadImage(name, width, height, cb) {
-    var myImage = new Image();
-    myImage.src = name;
-    loadingResources++;
-    myImage.onload = function () {
-        if (cb) {
-            cb(myImage);
-        } else if (!height && width) {
-            width(myImage);
-        }
-        loadingResources--;
-        checkForStart();
-    };
-    if (width && height) {
-        myImage.width = width;
-        myImage.height = height;
+{
+    var canvas2 = document.createElement("canvas");
+    var ctx2 = canvas2.getContext("2d");
+    function image(image, ...args) {
+        //args[0].crossOrigin = "";
+        ctx.drawImage(image.image, ...args);
     }
-    return myImage;
+    let pushedImages = [];
+    function pushImage() {
+        pushedImages.push(getImage());
+    }
+    function getImage() {
+        let img = new Image();
+        img.src = ctx.canvas.toDataURL();
+        return img;
+    }
+    function createImage(w, h) {
+        return new CImage(w, h);
+    }
+    function popImage() {
+        ctx.drawImage(pushedImages.pop());
+    }
+    function loadImage(name, width, height, cb) {
+        var myImage = new Image();
+        myImage.src = name;
+        let im = new Image2(myImage);
+        loadingResources++;
+        myImage.onload = function () {
+            myImage.onload = () => { };
+            im.width = myImage.width;
+            im.height = myImage.height;
+            //console.log(myImage.width);
+            if (cb) {
+                cb(im);
+            } else if (!height && width) {
+                width(im);
+            }
+            loadingResources--;
+            checkForStart();
+        };
+        if (width && height) {
+            myImage.width = width;
+            myImage.height = height;
+        }
+        return im;
+    }
 }
-
+    class Image2 {
+        constructor(im) {
+            this.width = im.width;
+            this.height = im.height;
+            this.image = im;
+        }
+        loadPixels() {
+            this.pixels = [];
+            canvas2.width = this.width;
+            canvas2.height = this.height;
+            ctx2.drawImage(this.image, 0, 0);
+            //console.log(this.width, this.height);
+            this.data = ctx2.getImageData(0, 0, this.width, this.height);
+            //this.pixels = this.data.data;
+            for (var i = 0; i < this.data.data.length; i += 4) {
+                this.pixels.push(this.data.data.slice(i, i + 4));
+            }
+        }
+        filter(f) {
+            this.loadPixels();
+            for (var i = 0; i < this.pixels.length; i++) {
+                let p = this.pos(i);
+                this.pixels[i] = f(p.x, p.y, i);
+            }
+            this.updatePixels();
+        }
+        pos(ind) {
+            let x = ind % this.width;
+            let y = (ind - x) / this.width;
+            return new Vector2(x, y);
+        }
+        index(x, y) {
+            return y * this.width + x;
+        }
+        grayScale() {
+            this.loadPixels();
+            for (var i = 0; i < this.pixels.length; i++) {
+                let dark = avg(...this.pixels[i].slice(0, 3));
+                this.pixels[i] = [dark, dark, dark, 255];
+            }
+            this.updatePixels();
+        }
+        updatePixels() {
+            let pixs = joinArrays(this.pixels);
+            setArray(this.data.data, pixs);
+            canvas2.width = this.width;
+            canvas2.height = this.height;
+            ctx2.putImageData(this.data, 0, 0);
+            this.image.src = ctx2.canvas.toDataURL();
+            //console.log(this.image);
+        }
+        onload(func) {
+            var ths = this;
+            this.image.onload = function () {
+                //console.log(ths.image);
+                ths.image.onload = function () { };
+                func(ths);
+            };
+        }
+    }
+function joinArrays(arrs) {
+    let arr = [];
+    for (var i = 0; i < arrs.length; i++) {
+        arr.push(...arrs[i]);
+    }
+    ///console.log(arrs);
+    return arr;
+}
+function setArray(arr1, arr2) {
+    for (var i = 0; i < arr1.length; i++) {
+        arr1[i] = arr2[i];
+    }
+    //console.log(arr2);
+}
 // #endregion
 
 //#region Gizmos

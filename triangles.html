@@ -6,18 +6,29 @@
     <script src="Canvas.js"></script>
     <script>
         let m = createVector(200, 200);
-        var a = Vector.add(m, Vector.AngleToVector(270, 120));
-        var b = Vector.add(m, Vector.AngleToVector(30, 120));
-        var c = Vector.add(m, Vector.AngleToVector(150, 120));
+        var a = Vector.add(m, Vector.AngleToVector(270, 200));
+        var b = Vector.add(m, Vector.AngleToVector(30, 200));
+        var c = Vector.add(m, Vector.AngleToVector(150, 200));
+
+        var ag = new Gizmo(a.x, a.y);
+        var bg = new Gizmo(b.x, b.y);
+        var cg = new Gizmo(c.x, c.y);
 
         var ac = color(255, 0, 0);
         var bc = color(0, 255, 0);
         var cc = color(0, 0, 255);
         let re = 1;
+        var slider;
         function setUp() {
             createCanvas(400, 400);
-            noLoop();
-            pixelsIntriangle(a, b, c, pixel, re);
+            slider = createSlider(2, 20, 1, 10, "resolution");
+        }
+        function draw() {
+            a = ag.position;
+            b = bg.position;
+            c = cg.position;
+            clear();
+            Shapes.shape.forPixel(p, slider.value, a, b, c);
             nofill();
             triangle(a.x, a.y, b.x, b.y, c.x, c.y);
         }
@@ -42,35 +53,23 @@
             //console.log(p.x, p.y, re, re);
             noStroke();
             fill(col);
-            rect(p.x, p.y, re, re);
+            rect(p.x, p.y, slider.value, slider.value);
 
         }
-        function pixelsIntriangle(a, b, c, func, res = 1) {
-            //console.log(max(a.y, b.y, c.y));
-            let mny = floor(min(a.y, b.y, c.y), res);
-            let mxy = floor(max(a.y, b.y, c.y), res);
-            //fill(255, 0, 0);
-            console.log(min(a.y, b.y, c.y), max(a.y, b.y, c.y));
-            for (var y = mny; y < mxy; y += res) {
-                let o = createVector(0, y);
-                let r = createVector(100, 0);
-                //nofill();
-                //line(o.x, o.y, o.x + r.x, o.y + r.y);
-                let cast = RayCast.v2.Vector.shape(o, r, a, b, c);
-                //console.log(cast.points);
-                if (cast.points.length > 0) {
-                    let ap = cast.points[0];
-                    let bp = cast.points[cast.points.length - 1];
-                    mnx = floor(min(ap.x, bp.x), res);
-                    mxx = floor(max(ap.x, bp.x), res);
-                    //console.log(mnx, mxx);
-                    for (var x = mnx; x < mxx; x += res) {
-                        //console.log(x, y);
-                        //rect(x, y, res, res);
-                        func(x, y);
-                    }
-                }
-            }
+        function p(x, y) {
+            let p = createVector(x, y);
+            let dab = distance.Vector.line(a, b, p);
+            let dbc = distance.Vector.line(b, c, p);
+            let dca = distance.Vector.line(c, a, p);
+            let col1 = Colors.weighted(ac, dab.t, bc, 1 - dab.t);
+            let col2 = Colors.weighted(bc, dbc.t, cc, 1 - dbc.t);
+            let col3 = Colors.weighted(cc, dca.t, ac, 1 - dca.t);
+            let col = Colors.avg(col1, col2, col3);
+            col = Color.mult(col, 2.5);
+            noStroke();
+            fill(col);
+            rect(p.x, p.y, slider.value, slider.value);
+
         }
     </script>
 

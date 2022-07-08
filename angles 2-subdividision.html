@@ -1,0 +1,87 @@
+
+ <html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let length = 100;
+        let slider;
+        let points = [
+            createVector(-100, 100).setMag(length),
+            createVector(100, 100).setMag(length),
+            createVector(100, -100).setMag(length),
+            createVector(-100, -100).setMag(length),
+        ];
+        
+        function setUp() {
+            createCanvas(800, 800, color(255));
+            slider = createSlider(-1, 2, 0.05, 0.25, "Sub Division distance");
+        }
+        function draw() {
+            clear();
+            //console.log(points);
+            drawPoints(points);
+        }
+        function key_Press() {
+            if (keyCode == key.enter) {
+                //points = interpolatePoints(points);
+                points = subdivide(points);
+            }
+            console.log(points);
+            if (keyCode == key.space) {
+                setMags(points);
+            }
+        }
+        let distsub = 0.65;
+        function subdivide(pts) {
+            if (pts.length >= 360) return pts;
+            distsub = slider.value;
+            //console.log(distsub);
+            let ptss = [];
+            for (var i = 0; i < pts.length; i++) {
+                let a = pts[mod.pos((i - 1), pts.length)];
+                let b = pts[i];
+                let c = pts[(i + 1) % pts.length];
+                let ab = Vector.interpolate(a, b, 1 - distsub);
+                let bc = Vector.interpolate(b, c, distsub);
+                ptss.push(ab, bc);
+            }
+            return ptss;
+        }
+        function interpolatePoints(ps) {
+            if (ps.length >= 360) return ps;
+            let ans = [ps[0]];
+            for (var i = 1; i < ps.length; i++) {
+                let vec = Vector.mid(ps[i - 1], ps[i]);
+                ans.push(vec);
+                ans.push(ps[i]);
+            }
+            ans.push(Vector.mid(ps[0], ps[ps.length - 1]));
+            return ans;
+        }
+        function setMags(points) {
+            for (var point of points) {
+                point.setMag(length);
+            }
+        }
+        function drawPoints(ps) {
+            push();
+            translate(CanvasWidth / 2, CanvasHeight / 2);
+            for (var i = ps.length - 1; i >= 0; i--) {
+                ln(ps[i], ps[(i + 1) % ps.length]);
+                pt(ps[i]);
+            }
+            pop();
+        }
+        function ln(A, B) {
+            line(A.x, A.y, B.x, B.y);
+        }
+        function pt(P) {
+            circle(P.x, P.y, 2);
+        }
+    </script>
+
+</body>
+</html>

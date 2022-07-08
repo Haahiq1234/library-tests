@@ -1,0 +1,151 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intersection</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let ag = new Gizmo(100, 200);
+        let bg = new Gizmo(300, 200);
+        let sh;
+        let sh1;
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            sh = new Rect(200, 200);
+            sh1 = new Rect(200, 200);
+        }
+        function draw() {
+            clear();
+            nofill();
+            sh.draw();
+            sh1.draw();
+            line(ag.x, ag.y, bg.x, bg.y);
+            let inti = Intersection.RTR(sh1.x, sh1.y, sh1.w, sh1.h, sh.x, sh.y, sh.w, sh.h);
+            for (var i = 0; i < inti.length; i++) {
+                let c = inti[i];
+                circle(c.x, c.y, 5);
+            }
+        }
+        const Intersection = {
+            LTL: function (ax, ay, bx, by, cx, cy, dx, dy) {
+                let inti = lineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
+                if (inti.intersected) {
+                    //console.log(inti.point);
+                    return inti.point;
+                }
+            },
+            LTS: function (ax, ay, bx, by, verts) {
+                let vs = Shapes.shape.vertices.get(verts);
+                let pts = [];
+                for (var i = 0; i < vs.length; i++) {
+                    let ci = i;
+                    let di = (i + 1) % vs.length;
+                    let c = vs[ci];
+                    let d = vs[di];
+                    let inti = this.LTL(ax, ay, bx, by, c.x, c.y, d.x, d.y);
+                    if (inti) {
+                        pts.push(inti);
+                    }
+                }
+                return pts;
+            },
+            STS: function (verts, verts2) {
+                let pts = [];
+                for (var i = 0; i < verts.length; i += 2) {
+                    let ai = (i / 2);
+                    let bi = (i / 2 + 1) % (verts.length / 2);
+                    let ax = verts[ai * 2];
+                    let ay = verts[ai * 2 + 1];
+                    let bx = verts[bi * 2];
+                    let by = verts[bi * 2 + 1];
+                    pts.push(...this.LTS(ax, ay, bx, by, verts2));
+                }
+                return pts;
+            },
+            LTR: function (ax, ay, bx, by, rx, ry, w, h) {
+                let verts = Shapes.rect.vertices.get2(rx, ry, w, h);
+                
+                return this.LTS(ax, ay, bx, by, verts);
+            },
+            RTR: function (ax, ay, aw, ah, bx, by, bw, bh) {
+                let verts = Shapes.rect.vertices.get2(ax, ay, aw, ah);
+                let verts1 = Shapes.rect.vertices.get2(bx, by, bw, bh);
+                return this.STS(verts, verts1);
+            },
+            CTL: function (ax, ay, bx, by, cx, cy, r) {
+                let verts = Shapes.circle.vertices.get2(cx, cy, r);
+
+                return this.LTS(ax, ay, bx, by, verts);
+            },
+            CTC: function (ax, ay, ar, bx, by, br) {
+                let verts = Shapes.circle.vertices.get2(ax, ay, ar);
+                let verts1 = Shapes.circle.vertices.get2(bx, by, br);
+                return this.STS(verts, verts1);
+            }
+        };
+        Object.freeze(Intersection);
+        class Circle {
+            r = 50;
+            constructor(x, y) {
+                this.g = new Gizmo(x, y);
+            }
+            get x() {
+                return this.g.x;
+            }
+            get y() {
+                return this.g.y;
+            }
+            draw() {
+                circle(this.x, this.y, this.r);
+            }
+        }
+        class Shape {
+            vs = [];
+            constructor(x, y) {
+                this.g = new Gizmo(x, y);
+                for (var i = 0; i < 360; i += 60) {
+                    this.vs.push(...Vector.array(Vector.AngleToVector(i, 50)));
+                }
+            }
+            get verts() {
+                let verts = [...this.vs];
+                for (var i = 0; i < verts.length; i += 2) {
+                    verts[i] += this.g.x;
+                    verts[i + 1] += this.g.y;
+                }
+                return verts;
+            }
+            draw() {
+                shape.draw(...this.verts);
+
+            }
+        }
+        class Rect {
+            constructor(x, y) {
+                this.g = new Gizmo(x, y);
+                this.w = 100;
+                this.h = 50;
+            }
+            get x() {
+                return this.g.x - this.w / 2;
+            }
+            get y() {
+                return this.g.y - this.h / 2;
+            }
+            draw() {
+                nofill();
+                rect(this.x, this.y, this.w, this.h);
+            }
+        }
+        function key_Press() {
+
+        }
+    </script>    
+</body>
+</html>

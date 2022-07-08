@@ -338,7 +338,7 @@ class Mesh {
             let b = vert[this.indices[i + 1]];
             let c = vert[this.indices[i + 2]];
             let normal = Vector3D.normal(a, b, c);
-
+            //this.normals[]
         }
     }
     draw() {
@@ -394,7 +394,7 @@ class Material {
             (
                 gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
                 gl.UNSIGNED_BYTE,
-                this._image
+                this._image.image
             );
         gl.bindTexture(gl.TEXTURE_2D, null);
     }

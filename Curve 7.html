@@ -11,6 +11,7 @@
         <script>
             let a = createVector(300, 100);
             let b = createVector(100, 300);
+            let ag = new Gizmo();
             let gizmo = new Gizmo(200, 200);
             let gizmo1 = new Gizmo(200, 200);
             let times = 30;
@@ -23,22 +24,22 @@
             function draw() {
                 clear();
                 for (var i = 0; i <= times; i++) {
-                    let pos = curve2(a, b, gizmo.position.copy(), i / times);
-                    //let pos1 = curve2(a, b, gizmo1.position.copy(), i / times);
-                    //let pos = Vector.avg(pos1, pos2);
+                    let pos2 = curve2(a, b, gizmo.position.copy(), i / times);
+                    let pos1 = curve2(a, b, gizmo1.position.copy(), i / times);
+                    let pos = Vector.avg(pos1, pos2);
                     circle(pos.x, pos.y, 5);
                 }
             }
             function curve2(a, b, p, t) {
-                let mid = Vector.mid(a, b);
+                let m = Vector.mid(a, b);
                 let ang = Vector.sub(b, a).heading();
                 let angRot = Vector.side(a, b, p);
-                let intersection = distance.line(a.x, a.y, b.x, b.y, p.x, p.y);
+                let intersection = distance.InfiniteLine(a.x, a.y, b.x, b.y, p.x, p.y);
                 let py = -intersection.dist * sign(angRot);
                 let c = intersection.point;
                 let nx, px;
-                px = Vector.dist(a, c);
-                nx = Vector.dist(b, c);
+                px = Vector.dist(a, m) - Vector.dist(m, c);
+                nx = Vector.dist(b, m) - Vector.dist(m, c);
                 let pnt = Vector.AngleToEllipse(t * 180, px, py, ang + 180, nx, py);
                 pnt.add(c);
                 return pnt;
