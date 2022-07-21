@@ -9,22 +9,27 @@
     <body>
         <script src="Canvas.js"></script>
         <script>
-            let gizmo;
-            let arr = [
-                createVector(0, 0),
-                createVector(5, 4)
-            ]
+            let ag;
+            let bg;
             function setUp() {
                 createCanvas(400, 400, color(255));
                 frameRate(60);
-                Canvas.flipY();
-                gizmo = new Gizmos(
+                ag = new Gizmo(
                     CanvasWidth / 2,
                     CanvasHeight / 2,
                     color(255, 0, 0)
                 );
-                gizmo.setShape(GizmoShapes.square, 20);
-                gizmo.setConstraints(createVector(), createVector(CanvasWidth, CanvasHeight));
+                ag.setShape(GizmoShapes.square, 20);
+                //ag.setConstraints(createVector(), createVector(CanvasWidth, CanvasHeight));
+
+                bg = new Gizmo(
+                    CanvasWidth / 2,
+                    CanvasHeight / 2,
+                    color(0, 255, 0)
+                );
+                bg.setShape(GizmoShapes.square, 20);
+                bg.setParent(ag);
+                //bg.setConstraints(createVector(), createVector(CanvasWidth, CanvasHeight));
             }
             function draw() {
                 clear();

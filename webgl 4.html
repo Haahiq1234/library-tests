@@ -1,0 +1,174 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+    <script src="Canvas.js"></script>
+    <script src="Webgl.js"></script>
+    <script src="gl-matrix.js"></script>
+    <script>
+        var angle = 0;
+        let vertices = [
+            -1.0, 1.0, -1.0,
+            1.0, 1.0, -1.0,
+            1.0, -1.0, -1.0,
+            -1.0, -1.0, -1.0,
+
+            1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0,
+            -1.0, -1.0, 1.0,
+            1.0, -1.0, 1.0,
+        ];
+        let colors = [
+            [1.0, 0.0, 0.15],
+            [1.0, 0.0, 0.15],
+            [1.0, 0.0, 0.15],
+            [1.0, 0.0, 0.15],
+            [1.0, 0.0, 0.15],
+            [1.0, 0.0, 0.15],
+
+            [0.5, 0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [0.5, 0.5, 0.5],
+                          
+            [0.5, 0.5, 1.0],
+            [0.5, 0.5, 1.0],
+            [0.5, 0.5, 1.0],
+            [0.5, 0.5, 1.0],
+            [0.5, 0.5, 1.0],
+            [0.5, 0.5, 1.0],
+
+            [0.0, 1.0, 0.15],
+            [0.0, 1.0, 0.15],
+            [0.0, 1.0, 0.15],
+            [0.0, 1.0, 0.15],
+            [0.0, 1.0, 0.15],
+            [0.0, 1.0, 0.15],
+
+            [0.25, 0.25, 0.75],
+            [0.25, 0.25, 0.75],
+            [0.25, 0.25, 0.75],
+            [0.25, 0.25, 0.75],
+            [0.25, 0.25, 0.75],
+            [0.25, 0.25, 0.75],
+
+            [0.75, 0.25, 0.5],
+            [0.75, 0.25, 0.5],
+            [0.75, 0.25, 0.5],
+            [0.75, 0.25, 0.5],
+            [0.75, 0.25, 0.5],
+            [0.75, 0.25, 0.5]
+        ];
+        let indices = [
+            0, 1, 2,
+            0, 2, 3,
+
+            4, 5, 6,
+            4, 6, 7,
+
+            5, 0, 3,
+            5, 3, 6,
+
+            1, 4, 7,
+            1, 7, 2,
+
+            5, 4, 1,
+            5, 1, 0,
+
+            3, 2, 7,
+            3, 7, 6
+        ];
+        let uvs = [
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0,
+
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0,
+
+            0.0, 0.9,
+            0.1, 0.9,
+            0.1, 1.0,
+            0.0, 1.0,
+
+            0.9, 0.0,
+            1.0, 0.0,
+            1.0, 0.1,
+            0.9, 0.1,
+
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0,
+
+            0.1, 0.9,
+            0.2, 0.9,
+            0.2, 1.0,
+            0.1, 1.0
+        ];
+        var box;
+        var texture = loadImage("Sprite Atlas.png");
+        var rotationSlider;
+        var scaleSlider;
+        var posSlider;
+        var uvmap;
+        function setUp() {
+            createGLCanvas(500, 500);
+            //createCanvas(500, 500);
+            gl.clearColor(0.75, 0.85, 0.8, 1.0);
+
+            //var ambientUL = program.getUL("ambientLight");
+            //gl.uniform3f(ambientUL, 0.5, 0.5, 0.5);
+
+            //var sunLightUL = program.getUL("lightr");
+            //gl.uniform3f(sunLightUL, 1.0, 1.0, 1.0);
+
+            //var directionUl = program.getUL("light.direction");
+            //gl.uniform3f(directionUl, 0.0, 2.0, 1.0);
+
+
+            scaleSlider = createVector3SLider(0, 4, 0, 4, 0, 4, 0.05, 1, 1, 1, "scale");
+            rotationSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "rotation");
+            posSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "position");
+
+
+            box = new Mesh();
+            box.vertices = Vector3D.fromArray(vertices);
+            box.indices = indices;
+            //box.uvs = uvs;
+            box.texture = texture;
+            //box.colors = colors;
+            program.use();
+            //uvmap = new UVMap(uvs, indices, texture);
+            box.build();
+            //loop();
+        }
+        function draw() {
+            gl.clear(gl.COLOR_BUFFER_BIT, gl.DEPTH_BUFFER_BIT);
+
+            glCamera.rotateWorld(0, 1, 0);
+            glCamera.updateController();
+
+            //uvmap.buildUvs();
+            //box.uvs = uvmap.uvs;
+
+            box.transform.scale = scaleSlider.v;
+            box.transform.rotation = rotationSlider.vt.mult(360);
+            box.transform.position = posSlider.v;
+            box.bind();
+            box.draw();
+
+
+            //clear();
+            //uvmap.draw();
+        }
+    </script>
+</body>
+</html>

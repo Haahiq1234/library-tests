@@ -4,30 +4,24 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Balls</title>
+    <title>Document</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <script src="Canvas.js"></script>
     <script>
-        var FramesPerSecond = 50;
-        var col;
-        var pos;
+        let ag = new Gizmo(100, 100);
+        let bg = new Gizmo(200, 100);
+        let cg = new Gizmo(100, 200);
         function setUp() {
             createCanvas(400, 400);
-            pos = new Vector2(0, 0);
-            frameRate(FramesPerSecond);
+            frameRate(60);
         }
         function draw() {
-            backGround(255, 50);
-            //console.log(color(255, 10));
-            //stroke(100);
-            //noStroke();
-            fill(0);
-            circle(pos.x, pos.y, 10);
-            pos.x += 2;
-            pos.y += 2;
+            clear();
+            let norm = Vector.normal2(ag.position, bg.position, cg.position);
+            line(bg.x, bg.y, bg.x + norm.x * 50, bg.y + norm.y * 50);
         }
-    </script>
+    </script>    
 </body>
 </html>

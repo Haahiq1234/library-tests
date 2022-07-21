@@ -9,7 +9,7 @@
         var fireworkChance = 3;
         var fireworks = [];
         var gravity;
-        let allowed = false;
+        let allowed = true;
         let textColor = color(1, 100, 32);
         function setUp() {
             createCanvas();
@@ -18,19 +18,21 @@
             fireworks.push(new FireWork());
             gravity = new Vector2(0, 0.2);
             textAlign(TEXT.CENTER, TEXT.MIDDLE);
-            textSize(50);
+            textSize(100);
             fill(textColor);
             stroke(textColor);
         }
         function draw() {
+            if (!(allowed || GetKey("Shift"))) return;
             backGround(255, 30);
             //Canvas.flipY();
-            if (frameNo % 160 == 0) {
-                textColor = Color.RandomColor(255, 255, 255);
-                //console.log(textColor);
-                fill(textColor);
-                stroke(textColor);
-            }
+            //if (frameNo % 160 == 0) {
+            //    textColor = Color.RandomColor(255, 255, 255);
+            //    //console.log(textColor);
+            //    fill(textColor);
+            //    stroke(textColor);
+            //}
+            text("Eid Mubarak", CanvasWidth / 2, CanvasHeight / 2);
             saveColor();
             for (let i = 0; i < fireworks.length; i++) {
                 fireworks[i].Update();
@@ -43,20 +45,21 @@
                 fireworks.push(new FireWork());
             }
             loadColor();
-            text("Eid Mubarak", CanvasWidth / 2, CanvasHeight / 2);
-        }
-        function drawText() {
-
         }
         function key_Press() {
+            //console.log(keyCode);
             if (keyCode == key.backSpace) {
-                noLoop();
+                //noLoop();
+                allowed = false;
             }
             if (keyCode == key.enter) {
-                loop();
+                //loop();
+                allowed = true;
             }
             if (keyCode == key.space) {
+                allowed = true;
                 redraw();
+                allowed = false;
             }
         }
         function Particle(pos, size, acc, col, spanned = false) {

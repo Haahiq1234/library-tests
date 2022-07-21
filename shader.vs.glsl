@@ -12,9 +12,10 @@ varying vec2 fragTextcoord;
 varying vec3 fragNormal;
 void main()
 {
+    vec4 position = mProj * mView * mWorld * transform * vec4(vertPosition, 1.0);
     fragColor = vertColor;
     fragTextcoord = textureCoord;
-    fragNormal = normal;
-    gl_Position = mProj * mView * mWorld * transform * vec4(vertPosition, 1.0);
+    fragNormal = (mWorld * vec4(normal, 0.0)).xyz;
+    gl_Position = position;
 }
             

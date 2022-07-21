@@ -56,8 +56,13 @@
                 this.angle += ang;
             }
             update() {
-                let vel = Vector.AngleToVector(this.angle, -GetAxis("vertical", "arrow") * 3);
-                this.pos.add(vel.mult(1));
+                let vel = Vector.AngleToVector(this.angle, 1);
+                this.pos.add(vel.copy().mult(-GetAxis("vertical") * 3));
+
+                vel.rotate(90);
+                vel.mult(GetAxis("horizontal", "key") * 3);
+                this.pos.add(vel);
+
                 this.pos.x = constraint(this.pos.x, 0, width);
                 this.pos.y = constraint(this.pos.y, 0, height);
             }
@@ -106,8 +111,7 @@
                     let h = 4000 / (length2);
                     let x = width + padding + i * this.res;
                     let y = CanvasHeight / 2 - h / 2;
-                    //console.log(cast2);
-                    fill(255 / (length2 / 20));
+                    fill(255 / (length2 / 20) * 5);
                     stroke(255 / (length2 / 20));
                     rect(x, y, this.res, h * 2);
                     line(p.x, p.y, this.x, this.y);

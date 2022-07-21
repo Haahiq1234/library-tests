@@ -128,9 +128,20 @@
         var posSlider;
         var uvmap;
         function setUp() {
-            createGLCanvas(500, 500);
+            crea.coloteGLCanvas(500, 500);
             //createCanvas(500, 500);
             gl.clearColor(0.75, 0.85, 0.8, 1.0);
+
+            var ambientUL = program.getUL("ambientLight");
+            gl.uniform3f(ambientUL, 0.5, 0.5, 0.5);
+
+            var sunLightUL = program.getUL("lightr");
+            gl.uniform3f(sunLightUL, 1.0, 1.0, 1.0);
+
+            var directionUl = program.getUL("light.direction");
+            gl.uniform3f(directionUl, 0.0, 2.0, 1.0);
+
+
             scaleSlider = createVector3SLider(0, 4, 0, 4, 0, 4, 0.05, 1, 1, 1, "scale");
             rotationSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "rotation");
             posSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "position");

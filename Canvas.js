@@ -1,3 +1,106 @@
+// #region Misc
+let windowWidth = window.innerWidth;
+let windowHeight = window.innerHeight;
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+function downloadCanvasImage() {
+    var link = document.createElement('a');
+    link.download = 'Canvas_Image.png';
+    link.href = ctx.canvas.toDataURL();
+    link.click();
+}
+function print(...message) {
+    console.log(...message);
+}
+{
+    let storageTypes = [];
+    let suffix = "_ItemType"
+    function storeItem(key, item) {
+        let type = typeof item;
+        if (type == "object") {
+            for (var i = 0; i < storageTypes.length; i++) {
+                if (item instanceof storageTypes[i].type) {
+                    type = storageTypes[i].name;
+                    localStorage.setItem(key + suffix, type);
+                    break;
+                }
+            }
+        }
+        localStorage.setItem(key, JSON.stringify(item));
+    }
+    function getItem(key) {
+        let type = localStorage.getItem(key + suffix);
+        let item = JSON.parse(localStorage.getItem(key));
+        if (item != null) {
+            for (var i = 0; i < storageTypes.length; i++) {
+                if (type == storageTypes[i].name) {
+                    console.log(item);
+                    item = storageTypes[i].parse(...Object.values(item));
+                }
+            }
+        }
+        return item;
+    }
+    function removeItem(key) {
+        localStorage.removeItem(key);
+        localStorage.removeItem(key + suffix);
+    }
+    function setStorageItemType(name, type, parse = (...args) => new type(...args)) {
+        storageTypes.push({
+            name: name,
+            type: type,
+            parse: parse
+        });
+    }
+    setStorageItemType("Vector2", Vector2);
+}
+var loadingResources = 0;
+function loadFile(url, callback) {
+    loadingResources++;
+    let request = new XMLHttpRequest();
+    //console.log(request);
+    request.open("GET", url, true);
+    request.onload = function () {
+        if (request.status < 200 || request.status > 299) {
+            callback("Error: HTTP Status " + request.status + " on resource " + url);
+        } else {
+            callback(null, request.responseText);
+        }
+        loadingResources--;
+        checkForStart();
+    };
+    request.send();
+    return request;
+}
+class Event1 {
+    bound;
+    constructor() {
+        this.bound = [];
+    }
+    bind(func) {
+        this.bound.push(func);
+    }
+    Fire(...args) {
+        for (var i = 0; i < this.bound.length; i++) {
+            this.bound[i](...args);
+        }
+    }
+    getFire() {
+        let ths = this;
+        return (...args) => {
+            ths.Fire(...args);
+        }
+    }
+}
+// #endregion
+
 // #region Vector
 class Camera {
     static position = new Vector3(0, 0, -10);
@@ -99,9 +202,15 @@ function rotateZ(ang) {
 }
 const Vector3D = {
     crossProduct: function (v, w) {
-        return new Vector3(v.y * w.z - v.z * w.y, v.x * w.z - w.x - v.z, v.x * w.y - w.x * v.y);
+        let y = -(v.x * w.z - w.x * v.z);
+        return new Vector3(v.y * w.z - v.z * w.y, y, v.x * w.y - w.x * v.y);
     },
     normal: function (a, b, c) {
+        a = a.copy().sub(c);
+        b = b.copy().sub(c);
+        return this.crossProduct(b, a).normalize();
+    },
+    normal2: function (a, b, c) {
         a = a.copy().sub(c);
         b = b.copy().sub(c);
         return this.crossProduct(b, a);
@@ -115,12 +224,9 @@ const Vector3D = {
         return v;
     },
     fromArray: function (...args) {
-        if (args.length == 3) {
-            return new Vector3(args[0], args[1], args[2]);
-        }
         let arr = [];
         for (var i = 0; i < args.length; i += 3) {
-            arr.push(new Vector3(args[i], ags[i + 1], args[i + 2]));
+            arr.push(new Vector3(args[i], args[i + 1], args[i + 2]));
         }
         return arr;
     },
@@ -169,7 +275,12 @@ function Vector3(x = 0, y = 0, z = 0) {
     this.mag = function () {
         return Math.sqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
     }
+    this.setMag = function (m) {
+        this.normalize().mult(m);
+        return this;
+    }
     this.sub = function (vec) {
+        //console.log(vec);
         this.add(vec.neg());
         return this;
     }
@@ -270,7 +381,7 @@ Vector.fromIndex = function (str) {
 Vector.array = function (...vecs) {
     let ans = [];
     for (var vec of vecs) {
-        ans.push(vec.x, vec.y);
+        ans.push(...vec.array());
     }
     return ans;
 }
@@ -297,12 +408,49 @@ Vector.setMag = function (vec, mag) {
     let vec1 = Vector.copy(vec).setMag(mag);
     return vec1;
 }
+Vector.fromArray = function (...verts) {
+    let arr = [];
+    for (var i = 0; i < verts.length; i += 2) {
+        arr.push(createVector(verts[i], verts[i + 1]));
+    }
+    return arr;
+}
 Vector.InSquare = function (a, b, p) {
     if (p.x >= a.x && p.y >= a.y && p.x <= b.x && p.y <= b.y) {
         return true;
     }
     return false
 }
+Vector.fromOrigin = {
+    farthest: function (o, arr) {
+        let len = 0;
+        let pt;
+        let li;
+        for (var i = 0; i < arr.length; i++) {
+            let d = Vector.dist(arr[i], o);
+            if (d > len) {
+                pt = arr[i].copy();
+                len = d;
+                li = i;
+            }
+        }
+        return [pt, li];
+    },
+    nearest: function (o, arr) {
+        let len = Infinity;
+        let pt;
+        let li;
+        for (var i = 0; i < arr.length; i++) {
+            let d = Vector.dist(arr[i], o);
+            if (d < len) {
+                pt = arr[i].copy();
+                len = d;
+                li = i;
+            }
+        }
+        return [pt, li];
+    }
+};
 Vector.AngleToEllipse = function (ang, px, py, rot = 0, nx = px, ny = py) {
     let x = Math.cos(radians(ang));
     let y = Math.sin(radians(ang));
@@ -325,16 +473,29 @@ Vector.mid = function (a, b) {
     let p = Vector.add(a, c);
     return p;
 }
-Vector.reflect = function (vec, norm) {
-    let vec2 = vec.neg();
-    let curr = vec2.heading();
-    let desired = norm.heading();
-    let steer = desired - curr;
-    desired += steer;
-    let reflection = Vector.AngleToVector(desired);
-    return reflection;
+Vector.normal2 = function (a, b, c) {
+    let ao = Vector.sub(a, b);
+    let co = Vector.sub(c, b);
+    let aoh = ao.heading();
+    let coh = co.heading();
+    let mid = avg(aoh, coh);
+    mid += 180;
+    return Vector.AngleToVector(mid, 1);
+}
+Vector.reflect = function (v, n) {
+    let vn = v.neg();
+    let d = Vector.dot(vn, n) / n.mag();
+    //console.log(v, n, d);
+    let p = n.copy().setMag(d);
+    let dp = Vector.sub(p, vn);
+    let vr = Vector.add(p, dp);
+    return vr;
+
 }
 Vector.copy = function (vec) {
+    if (vec instanceof Vector3) {
+        return new Vector3(vec.x, vec.y, vec.z);
+    }
     return new Vector2(vec.x, vec.y);
 }
 Vector.side = function (a, b, p) {
@@ -343,7 +504,7 @@ Vector.side = function (a, b, p) {
     b2.rotate(90);
     let po = Vector.sub(p, mid);
 
-    let prod = Vector.dotProduct(po, b2) / b2.mag();
+    let prod = Vector.dot(po, b2) / b2.mag();
     if (prod >= 0) {
         return 90;
     } else {
@@ -356,7 +517,7 @@ Vector.normal = function (a, b, p) {
     c.rotate(rot);
     return c;
 }
-Vector.constaint = function (p, a, b) {
+Vector.constraint = function (p, a, b) {
     let x = constraint(p.x, a.x, b.x);
     let y = constraint(p.y, a.y, b.y);
     return createVector(x, y);
@@ -373,7 +534,7 @@ Vector.lerp = function (A, B, t) {
     return C;
 }
 Vector.mult = function (vec, m) {
-    vec = new Vector2(vec.x * m, vec.y * m);
+    vec = vec.copy().mult(m);
     return vec;
 }
 Vector.min = function (...args) {
@@ -399,13 +560,10 @@ Vector.add = function () {
     var vec = arguments[0].copy();
     for (var i = 1; i < arguments.length; i++)
         vec.add(arguments[i].copy());
-    return new Vector2(vec.x, vec.y);
+    return Vector.copy(vec);
 }
-Vector.sub = function (vec, vec1) {
-    vec = vec.copy();
-    vec1 = vec1.copy();
-    vec.sub(vec1);
-    return new Vector2(vec.x, vec.y);
+Vector.sub = function (a, b) {
+    return Vector.copy(a.copy().sub(b));
 }
 Vector.heading = function (vec) {
     if (vec.x == 0 && vec.y == 0) {
@@ -419,12 +577,16 @@ Vector.heading = function (vec) {
     }
     return ang;
 }
-Vector.dotProduct = function (v, v2) {
+Vector.dot = function (v, v2) {
+    if (v instanceof Vector3) {
+        //console.log(v.x * v2.x + v.y * v2.y + v.z * v2.z);
+        return v.x * v2.x + v.y * v2.y + v.z * v2.z;
+    }
     return v.x * v2.x + v.y * v2.y;
 }
 Vector.AngleToVector = function (ang, rad = 1) {
-    let x = rad * Math.cos(radians(ang));
-    let y = rad * Math.sin(radians(ang));
+    let x = rad * cos(ang);
+    let y = rad * sin(ang);
     return new Vector2(x, y);
 }
 Vector.div = function (vec, no) {
@@ -442,9 +604,9 @@ Vector.DirectionVector = function (vec, vec1) {
 Vector.Direction = function (a, b) {
     return this.DirectionVector(a, b).heading();
 }
-Vector.dist = function (vec, vec1, x1, y1) {
-    let d = new Vector2(vec1.x - vec.x, vec1.y - vec.y).mag();
-    return d;
+Vector.dist = function (a, b) {
+    //console.log(a, b);
+    return b.copy().sub(a).mag();
 }
 Vector.limitDistance = function (a, b, lim) {
     let c = Vector.sub(b, a);
@@ -524,7 +686,7 @@ function Vector2(x, y) {
         return new Vector2(this.x, this.y);
     }
     this.normalize = function () {
-        this.div(this.mag());
+        this.div(this.mag() | 1);
         return this;
     }
     this.div = function (no) {
@@ -699,7 +861,9 @@ var mouse2 = new Vector2(0, 0);
 
 // #region constants
 const PI = Math.PI;
-const RGB = "RGB";
+const RGB = 0;
+const HSB = 1;
+const HSL = 2;
 const TEXT = {};
 TEXT.CENTER = "center";
 TEXT.MIDDLE = "middle";
@@ -734,16 +898,20 @@ autoStartLoop = true;
 var UnSetFps = true;
 let drawIntervalId;
 let animationFrameLoopId;
-var started = false;
-var loaded = false;
-function checkForStart() {
-    if (!(loadingResources > 0) && !started && loaded) {
-        started = true;
-        if (window.setUp) {
-            setUp();
-        }
-        if (autoStartLoop) {
-            requestAnimationFrame(redraw);
+var setupEvent = new Event1();
+{
+    var settedUP = false;
+    var loaded = false;
+    function checkForStart() {
+        if (!(loadingResources > 0) && !settedUP && loaded) {
+            settedUP = true;
+            setupEvent.Fire();
+            if (window.setUp) {
+                setUp();
+            }
+            if (autoStartLoop) {
+                requestAnimationFrame(redraw);
+            }
         }
     }
 }
@@ -751,7 +919,6 @@ document.body.onload = function () {
     loaded = true;
     checkForStart();
 }
-checkForStart();
 function frameRate(rate) {
     UnSetFps = false;
     Time.frameRate = rate;
@@ -819,6 +986,200 @@ function redraw(timeStamp) {
 // #endregion
 
 // #region Math
+const Intersection = {
+    LTL: function (ax, ay, bx, by, cx, cy, dx, dy) {
+        let inti = lineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
+        if (inti.intersected) {
+            //console.log(inti.point);
+            return inti.point;
+        }
+    },
+    ILTL: function (ax, ay, bx, by, cx, cy, dx, dy) {
+        let inti = lineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
+        if (inti.intersected) {
+            //console.log(inti.point);
+            return inti.point;
+        } else if (inti.u <= 1 && inti.u >= 0) {
+            let pt = Vector.interpolate(new Vector2(ax, ay), new Vector2(bx, by), inti.t);
+            if (Boolean(pt.x)) {
+                return pt;
+            } else {
+                console.log(pt);
+            }
+        }
+    },
+    ILTS: function (ax, ay, bx, by, verts) {
+        let vs = Shapes.shape.vertices.get(verts);
+        let pts = [];
+        for (var i = 0; i < vs.length; i++) {
+            let ci = i;
+            let di = (i + 1) % vs.length;
+            let c = vs[ci];
+            let d = vs[di];
+            let inti = this.ILTL(ax, ay, bx, by, c.x, c.y, d.x, d.y);
+            if (inti) {
+                pts.push(inti);
+            }
+        }
+        return pts;
+    },
+    LTS: function (ax, ay, bx, by, verts) {
+        let vs = Shapes.shape.vertices.get(verts);
+        let pts = [];
+        for (var i = 0; i < vs.length; i++) {
+            let ci = i;
+            let di = (i + 1) % vs.length;
+            let c = vs[ci];
+            let d = vs[di];
+            let inti = this.LTL(ax, ay, bx, by, c.x, c.y, d.x, d.y);
+            if (inti) {
+                pts.push(inti);
+            }
+        }
+        return pts;
+    },
+    STS: function (verts, verts2) {
+        let pts = [];
+        for (var i = 0; i < verts.length; i += 2) {
+            let ai = (i / 2);
+            let bi = (i / 2 + 1) % (verts.length / 2);
+            let ax = verts[ai * 2];
+            let ay = verts[ai * 2 + 1];
+            let bx = verts[bi * 2];
+            let by = verts[bi * 2 + 1];
+            pts.push(...this.LTS(ax, ay, bx, by, verts2));
+        }
+        return pts;
+    },
+    LTR: function (ax, ay, bx, by, rx, ry, w, h) {
+        let verts = Shapes.rect.vertices.get2(rx, ry, w, h);
+
+        return this.LTS(ax, ay, bx, by, verts);
+    },
+    ILTR: function (ax, ay, bx, by, rx, ry, w, h) {
+        let verts = Shapes.rect.vertices.get2(rx, ry, w, h);
+
+        return this.ILTS(ax, ay, bx, by, verts);
+    },
+    RTR: function (ax, ay, aw, ah, bx, by, bw, bh) {
+        let verts = Shapes.rect.vertices.get2(ax, ay, aw, ah);
+        let verts1 = Shapes.rect.vertices.get2(bx, by, bw, bh);
+        return this.STS(verts, verts1);
+    },
+    CTL: function (ax, ay, bx, by, cx, cy, r) {
+        let verts = Shapes.circle.vertices.get2(cx, cy, r);
+
+        return this.LTS(ax, ay, bx, by, verts);
+    },
+    CTC: function (ax, ay, ar, bx, by, br) {
+        let verts = Shapes.circle.vertices.get2(ax, ay, ar);
+        let verts1 = Shapes.circle.vertices.get2(bx, by, br);
+        return this.STS(verts, verts1);
+    }
+};
+Object.freeze(Intersection);
+function CartesianToBarycentric(p, a, b, c) {
+    let den = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+    let x1 = a.x, x2 = b.x, x3 = c.x, y1 = a.y, y2 = b.y, y3 = c.y, x = p.x, y = p.y;
+    let w1 = ((y2 - y3) * (x - x3) + (x3 - x2) * (y - y3)) / den;
+    let w2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / den;
+    let w3 = 1 - w1 - w2;
+    return [w1, w2, w3];
+}
+function PointInTriangle(p, a, b, c) {
+    let cp1 = Vector3D.normal2(p, a, b);
+    let cp2 = Vector3D.normal2(p, b, c);
+    let cp3 = Vector3D.normal2(p, c, a);
+    if (Vector.dot(cp2, cp1) < 0.0) {
+        return false;
+    }
+    if (Vector.dot(cp2, cp3) < 0.0) {
+        return false;
+    }
+    return true;
+}
+function sphereCast(ox, oy, oz, rx, ry, rz, cx, cy, cz, cr) {
+    let orig = createVector3(ox, oy, oz);
+    let dir = createVector3(rx, ry, rz);
+    let cv = createVector3(cx, cy, cz);
+    //orig.sub(cv);
+    ox -= cx;
+    oy -= cy;
+    oz -= cz;
+    let a = Vector.dot(dir, dir);
+    let b = 2 * Vector.dot(dir, orig);
+    let c = Vector.dot(orig, orig) - cr ** 2;
+    let eq = QuadraticFormula(a, b, c);
+    let arr = [];
+    for (var i = 0; i < eq.length; i++) {
+        if (eq[i] >= 0) {
+            //console.log(eq[i]);
+            let p = orig.copy().add(dir.copy().mult(eq[i]));
+            arr.push(p);
+        }
+    }
+    return arr;
+}
+function linePlaneIntersection(av, bv, af, bf, cf) {
+    let eq = getPlaneEq(af, bf, cf);
+    let a = eq[0];
+    let b = eq[1];
+    let c = eq[2];
+    let d = eq[3];
+    let t = (-a * av.x - b * av.y - c * av.z + d) / (a * bv.x + b * bv.y + c * bv.z);
+    //console.log(t);
+    let p = av.copy().add(bv.copy().mult(t));
+
+    return p;
+}
+function PlaneCast(av, bv, af, bf, cf) {
+    let eq = getPlaneEq(af, bf, cf);
+    let a = eq[0];
+    let b = eq[1];
+    let c = eq[2];
+    let d = eq[3];
+    let t = (-a * av.x - b * av.y - c * av.z + d) / (a * bv.x + b * bv.y + c * bv.z);
+    if (t >= 0) {
+        let p = av.copy().add(bv.copy().mult(t));
+        return p;
+    }
+}
+function RaycastFace(av, bv, af, bf, cf) {
+    //console.log(af, bf, cf);
+    let cast = linePlaneIntersection(av, bv, af, bf, cf);
+    if (cast && PointInTriangle(cast, af, bf, cf)) {
+        return cast;
+    }
+}
+function getPlaneEq(p, q, r) {
+    //console.log(p, q, r);
+    let a1 = Vector.sub(q, p);
+    let b1 = Vector.sub(r, p);
+    let norm = Vector3D.crossProduct(a1, b1);
+    let a = norm.x;
+    //console.log(a);
+    let b = norm.y;
+    let c = norm.z;
+    let d = a * q.x + b * q.y + c * q.z;
+    return [a, b, c, d];
+}
+function floorDiv(n, d) {
+    return floor(n / d);
+}
+function QuadraticFormula(a, b, c) {
+    let disc = b ** 2 - 4 * a * c;
+    if (disc < 0) return [];
+    let s1 = (-b + disc ** 0.5) / (2 * a);
+    if (disc == 0) return [s1];
+    if (disc > 0) {
+        let s2 = (-b - (disc ** 0.5)) / (2 * a);
+        return [s1, s2];
+    }
+    return [];
+}
+function sqrt(n) {
+    return n ** 0.5;
+}
 function avg(...ns) {
     let n = ArrayMath.number(ns);
     n /= ns.length;
@@ -894,11 +1255,11 @@ function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
         }
     }
 }
+function abs(n) {
+    return Math.abs(N);
+}
 const distance = {
     Vector: {
-        rect2: function (p, a, w, h) {
-            return distance.rect2(p.x, p.y, a.x, a.y, w, h);
-        },
         rect: function (p, a, w, h) {
             return distance.rect(p.x, p.y, a.x, a.y, w, h);
         },
@@ -911,13 +1272,10 @@ const distance = {
         circle: function (p, a, r) {
             return distance.circle(p.x, p.y, a.x, a.y, r);
         },
-        line2: function (a, b, p) {
-            return distance.line2(a.x, a.y, b.x, b.y, p.x, p.y);
-        },
         Infiniteline: function (a, b, p) {
             let bo = Vector.sub(b, a);
             let po = Vector.sub(p, a);
-            let prod = Vector.dotProduct(po, bo) / bo.mag();
+            let prod = Vector.dot(po, bo) / bo.mag();
             let pt = Vector.add(Vector.setMag(bo, prod), a)
             return {
                 point: pt,
@@ -929,7 +1287,7 @@ const distance = {
         line: function (a, b, p) {
             let bo = Vector.sub(b, a);
             let po = Vector.sub(p, a);
-            let prod = constraint(Vector.dotProduct(po, bo) / bo.mag(), 0, bo.mag());
+            let prod = constraint(Vector.dot(po, bo) / bo.mag(), 0, bo.mag());
             let pt = Vector.add(Vector.setMag(bo, prod), a)
             return {
                 point: pt,
@@ -937,76 +1295,38 @@ const distance = {
                 t: prod / bo.mag(),
                 normal: Vector.normal(a, b, p)
             };
+        },
+        line3d: function (a, b, p) {
+            let bo = Vector.sub(b, a);
+            let po = Vector.sub(p, a);
+            let prod = constraint(Vector.dot(po, bo) / bo.mag(), 0, bo.mag());
+            let pt = Vector.add(bo.copy().setMag(prod), a)
+            return {
+                point: pt,
+                dist: Vector.dist(p, pt),
+                t: prod / bo.mag()
+            };
         }
     },
     line: function (ax, ay, bx, by, px, py) {
         return this.Vector.line(createVector(ax, ay), createVector(bx, by), createVector(px, py));
     },
-    rect2: function (x, y, x1, y1, w, h) {
+    rect: function (x, y, x1, y1, w, h) {
         if (w < 0) {
-            x1 += w;
             w *= -1;
+            x1 -= w;
         }
         if (h < 0) {
-            y1 += h;
             h *= -1;
+            y1 -= h;
         }
         let A = createVector(x1, y1);
         let B = createVector(x1 + w, y1);
         let C = createVector(x1 + w, y1 + h);
         let D = createVector(x1, y1 + h);
         let d = distance.shape(x, y, A.x, A.y, B.x, B.y, C.x, C.y, D.x, D.y);
+        //console.log(d);
         return d;
-    },
-    rect: function (x, y, x1, y1, w, h) {
-        if (w < 0) {
-            x1 += w;
-            w *= -1;
-        }
-        if (h < 0) {
-            y1 += h;
-            h *= -1;
-        }
-        let A = createVector(x1, y1);
-        let B = createVector(x1 + w, y1);
-        let C = createVector(x1 + w, y1 + h);
-        let D = createVector(x1, y1 + h);
-        let E = createVector(x1 + w / 2, y1 + h / 2);
-        let K = createVector(x, y);
-        let P = Vector.sub(K, E);
-        let ang = P.heading();
-
-        let cornerA = Vector.sub(A, E).heading();
-        let cornerB = Vector.sub(B, E).heading();
-        let cornerC = Vector.sub(C, E).heading();
-        let cornerD = Vector.sub(D, E).heading();
-        //console.log(cornerA, cornerB, cornerC, cornerD);
-
-        if (ang >= cornerB || ang <= cornerC) {
-            let length = K.y - B.y;
-            length = constraint(length, 0, h);
-            P = B.copy();
-            P.y += length;
-        } else if (ang <= cornerB && ang >= cornerA) {
-            let length = K.x - A.x;
-            length = constraint(length, 0, w);
-            P = A.copy();
-            P.x += length;
-        } else if (ang >= cornerD && ang <= cornerA) {
-            let length = K.y - A.y;
-            length = constraint(length, 0, h);
-            P = A.copy();
-            P.y += length;
-        } else if (ang <= cornerD && ang >= cornerC) {
-            let length = K.x - D.x;
-            length = constraint(length, 0, w);
-            P = D.copy();
-            P.x += length;
-        }
-        return {
-            point: P,
-            dist: Vector.dist(P, K)
-        }
     },
     triangle: function () {
         // x, y, x1, y1, x2, y2, x3, y3 arguments needed
@@ -1020,79 +1340,33 @@ const distance = {
         let pt = Vector.add(Vector.sub(A, B).setMag(dst), B);
         return {
             point: pt,
-            dist: dst
-        }
-    },
-    line2: function (x1, y1, x2, y2, x3, y3) {
-        let A = createVector(x1, y1);
-        let B = createVector(x2, y2);
-        let C = createVector(x3, y3);
-        let D = Vector.sub(B, A);
-        let Dir = D.heading() + 90; // direction of raycasting
-        let Dst = (Vector.sub(A, C).mag() + Vector.sub(B, C).mag()) / 2; //length of raycasting
-        let A1 = Vector.sub(C, Vector.AngleToVector(Dir, Dst));
-        let B1 = Vector.add(C, Vector.AngleToVector(Dir, Dst));
-
-        let coll = lineIntersection(A.x, A.y, B.x, B.y, A1.x, A1.y, B1.x, B1.y);
-        let t = constraint(coll.t, 0, 1);
-        let pos = Vector.add(A, Vector.sub(B, A).mult(t));
-        //line(pos.x, pos.y, C.x, C.y);
-        return {
-            point: pos,
-            dist: Vector.dist(pos, C),
-            normal: Vector.normal(A, B, C)
+            dist: Math.abs(dst),
         }
     },
     InfiniteLine: function (x1, y1, x2, y2, x3, y3) {
         return this.Vector.Infiniteline(createVector(x1, y1), createVector(x2, y2), createVector(x3, y3));
     },
-    shape: function () {
-        let xPositions = [];
-        let yPositions = [];
-        for (let i = 2; i < arguments.length; i += 2) {
-            xPositions.push(arguments[i]);
-            yPositions.push(arguments[i + 1]);
-        }
+    shape: function (x, y, ...args) {
+        let ps = Vector.fromArray(...args);
         let pt;
         let length = Infinity;
         let norm;
-        for (let i = 0; i < xPositions.length - 1; i++) {
-            let coll = this.line(xPositions[i], yPositions[i], xPositions[i + 1], yPositions[i + 1], x, y);
+        for (let i = 0; i < ps.length; i++) {
+            let ai = i;
+            let bi = (i + 1) % ps.length;
+            let coll = this.line(ps[ai].x, ps[ai].y, ps[bi].x, ps[bi].y, x, y);
             if (coll.dist < length) {
+                //console.log(coll);
                 length = coll.dist;
                 pt = coll.point;
                 norm = coll.normal;
             }
-        }
-        let coll = this.line(xPositions[xPositions.length - 1], yPositions[yPositions.length - 1], xPositions[0], yPositions[0], x, y);
-        if (coll.dist < length) {
-            length = coll.dist;
-            pt = coll.point;
-            norm = coll.normal;
         }
         return {
             dist: length,
             point: pt,
             normal: norm
         }
-    },
-    rect3: function (x, y, x1, y1, w, h) {
-        if (w < 0) {
-            x1 += w;
-            w *= -1;
-        }
-        if (h < 0) {
-            y1 += h;
-            h *= -1;
-        }
-        let A = createVector(x1, y1);
-        let B = createVector(x1 + w, y1 + h);
-        let C = createVector(x, y);
-        let D = Vector.min(Vector.max(C, A), B)
-        return {
-            point: D,
-            dist: Vector.dist(D, C)
-        };
     },
 
 }
@@ -1178,6 +1452,96 @@ const Between = {
 };
 Object.freeze(Between);
 const RayCast = {
+    farthest: {
+        Vector: {
+            shape: function (origin, dir, ...verts) {
+                return RayCast.farthest.shape(origin.x, origin.y, dir.x, dir.y, ...Vector.array(...verts));
+            },
+            rect: function (origin, dir, a, bx, by) {
+                return RayCast.farthest.rect(origin.x, origin.y, dir.x, dir.y, a.x, a.y, bx, by);
+            },
+            rect1: function (origin, dir, ax, ay, bx, by) {
+                return this.rect(origin.x, origin.y, dir.x, dir.y, createVector(ax, ay), bx, by);
+            },
+            square: function (origin, dir, a, b) {
+                return this.rect(origin, dir, a, b, b);
+            },
+            square1: function (origin, dir, ax, ay, b) {
+                return this.rect(origin, dir, createVector(ax, ay), b, b);
+            },
+            circle: function (o, r, c, rad) {
+                return RayCast.farthest.circle(o.x, o.y, r.x, r.y, c.x, c.y, rad);
+            }
+
+        },
+        rect: function (origX, origY, dirX, dirY, ax, ay, bx, by) {
+            return this.shape(origX, origY, dirX, dirY, ax, ay, ax + bx, ay, ax + bx, ay + by, ax, ay + by);
+        },
+        shape: function (originX, originY, dirX, dirY, ...args) {
+            let origin = createVector(originX, originY);
+            let dir = createVector(dirX, dirY);
+            let verts = [];
+            for (var i = 0; i < args.length; i += 2) {
+                verts.push(createVector(args[i], args[i + 1]));
+            }
+
+            let finalCast = {
+                intersected: false
+            };
+            var len = 0;
+            for (var i = 0; i < verts.length; i++) {
+                let a = verts[i];
+                let b = verts[(i + 1) % verts.length];
+                let cast = RayCast.Vector.line(origin, dir, a, b);
+                if (cast.intersected) {
+                    let d = Vector.dist(origin, cast.point);
+                    if (d > len) {
+                        len = d;
+                        finalCast = cast;
+                    }
+                }
+            }
+            return finalCast;
+        },
+        square: function (origX, origY, dirX, dirY, ax, ay, b) {
+            return this.rect(origX, origY, dirX, dirY, ax, ay, b, b);
+        },
+        circle: function (ox, oy, rx, ry, cx, cy, cr) {
+            let o = createVector(ox, oy);
+            ox -= cx;
+            oy -= cy;
+            let a = rx ** 2 + ry ** 2;
+            let b = 2 * ox * rx + 2 * oy * ry;
+            let c = ox ** 2 + oy ** 2 - cr ** 2;
+            let eq = QuadraticFormula(a, b, c);
+            let len = I0;
+            let pt;
+            let n;
+            for (var i = 0; i < eq.length; i++) {
+                if (eq[i] >= 0) {
+                    let x = cx + ox + rx * eq[i];
+                    let y = cy + oy + ry * eq[i];
+                    let p = createVector(x, y);
+                    let d = Vector.dist(p, o);
+                    if (d > len) {
+                        len = d;
+                        pt = p;
+                        n = Vector.sub(pt, new Vector2(cx, cy)).normalize();
+                    }
+                }
+            }
+            if (pt) {
+                return {
+                    intersected: true,
+                    point: pt,
+                    normal: n
+                };
+            }
+            return {
+                intersected: false
+            };
+        }
+    },
     v2: {
         Vector: {
             shape: function (origin, dir, ...verts) {
@@ -1249,6 +1613,7 @@ const RayCast = {
             return cast;
         }
     },
+
     Vector: {
         line: function (rs, r, a, b) {
             return RayCast.line(rs.x, rs.y, r.x, r.y, a.x, a.y, b.x, b.y);
@@ -1363,6 +1728,24 @@ function factorize(no) {
     factors.push(no);
     return factors;
 }
+function circleLineIntersection(ox, oy, rx, ry, cx, cy, cr) {
+    ox -= cx;
+    oy -= cy;
+    let a = rx ** 2 + ry ** 2;
+    let b = 2 * ox * rx + 2 * oy * ry;
+    let c = ox ** 2 + oy ** 2 - cr ** 2;
+    let eq = QuadraticFormula(a, b, c);
+    let arr = [];
+    for (var i = 0; i < eq.length; i++) {
+        if (eq[i] >= 0) {
+            let x = cx + ox + rx * eq[i];
+            let y = cy + oy + ry * eq[i];
+            let p = createVector(x, y);
+            arr.push(p);
+        }
+    }
+    return arr;
+}
 function factorial(no) {
     let fac = 1;
     for (var i = 1; i <= no; i++) {
@@ -1378,9 +1761,51 @@ function primeFactors(no) {
 function floor(no, floore = 1) {
     return no - (no % floore);
 }
+function lineIntersection2(ax, ay, bx, by, cx, cy, dx, dy) {
+    let eq1 = getLineEq(ax, ay, bx, by);
+    let eq2 = getLineEq(cx, cy, dx, dy);
+    let a1 = eq1[0];
+    let b1 = eq1[1];
+    let c1 = eq1[2];
+    let a2 = eq2[0];
+    let b2 = eq2[1];
+    let c2 = eq2[2];
+
+    let den = a1 * b2 - a2 * b1;
+    let x = (b2 * c1 - b1 * c2) / den;
+    let y = (a1 * c2 - a2 * c1) / den;
+    circle(x, y, 5);
+    //console.log(x, y, den);
+}
+function getLineEq(ax, ay, bx, by) {
+    let a = by - ay;
+    let b = ax - bx;
+    let lcm = HCF(a, b);
+    //console.log(lcm);
+    a /= lcm;
+    b /= lcm;
+    //bx /= lcm;
+    //by /= lcm;
+    let c = a * bx + b * by;
+    //console.log(a * bx + b * by, a * bx );
+    return [a, b, c];
+}
 function HCF(no1, no2) {
     let factors1 = primeFactors(no1);
+    if (no1 < 0) {
+        factors1 = [-1];
+        no1 = no1 * -1;
+        factors1.push(...primeFactors(no1));
+    }
+    //console.log(factors1);
     let factors2 = primeFactors(no2);
+    if (no2 < 0) {
+        factors2 = [-1];
+        no2 = no2 * -1;
+        factors2.push(...primeFactors(no2));
+    }
+    //console.log(no2);
+    //console.log(factors2);
     let lcmss = [1];
     for (var i = 0; i < factors1.length; i++) {
         for (var j = 0; j < factors2.length; j++) {
@@ -1662,7 +2087,7 @@ const Shapes = {
                     let mnx = floor(min(...o2.x), res);
                     let mxx = floor(max(...o2.x), res);
                     //console.log(mnx, mxx, ...o2.x);
-                    for (var x = mnx; x < mxx; x += res) {
+                    for (var x = mnx; x <= mxx; x += res) {
                         func(x, y);
                     }
                 }
@@ -1756,10 +2181,88 @@ const Shapes = {
 // #endregion
 
 // #region color
+function RGBToHSL(r, g, b, a = 255) {
+    // Make r, g, and b fractions of 1
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    // Find greatest and smallest channel values
+    let cmin = Math.min(r, g, b),
+        cmax = Math.max(r, g, b),
+        delta = cmax - cmin,
+        h = 0,
+        s = 0,
+        l = 0;
+    if (delta == 0)
+        h = 0;
+    // Red is max
+    else if (cmax == r)
+        h = ((g - b) / delta) % 6;
+    // Green is max
+    else if (cmax == g)
+        h = (b - r) / delta + 2;
+    // Blue is max
+    else
+        h = (r - g) / delta + 4;
+
+    h = Math.round(h * 60);
+
+    // Make negative hues positive behind 360°
+    if (h < 0)
+        h += 360;
+    l = (cmax + cmin) / 2;
+
+    // Calculate saturation
+    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+
+    // Multiply l and s by 100
+    s = +(s * 100).toFixed(1);
+    l = +(l * 100).toFixed(1);
+    return [h / 360 * 255, s / 100 * 255, l / 100 * 255, a];
+}
+function HSLToRGB(h, s, l, a = 255) {
+    h = h / 255 * 359;
+    // Must be fractions of 1
+    s /= 255;
+    l /= 255;
+
+    let c = (1 - Math.abs(2 * l - 1)) * s,
+        x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+        m = l - c / 2,
+        r = 0,
+        g = 0,
+        b = 0;
+
+    if (0 <= h && h < 60) {
+        r = c; g = x; b = 0;
+    } else if (60 <= h && h < 120) {
+        r = x; g = c; b = 0;
+    } else if (120 <= h && h < 180) {
+        r = 0; g = c; b = x;
+    } else if (180 <= h && h < 240) {
+        r = 0; g = x; b = c;
+    } else if (240 <= h && h < 300) {
+        r = x; g = 0; b = c;
+    } else if (300 <= h && h < 360) {
+        r = c; g = 0; b = x;
+    }
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+
+    return [r, g, b, a];
+}
 var fl = true;
 var st = true;
 function brightness(rgb) {
-    if (typeof (rgb) == "object") return avg(...rgb.slice(0, 3));
+    if (typeof rgb == "object") {
+        rgb = rgb.slice(0, 3)
+        let mn = min(...rgb);
+        let mx = max(...rgb);
+        //console.log(mn);
+        return avg(mn, mx);
+    }
 }
 function addAlpha(col, al, mode) {
     if ("RGB" == mode) {
@@ -1779,39 +2282,87 @@ for (var i = 0; i < 255; i++) {
     var hex = (alpha + 0x10000).toString(16).substr(-2).toUpperCase();
     alphaValues.unshift(hex);
 }
+function rgb(...args) {
+    if (args.length == 1) {
+        args[0] = constraint(args[0], 0, 255);
+        return "rgba(" + args[0] + ", " + args[0] + ", " + args[0] + ", 1)";
+    } else if (args.length == 2) {
+        args[0] = constraint(args[0], 0, 255);
+        args[1] = constraint(args[1], 0, 255);
+        return "rgba(" + args[0] + ", " + args[0] + ", " + args[0] + ", " + args[1] / 255 + ")";
+    } else if (args.length == 3) {
+        args[0] = constraint(args[0], 0, 255);
+        args[1] = constraint(args[1], 0, 255);
+        args[2] = constraint(args[2], 0, 255);
+        return "rgba(" + args[0] + ", " + args[1] + ", " + args[2] + ", 1)";
+    } else if (args.length == 4) {
+        args[0] = constraint(args[0], 0, 255);
+        args[1] = constraint(args[1], 0, 255);
+        args[2] = constraint(args[2], 0, 255);
+        args[3] = constraint(args[3], 0, 255);
+        return "rgba(" + args[0] + ", " + args[1] + ", " + args[2] + ", " + args[3] / 255 + ")";
+    }
+}
 function color() {
     args = filterArray(arguments);
     if (typeof args[0] == "string") {
         return args[0];
     }
-    if (Canvas.colorMode == "RGB") {
+    if (Canvas.colorMode == RGB) {
+        if (args[0] instanceof Array) {
+            return color(...args[0]);
+        }
         if (args.length == 1) {
             args[0] = constraint(args[0], 0, 255);
-            return "rgba(" + args[0] + ", " + args[0] + ", " + args[0] + ", 1)";
+            return [args[0], args[0], args[0], 255];
         } else if (args.length == 2) {
             args[0] = constraint(args[0], 0, 255);
             args[1] = constraint(args[1], 0, 255);
-            return "rgba(" + args[0] + ", " + args[0] + ", " + args[0] + ", " + ((args[1] > 1) ? args[1] / 255 : args[1]) + ")";
+            return [args[0], args[0], args[0], args[1]];
         } else if (args.length == 3) {
             args[0] = constraint(args[0], 0, 255);
             args[1] = constraint(args[1], 0, 255);
             args[2] = constraint(args[2], 0, 255);
-            return "rgba(" + args[0] + ", " + args[1] + ", " + args[2] + ", 1)";
+            return [args[0], args[1], args[2], 255];
         } else if (args.length == 4) {
             args[0] = constraint(args[0], 0, 255);
             args[1] = constraint(args[1], 0, 255);
             args[2] = constraint(args[2], 0, 255);
             args[3] = constraint(args[3], 0, 255);
-            return "rgba(" + args[0] + ", " + args[1] + ", " + args[2] + ", " + ((args[3] > 1) ? args[3] / 255 : args[3]) + ")";
+            return [args[0], args[1], args[2], args[3]];
+        }
+    } else if (Canvas.colorMode == HSL) {
+        if (args.length == 1) {
+            return "hsla(" + args[0] / 255 * 360 + ", 100%, 50%, 1)";
+        } else if (args.length == 2) {
+            return "hsla(" + args[0] / 255 * 360 + ", 100%, 50%, " + args[1] / 255+ ")";
+        }else if (args.length == 3) {
+            return "hsla(" + args[0] / 255 * 360 + ", " + args[1] / 2.55 + "%, " + args[2] / 2.55 + "%, 1)";
+        } else if (args.length == 4) {
+            return "hsla(" + args[0] / 255 * 360 + ", " + args[1] / 2.55 + "%, " + args[2] / 2.55 + "%," + args[3] / 255 + ")";
         }
     }
 }
-function splitRGB(rgb) {
-    let col = rgb.split(", ");
-    let r = parseFloat(col[0].split("rgba(")[1]);
-    let g = parseFloat(col[1]);
-    let b = parseFloat(col[2]);
-    let a = parseFloat(col[3].slice(0, col[3].length - 1)) * 255;
+function HSVtoHSL(h, sv, v, a = 255) {
+    sv = sh / 255;
+    v = v / 255;
+    let l = v * (1 - sv / 2);
+    let sl = 0;
+    if (!(l == 0) && !(l == 1)) {
+        sl = (v - l) / (min(l, 1 - l));
+    }
+    return [h, sl * 255, l * 255, a];
+}
+function splitRGB(rgba) {
+    //let col = rgb.split(", ");
+    //let r = parseFloat(col[0].split("rgba(")[1]);
+    //let g = parseFloat(col[1]);
+    //let b = parseFloat(col[2]);
+    //let a = parseFloat(col[3].slice(0, col[3].length - 1)) * 255;
+    let r = rgba[0];
+    let g = rgba[1];
+    let b = rgba[2];
+    let a = rgba[3];
     return {
         r: r,
         g: g,
@@ -1821,7 +2372,7 @@ function splitRGB(rgb) {
             return color(r * t, g * t, b * t, a);
         },
         string: function () {
-            return color(r, g, b, a);
+            return rgb(r, g, b, a);
         }
     };
 }
@@ -1850,7 +2401,7 @@ const Colors = {
         return col;
     },
     interpolate: function (a, b, t) {
-        return Colors.weighted(a, t, b, 1 - t);
+        return Colors.weighted(a, 1 - t, b, t);
      },
     avg: function (...cols) {
         let col = this.add(...cols);
@@ -1860,17 +2411,13 @@ const Colors = {
 };
 const Color = {
     mult: function (col, t) {
-        if (col.includes("rgba")) {
-            let c = splitRGB(col);
-            return c.mult(t);
-        }
+        let c = splitRGB(col);
+        return c.mult(t);
     },
     setAlpha: function (col, alpha) {
-        if (col.includes("rgba")) {
-            let c = splitRGB(col);
-            c.a = alpha;
-            return c.string();
-        }
+        let c = splitRGB(col);
+        c.a = alpha;
+        return c.string();
     },
     RandomColorBetween: function (...args) {
         let arr = [];
@@ -1893,6 +2440,15 @@ const Color = {
 }
 function stroke() {
     var col = color(...arguments);
+    if (col instanceof Array) {
+        if (Canvas.colorMode == RGB) {
+            //console.log(rgb);
+            col = rgb(...col);
+        }// else if (Canvas.colorMode == hsl) {
+        //    col = hsl(...col);
+        //}
+
+    }
     ctx.strokeStyle = col;
     Canvas.strokeStyle = col;
 }
@@ -1902,6 +2458,14 @@ function nofill() {
 }
 function fill() {
     var col = color(arguments[0], arguments[1], arguments[2], arguments[3]);
+    if (col instanceof Array) {
+        if (Canvas.colorMode == RGB) {
+            col = rgb(...col);
+        }// else if (Canvas.colorMode == hsl) {
+        //    col = hsl(...col);
+        //}
+
+    }
     fl = true;
     ctx.fillStyle = col;
     Canvas.fillStyle = col;
@@ -1925,12 +2489,20 @@ function create2DArray(cols, rows, fillVal) {
     return arr;
 }
 function includes(arr, item) {
-    for (var i = 0; i < arr.length; i++) {
-        if (arr[i] == item) {
-            return true;
+    let farr = arr.filter(function (it) {
+        if (it == item) {
+            return item;
         }
-    }
-    return false;
+    });
+    return (farr.length > 0);
+}
+function includesVector(arr, item) {
+    let farr = arr.filter(function (it) {
+        if (it.x == item.x && it.y == item.y) {
+            return item;
+        }
+    });
+    return (farr.length > 0);
 }
 function fillArray(len, ...fls) {
     let arr = new Array(len);
@@ -2127,7 +2699,7 @@ function indicesOf(arr, val) {
 const Equation = {
     line: function (x1, y1, x2, y2) {
         if (x2 < x1) {
-            console.log(x2, y2);
+            //console.log(x2, y2);
             let temp = [x1, y1];
             [x1, y1] = [x2, y2];
             [x2, y2] = temp;
@@ -2374,7 +2946,7 @@ const Canvas = {
     lineCap: "butt",
     strokeStyle: undefined,
     fillStyle: undefined,
-    colorMode: "RGB",
+    colorMode: RGB,
     xo: 0,
     yo: 0,
     ym: 1,
@@ -2541,8 +3113,9 @@ function pixelDensity(val) {
         var w = c.width, h = c.height;
         c.setAttribute('width', w * val);
         c.setAttribute('height', h * val);
-        c.style.width = w;
-        c.style.height = h;
+        //console.log(w);
+        c.style.width = w + "px";
+        c.style.height = h + "px";
         ctx.scale(val, val);
         backGround(255);
     } else {
@@ -2574,109 +3147,6 @@ class Turtle {
     jumpTo(x, y) {
         this.x = x;
         this.y = y;
-    }
-}
-// #endregion
-
-// #region Misc
-let windowWidth = window.innerWidth;
-let windowHeight = window.innerHeight;
-function download(filename, text) {
-    var element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-function downloadCanvasImage() {
-    var link = document.createElement('a');
-    link.download = 'Canvas_Image.png';
-    link.href = ctx.canvas.toDataURL();
-    link.click();
-}
-function print(...message) {
-    console.log(...message);
-}
-{
-    let storageTypes = [];
-    let suffix = "_ItemType"
-    function storeItem(key, item) {
-        let type = typeof item;
-        if (type == "object") {
-            for (var i = 0; i < storageTypes.length; i++) {
-                if (item instanceof storageTypes[i].type) {
-                    type = storageTypes[i].name;
-                    localStorage.setItem(key + suffix, type);
-                    break;
-                }
-            }
-        }
-        localStorage.setItem(key, JSON.stringify(item));
-    }
-    function getItem(key) {
-        let type = localStorage.getItem(key + suffix);
-        let item = JSON.parse(localStorage.getItem(key));
-        if (item != null) {
-            for (var i = 0; i < storageTypes.length; i++) {
-                if (type == storageTypes[i].name) {
-                    console.log(item);
-                    item = storageTypes[i].parse(...Object.values(item));
-                }
-            }
-        }
-        return item;
-    }
-    function removeItem(key) {
-        localStorage.removeItem(key);
-        localStorage.removeItem(key + suffix);
-    }
-    function setStorageItemType(name, type, parse = (...args) => new type(...args)) {
-        storageTypes.push({
-            name: name,
-            type: type,
-            parse: parse
-        });
-    }
-    setStorageItemType("Vector2", Vector2);
-}
-var loadingResources = 0;
-function loadFile(url, callback) {
-    loadingResources++;
-    let request = new XMLHttpRequest();
-    //console.log(request);
-    request.open("GET", url, true);
-    request.onload = function () {
-        if (request.status < 200 || request.status > 299) {
-            callback("Error: HTTP Status " + request.status + " on resource " + url);
-        } else {
-            callback(null, request.responseText);
-        }
-        loadingResources--;
-        checkForStart();
-    };
-    request.send();
-    return request;
-}
-class Event1 {
-    bound;
-    constructor() {
-        this.bound = [];
-    }
-    bind(func) {
-        this.bound.push(func);
-    }
-    Fire(...args) {
-        for (var i = 0; i < this.bound.length; i++) {
-            this.bound[i](...args);
-        }
-    }
-    getFire() {
-        let ths = this;
-        return (...args) => {
-            ths.Fire(...args);
-        }
     }
 }
 // #endregion
@@ -2861,7 +3331,7 @@ class Event1 {
             this.events = [];
         }
         get value() {
-            console.log(this.slider.value);
+            //console.log(this.slider.value);
             return parseFloat(this.slider.value);
         }
         set value(value) {
@@ -2882,9 +3352,139 @@ class Event1 {
 // #endregion
 
 // #region Image
+class camera {
+    static video;
+    static set res(re) {
+        camera.video.style.width = re + "px";
+        camera.video.style.height = re + "px";
+    }
+    static Init() {
+        const video = document.createElement("video");
+        video.setAttribute("playsinline", "");
+        video.setAttribute("autoplay", "");
+        video.setAttribute("muted", "");
+        video.style.width = 200 + "px";
+        video.style.height = 200 + "px";
+
+        const facingMode = "user";
+        const constraints = {
+            audio: false,
+            video: {
+                facingMode
+            }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
+            video.srcObject = stream;
+        });
+        document.body.appendChild(video);
+        camera.video = video;
+        camera.image = new Image2(camera.video);
+    }
+    static image;
+}
+var pixels = [];
+class Image2 {
+    static canvas;
+    static ctx;
+    constructor(im) {
+        this.width = im.width;
+        this.height = im.height;
+        this.image = im;
+    }
+    loadPixels() {
+        this.pixels = [];
+        canvas2.width = this.width;
+        canvas2.height = this.height;
+        ctx2.drawImage(this.image, 0, 0);
+        this.data = ctx2.getImageData(0, 0, this.width, this.height);
+        for (var i = 0; i < this.data.data.length; i += 4) {
+            let col = this.data.data.slice(i, i + 4);
+            if (Canvas.colorMode == HSL) {
+                col = RGBToHSL(...col);
+            }
+            this.pixels.push(col);
+        }
+    }
+    filter(f) {
+        this.loadPixels();
+        for (var i = 0; i < this.pixels.length; i++) {
+            let p = this.pos(i);
+            this.pixels[i] = f(p.x, p.y, i);
+        }
+        this.updatePixels();
+    }
+    pos(ind) {
+        let x = ind % this.width;
+        let y = (ind - x) / this.width;
+        return new Vector2(x, y);
+    }
+    index(x, y) {
+        return y * this.width + x;
+    }
+    grayScale() {
+        this.loadPixels();
+        for (var i = 0; i < this.pixels.length; i++) {
+            //let dark = avg(...this.pixels[i].slice(0, 3));
+            let dark = brightness(this.pixels[i]);
+            this.pixels[i] = [dark, dark, dark, 255];
+        }
+        this.updatePixels();
+    }
+    updatePixels() {
+        let pixs = [];
+        for (var i = 0; i < this.pixels.length; i++) {
+            let col = this.pixels[i];
+            if (Canvas.colorMode == HSL) {
+                col = HSLToRGB(...col);
+            }
+            pixs.push(...col);
+        }
+        setArray(this.data.data, pixs);
+        canvas2.width = this.width;
+        canvas2.height = this.height;
+        ctx2.putImageData(this.data, 0, 0);
+        this.image.src = ctx2.canvas.toDataURL();
+        //console.log(this.image);
+    }
+    onload(func) {
+        var ths = this;
+        this.image.onload = function () {
+            //console.log(ths.image);
+            ths.image.onload = function () { };
+            func(ths);
+        };
+    }
+}
 {
     var canvas2 = document.createElement("canvas");
     var ctx2 = canvas2.getContext("2d");
+    function loadPixels() {
+        let data = ctx.getImageData(0, 0, CanvasWidth, CanvasHeight);
+        pixels = [];
+        for (var i = 0; i < data.data.length; i += 4) {
+            let arr = data.data.slice(i, i + 4);
+            if (Canvas.colorMode == HSL) {
+                arr = RGBToHSL(...arr);
+            }
+            //console.log(arr);
+            pixels.push(arr);
+        }
+        Canvas.data = data;
+    }
+    function updatePixels() {
+        setArray(Canvas.data, joinArrays(pixels));
+        let pixs = [];
+        for (var i = 0; i < pixels.length; i++) {
+            let arr = pixels[i];
+            if (Canvas.colorMode == HSL) {
+                arr = HSLToRGB(...arr);
+            }
+            pixs.push(...arr);
+        }
+        setArray(Canvas.data.data, pixs);
+        ctx.putImageData(Canvas.data, 0, 0);
+    }
     function image(image, ...args) {
         //args[0].crossOrigin = "";
         ctx.drawImage(image.image, ...args);
@@ -2898,17 +3498,32 @@ class Event1 {
         img.src = ctx.canvas.toDataURL();
         return img;
     }
-    function createImage(w, h) {
-        return new CImage(w, h);
+    function createImage(w, h, cb) {
+        canvas2.width = w;
+        canvas2.height = h;
+        let img = new Image(w, h);
+        ctx2.fillStyle = color(0, 0, 0, 0);
+        ctx2.fillRect(0, 0, w, h);
+        img.src = ctx2.canvas.toDataURL();
+        let im = new Image2(img);
+        img.onload = function () {
+            img.onload = () => { };
+            if (cb) {
+                cb(im);
+            }
+            loadingResources--;
+            checkForStart();
+        };
+        return im;
     }
     function popImage() {
         ctx.drawImage(pushedImages.pop());
     }
     function loadImage(name, width, height, cb) {
+        loadingResources++;
         var myImage = new Image();
         myImage.src = name;
         let im = new Image2(myImage);
-        loadingResources++;
         myImage.onload = function () {
             myImage.onload = () => { };
             im.width = myImage.width;
@@ -2928,67 +3543,9 @@ class Event1 {
         }
         return im;
     }
+    Image2.canvas = canvas2;
+    Image2.ctx = ctx2;
 }
-    class Image2 {
-        constructor(im) {
-            this.width = im.width;
-            this.height = im.height;
-            this.image = im;
-        }
-        loadPixels() {
-            this.pixels = [];
-            canvas2.width = this.width;
-            canvas2.height = this.height;
-            ctx2.drawImage(this.image, 0, 0);
-            //console.log(this.width, this.height);
-            this.data = ctx2.getImageData(0, 0, this.width, this.height);
-            //this.pixels = this.data.data;
-            for (var i = 0; i < this.data.data.length; i += 4) {
-                this.pixels.push(this.data.data.slice(i, i + 4));
-            }
-        }
-        filter(f) {
-            this.loadPixels();
-            for (var i = 0; i < this.pixels.length; i++) {
-                let p = this.pos(i);
-                this.pixels[i] = f(p.x, p.y, i);
-            }
-            this.updatePixels();
-        }
-        pos(ind) {
-            let x = ind % this.width;
-            let y = (ind - x) / this.width;
-            return new Vector2(x, y);
-        }
-        index(x, y) {
-            return y * this.width + x;
-        }
-        grayScale() {
-            this.loadPixels();
-            for (var i = 0; i < this.pixels.length; i++) {
-                let dark = avg(...this.pixels[i].slice(0, 3));
-                this.pixels[i] = [dark, dark, dark, 255];
-            }
-            this.updatePixels();
-        }
-        updatePixels() {
-            let pixs = joinArrays(this.pixels);
-            setArray(this.data.data, pixs);
-            canvas2.width = this.width;
-            canvas2.height = this.height;
-            ctx2.putImageData(this.data, 0, 0);
-            this.image.src = ctx2.canvas.toDataURL();
-            //console.log(this.image);
-        }
-        onload(func) {
-            var ths = this;
-            this.image.onload = function () {
-                //console.log(ths.image);
-                ths.image.onload = function () { };
-                func(ths);
-            };
-        }
-    }
 function joinArrays(arrs) {
     let arr = [];
     for (var i = 0; i < arrs.length; i++) {
@@ -3009,6 +3566,166 @@ function setArray(arr1, arr2) {
 
 let gizmos = [];
 let gizmoSelected = false;
+class Button {
+    id;
+
+    size;
+
+    shape;
+
+    selected;
+
+    hovered;
+
+    name;
+
+    stateChanged;
+
+    hoveredColor;
+
+    hoveredColor2;
+
+    normalColor;
+
+    clickedColor;
+
+    onClick;
+
+    static gizmos = [];
+    static update() {
+        for (var i = Button.gizmos.length - 1; i >= 0; i--) {
+            let gizmo = Button.gizmos[i];
+            if (gizmo.selfUpdate) {
+                gizmo.update();
+            }
+        }
+    }
+    static draw() {
+        for (var i = 0; i < Button.gizmos.length; i++) {
+            let gizmo = Button.gizmos[i];
+            if (gizmo.selfDraw) {
+                gizmo.draw();
+            }
+        }
+    }
+    constructor(x, y, col = color(0, 255, 0)) {
+        this.size = [];
+        this.event = new Event1();
+        this.offset = createVector();
+        this.size[0] = 10;
+        this.shape = GizmoShapes.circle;
+        this.position = createVector(x, y);
+        this.selfUpdate = true;
+        this.selfDraw = true;
+        this.id = Gizmo2.gizmos.length;
+        Button.gizmos.push(this);
+        this.setColor(col);
+        this.setShape(GizmoShapes.circle, 10);
+        this.name = "";
+        this.nameSize = 5 * this.size[0];
+    }
+    setName(nm) {
+        this.name = nm;
+    }
+    setShape(shape, ...sizes) {
+        if (shape == GizmoShapes.square) {
+            this.offset = createVector(-sizes[0] / 2, -sizes[0] / 2);
+        } else if (shape == GizmoShapes.rect) {
+            this.offset = createVector(-sizes[0] / 2, -sizes[1] / 2);
+        } else if (shape == GizmoShapes.circle) {
+            this.offset = createVector(0, 0);
+        }
+        this.size = [...sizes];
+        this.shape = shape;
+    }
+    getHoveredInfo() {
+        if (this.shape == GizmoShapes.circle) {
+            return (Vector.dist(Vector.add(this.position, this.offset), mouse) <= this.size[0]);
+        } else if (this.shape == GizmoShapes.square) {
+            let vec = Vector.add(this.position, this.offset);
+            return Between.square(vec, this.size[0], mouse);
+        } else if (this.shape == GizmoShapes.rect) {
+            let vec = Vector.add(this.position, this.offset);
+            return Between.rect(vec, this.size[0], this.size[1], mouse);
+        }
+        return false;
+    }
+    setColor(col) {
+        let col2 = splitRGB(col);
+        this.normalColor = col;
+        this.hoveredColor = col2.mult(0.85);
+        this.hoveredColor2 = col2.mult(0.85);
+        this.clickedColor = col2.mult(0.7);
+    }
+    setNormalColor(col) {
+        let col2 = splitRGB(col);
+        this.normalColor = col;
+        this.hoveredColor = col2.mult(0.85);
+    }
+    setSelectedColor(col) {
+        let col2 = splitRGB(col);
+        this.clickedColor = col;
+        this.hoveredColor2 = col2.mult(0.85);
+    }
+    destroy() {
+        Button.gizmos.splice(this.id, 1);
+        for (var i = this.id; i < Button.gizmos.length; i++) {
+            Button.gizmos[i].id--;
+        }
+        return this;
+    }
+    update() {
+        this.hovered = this.getHoveredInfo();
+        if (mousePressed) {
+            if (!this.stateChanged && this.hovered) {
+                this.selected = true;
+                if (this.onClick) {
+                    this.onClick();
+                }
+                this.event.Fire();
+                this.stateChanged = true;
+            } else {
+                this.selected = false;
+            }
+        } else {
+            this.stateChanged = false;
+        }
+    }
+    bind(func) {
+        this.event.bind(func);
+    }
+    draw() {
+        saveColor();
+        noStroke();
+        if (this.selected && this.hovered) {
+            fill(this.hoveredColor2);
+        } else if (this.selected) {
+            fill(this.clickedColor);
+        } else if (this.hovered) {
+            fill(this.hoveredColor);
+            //console.log("ok");
+        } else {
+            fill(this.normalColor);
+        }
+        //fill(0);
+        this.drawShape();
+        if (this.hovered) {
+            textSize(this.nameSize);
+            text(this.name, this.position.x, this.position.y);
+        }
+        loadColor();
+
+    }
+    drawShape() {
+        if (this.shape == GizmoShapes.circle) {
+            circle(this.position.x + this.offset.x, this.position.y + this.offset.y, this.size[0]);
+        } else if (this.shape == GizmoShapes.square) {
+            rect(this.position.x + this.offset.x, this.position.y + this.offset.y, this.size[0], this.size[0]);
+        } else if (this.shape == GizmoShapes.rect) {
+            rect(this.position.x + this.offset.x, this.position.y + this.offset.y, this.size[0], this.size[1]);
+        }
+    }
+}
 class Gizmo {
     static gizmos = [];
     static update() {
@@ -3028,21 +3745,19 @@ class Gizmo {
         }
     }
     id;
-    selected;
-    hovered;
-    size = [];
-    parent;
-    children = [];
     shape;
-    mouseOffset;
-    lastPosition;
-
+    parent;
+    hovered;
+    selected;
     snapX = 0;
     snapY = 0;
-
+    size = [];
+    mouseOffset;
+    lastPosition;
+    children = [];
+    snapped = false;
     rotatingChildren = [];
 
-    snapped = false;
     setParent(par, rotate = false) {
         par.children.push(this);
         this.parent = par;
@@ -3068,18 +3783,29 @@ class Gizmo {
         this.setColor(col);
         Gizmo.gizmos.push(this);
     }
-    updatePosition(offset, ...notUP) {
-        this.position.add(offset);
-        let off = Vector.sub(this.position, this.lastPosition);
-        for (var i = 0; i < this.children.length; i++) {
-            let child = this.children[i];
-            //console.log(!includes());
-            if (child != this.parent && !includes(notUP, child)) {
-                child.updatePosition(offset, ...notUP, this);
-            }
-        }
-        this.lastPosition = this.position;
+    getPosition() {
+        return Vector.add(this.position, this.getParentPosition());
     }
+    getParentPosition() {
+        if (this.parent) {
+            return this.parent.getPosition();
+
+        } else {
+            return createVector(0, 0);
+        }
+    }
+    //updatePosition(offset, ...notUP) {
+    //    this.position.add(offset);
+    //    let off = Vector.sub(this.position, this.lastPosition);
+    //    for (var i = 0; i < this.children.length; i++) {
+    //        let child = this.children[i];
+    //        //console.log(!includes());
+    //        if (child != this.parent && !includes(notUP, child)) {
+    //            child.updatePosition(offset, ...notUP, this);
+    //        }
+    //    }
+    //    this.lastPosition = this.position;
+    //}
     setConstraints(a = craeteVector(), b = createVector(CanvasWidth, CanvasHeight)) {
         this.constraintedA = a;
         this.constraintedB = b;
@@ -3098,6 +3824,7 @@ class Gizmo {
         this.normalColor = this.col.string();
         this.hoveredColor = this.col.mult(0.90);
         this.clickedColor = this.col.mult(0.80);
+        //console.log(this.normalColor, this.hoveredColor, this.clickedColor);
         return this;
     }
     destroy() {
@@ -3109,20 +3836,26 @@ class Gizmo {
     }
     setPos(pos) {
         this.position = pos;
-        if (this.lastPosition != pos) {
-            let off = Vector.sub(pos, this.lastPosition);
-            for (var i = 0; i < this.children.length; i++) {
-                this.children[i].updatePosition(off, this);
-            }
-            this.lastPosition = this.position;
-        }
+        //if (this.lastPosition != pos) {
+        //    let off = Vector.sub(pos, this.lastPosition);
+        //    for (var i = 0; i < this.children.length; i++) {
+        //        this.children[i].updatePosition(off, this);
+        //    }
+        //    this.lastPosition = this.position;
+        //}
         return this;
+    }
+    getMouse() {
+        //console.log(mouse);
+        let par = this.getParentPosition();
+        return Vector.sub(mouse, par);
     }
     update() {
         this.hovered = this.getHoveredInfo();
         if (this.hovered || this.selected) {
             if (!gizmoSelected || this.selected) {
                 if (mousePressed) {
+                    let mouse = this.getMouse();
                     if (!this.selected) {
                         this.mouseOffset = Vector.sub(mouse, this.position);
                         this.selected = true;
@@ -3158,9 +3891,15 @@ class Gizmo {
         return this;
     }
     get x() {
-        return this.position.x;
+        return this.getPosition().x;
     }
     get y() {
+        return this.getPosition().y;
+    }
+    get px() {
+        return this.position.x;
+    }
+    get py() {
         return this.position.y;
     }
     draw() {
@@ -3179,12 +3918,13 @@ class Gizmo {
         return this;
     }
     drawShape() {
+        let pos = this.getPosition();
         if (this.shape == GizmoShapes.circle) {
-            circle(this.position.x + this.offset.x, this.position.y + this.offset.y, this.size[0]);
+            circle(pos.x + this.offset.x, pos.y + this.offset.y, this.size[0]);
         } else if (this.shape == GizmoShapes.square) {
-            rect(this.position.x + this.offset.x, this.position.y + this.offset.y, this.size[0], this.size[0]);
+            rect(pos.x + this.offset.x, pos.y + this.offset.y, this.size[0], this.size[0]);
         } else if (this.shape == GizmoShapes.rect) {
-            rect(this.position.x + this.offset.x, this.position.y + this.offset.y, this.size[0], this.size[1]);
+            rect(pos.x + this.offset.x, pos.y + this.offset.y, this.size[0], this.size[1]);
         }
         return this;
     }
@@ -3201,13 +3941,16 @@ class Gizmo {
         return this;
     }
     getHoveredInfo() {
+        let mouse1 = this.getMouse();
+        //console.log(mouse, mouse1);
         if (this.shape == GizmoShapes.circle) {
-            return (Vector.dist(Vector.add(this.position, this.offset), mouse) <= this.size[0]);
+            return (Vector.dist(Vector.add(this.position, this.offset), mouse1) <= this.size[0]);
         } else if (this.shape == GizmoShapes.square) {
             let vec = Vector.add(this.position, this.offset);
-            if (Between.square(vec, this.size[0], mouse)) {
-                return true;
-            }
+            return Between.square(vec, this.size[0], mouse1);
+        } else if (this.shape == GizmoShapes.rect) {
+            let vec = Vector.add(this.position, this.offset);
+            return Between.rect(vec, this.size[0], this.size[1], mouse1);
         }
         return false;
     }
@@ -3289,6 +4032,9 @@ class Gizmo2 {
         } else if (this.shape == GizmoShapes.square) {
             let vec = Vector.add(this.position, this.offset);
             return Between.square(vec, this.size[0], mouse);
+        } else if (this.shape == GizmoShapes.rect) {
+            let vec = Vector.add(this.position, this.offset);
+            return Between.rect(vec, this.size[0], this.size[1], mouse);
         }
         return false;
     }

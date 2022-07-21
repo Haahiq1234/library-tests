@@ -10,15 +10,13 @@
         var cols;
         var started = true;
         var grid;
-        var painter;
         function setUp() {
-            createCanvas(600, 500, "black");
+            createCanvas(600, 500, color(0));
             frameRate(FramesPerSecond);
 
             rows = CanvasHeight / resolution;
             cols = CanvasWidth / resolution;
             grid = create2DArray(cols, rows);
-            painter = new Painter(0, 0);
 
             for (var i = 0; i < cols; i++) {
                 for (var j = 0; j < rows; j++) {
@@ -44,9 +42,10 @@
                     }
                 }
             }
-            if (painter.done)
+            if (painter.done) {
+                painter.update();
                 nextGeneration();
-            else
+            } else
                 painter.show();
         }
         function nextGeneration() {
@@ -72,18 +71,6 @@
             }
         }
         function key_Down() {
-            if (keyCode == key.up) {
-                painter.y--;
-            }
-            if (keyCode == key.down) {
-                painter.y++;
-            }
-            if (keyCode == key.right) {
-                painter.x++;
-            }
-            if (keyCode == key.left) {
-                painter.x--;
-            }
             if (keyCode == key.enter) {
                 grid[painter.x][painter.y] = 1;
             }
@@ -94,15 +81,31 @@
                 downloadImage();
             }
         }
-        class Painter {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-                this.done = true;
+        class painter {
+            static x = 0;
+            static y = 0;
+            static done = true;
+            static update() {
+                if (GetKey(key.up)) {
+                    painter.y--;
+                }
+                if (GetKey(key.down)) {
+                    painter.y++;
+                }
+                if (GetKey(key.right)) {
+                    painter.x++;
+                }
+                if (GetKey(key.left)) {
+                    painter.x--;
+                }
             }
-            show() {
-                fill("red");
-                fillRect(this.x * resolution + 1, this.y * resolution + 1, resolution - 3, resolution - 3);
+            static show() {
+                fill(255, 0, 0);
+                if (GetKey(key.up)) {
+
+                }
+                //console.log(painter.x * resolution + 1, painter.y * resolution + 1, resolution - 3, resolution - 3);
+                rect(painter.x * resolution + 1, painter.y * resolution + 1, resolution - 3, resolution - 3);
             }
         }
         function countNeighbours(grid, x, y) {

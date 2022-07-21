@@ -10,9 +10,9 @@
         <script src="Canvas.js"></script>
         <script src="noise.js"></script>
         <script>
-            let grid = new Array2D();
             let cols = 80;
             let rows = 80;
+            let grid = new Array2D(cols, rows);
             let smoothness = 8;
             let ga = new Gizmo2(100, 100, color(0, 255, 0));
             ga.setSelectedColor(color(255, 0, 0));
@@ -26,6 +26,11 @@
             gb.onClick = logCode;
             gc.onClick = logCode;
             gd.onClick = logCode;
+
+            ga.setShape(GizmoShapes.rect, 20, 20);
+            gb.setShape(GizmoShapes.rect, 20, 20);
+            gc.setShape(GizmoShapes.rect, 20, 20);
+            gd.setShape(GizmoShapes.rect, 20, 20);
             function setUp() {
                 createCanvas(400, 400, color(255));
                 frameRate(60);

@@ -27,69 +27,14 @@
             sh1.draw();
             line(ag.x, ag.y, bg.x, bg.y);
             let inti = Intersection.RTR(sh1.x, sh1.y, sh1.w, sh1.h, sh.x, sh.y, sh.w, sh.h);
+            let inti1 = Intersection.LTR(ag.x, ag.y, bg.x, bg.y, sh1.x, sh1.y, sh1.w, sh1.h);
+            let inti2 = Intersection.LTR(ag.x, ag.y, bg.x, bg.y, sh.x, sh.y, sh.w, sh.h);
+            inti.push(...inti1, ...inti2);
             for (var i = 0; i < inti.length; i++) {
                 let c = inti[i];
                 circle(c.x, c.y, 5);
             }
         }
-        const Intersection = {
-            LTL: function (ax, ay, bx, by, cx, cy, dx, dy) {
-                let inti = lineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
-                if (inti.intersected) {
-                    //console.log(inti.point);
-                    return inti.point;
-                }
-            },
-            LTS: function (ax, ay, bx, by, verts) {
-                let vs = Shapes.shape.vertices.get(verts);
-                let pts = [];
-                for (var i = 0; i < vs.length; i++) {
-                    let ci = i;
-                    let di = (i + 1) % vs.length;
-                    let c = vs[ci];
-                    let d = vs[di];
-                    let inti = this.LTL(ax, ay, bx, by, c.x, c.y, d.x, d.y);
-                    if (inti) {
-                        pts.push(inti);
-                    }
-                }
-                return pts;
-            },
-            STS: function (verts, verts2) {
-                let pts = [];
-                for (var i = 0; i < verts.length; i += 2) {
-                    let ai = (i / 2);
-                    let bi = (i / 2 + 1) % (verts.length / 2);
-                    let ax = verts[ai * 2];
-                    let ay = verts[ai * 2 + 1];
-                    let bx = verts[bi * 2];
-                    let by = verts[bi * 2 + 1];
-                    pts.push(...this.LTS(ax, ay, bx, by, verts2));
-                }
-                return pts;
-            },
-            LTR: function (ax, ay, bx, by, rx, ry, w, h) {
-                let verts = Shapes.rect.vertices.get2(rx, ry, w, h);
-                
-                return this.LTS(ax, ay, bx, by, verts);
-            },
-            RTR: function (ax, ay, aw, ah, bx, by, bw, bh) {
-                let verts = Shapes.rect.vertices.get2(ax, ay, aw, ah);
-                let verts1 = Shapes.rect.vertices.get2(bx, by, bw, bh);
-                return this.STS(verts, verts1);
-            },
-            CTL: function (ax, ay, bx, by, cx, cy, r) {
-                let verts = Shapes.circle.vertices.get2(cx, cy, r);
-
-                return this.LTS(ax, ay, bx, by, verts);
-            },
-            CTC: function (ax, ay, ar, bx, by, br) {
-                let verts = Shapes.circle.vertices.get2(ax, ay, ar);
-                let verts1 = Shapes.circle.vertices.get2(bx, by, br);
-                return this.STS(verts, verts1);
-            }
-        };
-        Object.freeze(Intersection);
         class Circle {
             r = 50;
             constructor(x, y) {

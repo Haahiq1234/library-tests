@@ -1,0 +1,63 @@
+﻿<html>
+<head>
+    <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let res = 100;
+        let a = new Gizmo(300, 300);
+        let b = new Gizmo(400, 300);
+        let ang = 0;
+        let angleVel = 1;
+        let shaped = [];
+        function setUp() {
+            createCanvas(600, 600, color(241));
+            frameRate(60);
+            pos = new Vector2(200, CanvasHeight / 2);
+            lineWidth(2);
+            shaped.push(createVector(0, 0));
+            shaped.push(createVector(CanvasWidth, 0));
+            shaped.push(createVector(CanvasWidth, CanvasHeight));
+            shaped.push(createVector(0, CanvasHeight));
+        }
+        function log() {
+            let arr = [new Vector2(0, 0), new Vector2(2, 2), new Vector2(0, 1), new Vector2(2, 5)];
+            let v1 = createVector(2, 2);
+            console.log(includesVector(arr, v1));
+        }
+        log();
+        function draw() {
+            backGround(241);
+            let ap = a.position;
+            //console.log(ap)
+            let bp = b.position;
+            line(ap.x, ap.y, bp.x, bp.y);
+            let ray = Vector.sub(bp, ap);
+            let cast = RayCast.Vector.shape(ap, Vector.sub(bp, ap), ...shaped);
+            if (cast.intersected) {
+                circle(cast.point.x, cast.point.y, 5);
+                line(cast.point.x, cast.point.y, ap.x, ap.y);
+                let v = Vector.reflect(ray, cast.normal);
+                rcast(cast.point, v);
+                //line(cast.point.x, cast.point.y, cast.point.x + v.x, cast.point.y + v.y);
+                //let cast1 = RayCast.farthest.Vector.shape(cast.point, v, ...shaped);
+                //if (cast1.intersected) {
+                //    //console.log(cast1.point)
+                //    circle(cast1.point.x, cast1.point.y, 10);
+                //}
+            }
+        }
+        function rcast(o, r, t = 20) {
+            let cast = RayCast.farthest.Vector.shape(o, r, ...shaped);
+            if (cast.intersected) {
+                line(o.x, o.y, cast.point.x, cast.point.y);
+                if (t > 0) {
+                    let rr = Vector.reflect(r, cast.normal);
+                    rcast(cast.point, rr, t - 1);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

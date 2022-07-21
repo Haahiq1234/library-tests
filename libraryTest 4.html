@@ -1,5 +1,11 @@
-﻿<html>
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Balls</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <div></div>
@@ -7,7 +13,7 @@
         var FramesPerSecond = 50;
         let particles = [];
         function setUp() {
-            createCanvas(400, 400, color(0));
+            createCanvas(400, 400);
             frameRate(FramesPerSecond);
             textSize(64);
             var pos = textToPoints("Welcome", 100, 200);
@@ -18,20 +24,20 @@
                 particles[i].update();
                 particles[i].show();
             }
-            pos = getPixels(150, 150, 100, 100);
-            particles = [];
-            for (var i = 0; i < pos.length; i++) {
-                noStroke();
-                fill();
-                rect(150 + pos[i].x, 150 + pos[i].y, 1, 1);
-                particles.push(new Particle(pos[i].x, pos[i].y, color(pos[i][0], pos[i][1], pos[i][2])));
-            }
-            point(50, 50); 
+            //pos = getPixels(150, 150, 100, 100);
+            //particles = [];
+            //for (var i = 0; i < pos.length; i++) {
+            //    noStroke();
+            //    fill();
+            //    rect(150 + pos[i].x, 150 + pos[i].y, 1, 1);
+            //    particles.push(new Particle(pos[i].x, pos[i].y, color(pos[i][0], pos[i][1], pos[i][2])));
+            //}
+            //point(50, 50);
         }
         function draw() {
-            backGround(0);
-            fill(255);
-            stroke(255);
+            clear();
+            fill(255, 0, 0);
+            stroke(255, 0, 0);
             for (var i = 0; i < particles.length; i++) {
                 particles[i].update();
                 particles[i].show();
@@ -40,12 +46,14 @@
         class Particle {
             constructor(x, y, color) {
                 this.pos = new Vector2(x, y);
+                //console.log(x, y);
                 this.base = new Vector2(x, y);
                 this.color = color | "white";
                 this.reforming = false;
                 this.force = 4;
             }
             show() {
+                fill(255, 0, 0);
                 circle(this.pos.x, this.pos.y, 1);
             }
             update() {
@@ -60,7 +68,7 @@
                 //    }
                 //}
                 if (mousePressed) {
-                    let d = Vector.sub(this.pos, mousePos).limit(this.force);
+                    let d = Vector.sub(this.pos, mouse).limit(this.force);
                     this.pos.sub(d);
                 } else if (mousePressed || true) {
                     if (dist(this.pos.x, this.pos.y, this.base.x, this.base.y) > 0) {
@@ -71,24 +79,25 @@
             }
         }
         function textToPoints(text, x1, y1) {
-            let img = ctx.getImageData(0, 0, CanvasWidth, CanvasHeight);
-            let sz = parseInt(ctx.font.split("px")[0]);
+            let sz = parseInt(Image2.ctx.font.split("px")[0]);
             let i = 0;
             let imp = 1;
-            //textSize(sz / 2);
-            let metrics = ctx.measureText(text);
-            ctx.clearRect(0, 0, CanvasWidth, CanvasHeight);
-            ctx.strokeStyle = color(255);
-            ctx.strokeText(text, 0, 0);
-            let img2 = ctx.getImageData(0, 0, metrics.width, metrics.width);
-            ctx.putImageData(img, 0, 0);
+            textSize(sz / 2);
+            let metrics = Image2.ctx.measureText(text);
+            //Image2.ctx.clearRect(0, 0, CanvasWidth, CanvasHeight);
+            Image2.ctx.canvas.width = metrics.width;
+            Image2.ctx.strokeStyle = color(255);
+            Image2.ctx.strokeText(text, 0, 0);
+            textSize(sz / 2);
+            Image2.ctx.fillText(text, 0, 0);
+            let img2 = Image2.ctx.getImageData(0, 0, metrics.width, metrics.height);
             let positions = [];
             for (let y = 0, y2 = img2.height; y < y2; y++) {
                 for (let x = 0, x2 = img2.width; x < x2; x++) {
-                    if (img2.data[(y * 4 * img2.width) + (x * 4) + 3] > 0) {
-                        if (i % imp == 0) {
-                            positions.push(new Vector2(x, y));
-                        }
+                    let id = (x + y * img2.width) * 4;
+                    let d = img2.data.slice(id, id + 4);
+                    if (brightness(d) > 0) {
+                        positions.push(new Vector2(x, y));
                         i++;
                     }
                 }

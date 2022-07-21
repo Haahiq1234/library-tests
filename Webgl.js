@@ -184,6 +184,7 @@ function createGLCanvas(width, height) {
     GL.colorAL = program.getAL("vertColor");
     GL.positionAL = program.getAL("vertPosition");
     GL.textureAL = program.getAL("textureCoord");
+    GL.normalAL = program.getAL("normal");
     glCamera = new GLCamera([0, 0, -10], [0, 0, 1], [0, 1, 0]);
     glCamera.Init(program, canvas);
     gl.enable(gl.DEPTH_TEST);
@@ -201,7 +202,8 @@ var GL = {
     },
     positionAL: null,
     colorAL: null,
-    textureAL: null
+    textureAL: null,
+    normalAL: null
 };
 class Mesh {
     vertices;
@@ -225,30 +227,34 @@ class Mesh {
         this.vertices = [];
         this.indices = [];
         this.colors = [];
+        this.colorPerIndex = false;
         this.transform = new Transform();
         this.uvs = [];
         this.lineColor = [255, 255, 0];
+        this.smoothingStrength = 1;
+
+        this.vbo = gl.createBuffer();
+        this.ibo = gl.createBuffer();
+        this.cbo = gl.createBuffer();
+        this.uvbo = gl.createBuffer();
+        this.nbo = gl.createBuffer();
     }
     buildFrameWork() {
-        this.vbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
 
         let indices = getLinesFromFaces(this.indices);
 
-        this.ibo = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
         let colors = fillArray(this.vertices.length * 3, ...this.lineColor);
 
-        this.cbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.cbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
         let uvs = new Array(this.vertices.length * 2).fill(2.0);
 
-        this.uvbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.uvbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
 
@@ -256,29 +262,34 @@ class Mesh {
         this.drawingVertices = indices.length;
     }
     build() {
-        this.vbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
 
-        this.ibo = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.ibo);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
 
-        if (this.colors.length == 0) {
-            this.colors = new Array(this.vertices.length * 3).fill(1.0)
+        let vertices = this.verts;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        let cols = [];
+        if (this.colors.length == 0 && !this.colorPerIndex) {
+            cols = new Array(vertices.length).fill(1.0)
+        } else if (this.colors.length == 0 && this.colorPerIndex) {
+            cols = new Array(this.indices.length);
+        } else {
+            cols = joinArrays(this.colors);
         }
-
-        this.cbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.cbo);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.colors), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cols), gl.STATIC_DRAW);
 
         if (this.uvs.length == 0) {
-            this.uvs = new Array(this.vertices.length * 2).fill(2.0);
+            this.uvs = new Array(vertices.length * 2).fill(2.0);
         }
 
-        this.uvbo = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.uvbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.uvs), gl.STATIC_DRAW);
+
+        this.recalculateNormals();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.nbo);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normals), gl.STATIC_DRAW);
 
         this.primitiveType = gl.TRIANGLES;
         this.drawingVertices = this.indices.length;
@@ -301,6 +312,38 @@ class Mesh {
         );
         gl.enableVertexAttribArray(GL.positionAL);
 
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvbo);
+        
+        gl.vertexAttribPointer(
+            GL.textureAL,  //attribute location
+            2,  //number of elements per attribute
+            gl.FLOAT, //type of elements
+            gl.FALSE,
+            2 * Float32Array.BYTES_PER_ELEMENT, // size of vertex
+            0  //size offset from beggining of vertex
+        );
+
+        gl.enableVertexAttribArray(GL.textureAL);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.nbo);
+
+        gl.vertexAttribPointer(
+            GL.normalAL,
+            3,
+            gl.FLOAT,
+            gl.FALSE,
+            3 * Float32Array.BYTES_PER_ELEMENT,
+            0
+        );
+
+        gl.enableVertexAttribArray(GL.normalAL);
+
+        if (this.colorPerIndex) {
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+        }
+
+
         gl.bindBuffer(gl.ARRAY_BUFFER, this.cbo);
 
         gl.vertexAttribPointer(
@@ -314,32 +357,25 @@ class Mesh {
 
         gl.enableVertexAttribArray(GL.colorAL);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.uvbo);
-        //console.log(GL.textureAL);
-        gl.vertexAttribPointer(
-            GL.textureAL,  //attribute location
-            2,  //number of elements per attribute
-            gl.FLOAT, //type of elements
-            gl.FALSE,
-            2 * Float32Array.BYTES_PER_ELEMENT, // size of vertex
-            0  //size offset from beggining of vertex
-        );
-
-        gl.enableVertexAttribArray(GL.textureAL);
         this._texture.bind();
     }
     get verts() {
-        return Vector3D.fromArray(...this.vertices);
+        return Vector.array(...this.vertices);
     }
     recalculateNormals() {
-        let vert = this.verts;
+        let vert = this.vertices;
+        let norms = [];
+        //let norms2 = [];
         for (var i = 0; i < this.indices.length; i += 3) {
             let a = vert[this.indices[i + 0]];
             let b = vert[this.indices[i + 1]];
             let c = vert[this.indices[i + 2]];
             let normal = Vector3D.normal(a, b, c);
-            //this.normals[]
+            norms[this.indices[i]] = normal;
+            norms[this.indices[i + 1]] = normal;
+            norms[this.indices[i + 2]] = normal;
         }
+        this.normals = Vector.array(...norms);
     }
     draw() {
         //box.bind();
