@@ -11,12 +11,11 @@
     <script src="Canvas.js"></script>
     <script>
         function setUp() {
-            createCanvas(400, 400);
-            frameRate(60);
+            //createCanvas(400, 400);
+            //frameRate(60);
+            //return;
             console.log(sub("52619", "79562"));
-        }
-        function draw() {
-            clear();
+            console.log(sub("10000", "1"));
         }
         function key_Press() {
 
@@ -52,13 +51,51 @@
             let mx = pos;
             if (Equality.relation(neg, pos) == Equality.Greater) {
                 preOff = "-"
+                mx = neg;
+                mn = pos;
             }
-            let ans = ;
-            for () {
-
+            let ans = mx;
+            for (var i = mn.length - 1; i >= 0; i--) {
+                let a = parseInt(mn[i]);
+                
+                if (a > 0) {
+                    let b1 = parseInt(ans[i]);
+                    if (b1 > 0 && b1 >= a) {
+                        a = b1 - a;
+                    } else if (b1 > 0 && b1 < a) {
+                        a = 10 + b1 - a;
+                    } else {
+                        a = 10 - a;
+                    }
+                    let j2 = i;
+                    for (var j = i; j >= 0; j--) {
+                        let b = parseInt(ans[j]);
+                        //console.log(b, j);
+                        if (b > 0) {
+                            j2 = j;
+                            b--;
+                            //console.log(ans, b, j, i);
+                            ans = replaceAt(ans, b, j);
+                            //console.log(ans);
+                            //console.log(ans, b, j);
+                            break;
+                        }
+                        if (b > 0) {
+                            console.log("not broken");
+                        }
+                    }
+                    ans = replaceAt(ans, a, i);
+                    //console.log(j2, i);
+                    for (var j = j2 + 1; j < i; j++) {
+                        ans = replaceAt(ans, "9", j);
+                    }
+                }
             }
-
-            console.log(pos, neg);
+            if (d >= 0 && d < ans.length) {
+                ans = insertString(ans, ".", d);
+            }
+            //console.log(pos, neg, ans);
+            return preOff + ans;
         }
         const Equality = {
             relation: function (a, b) {
@@ -101,6 +138,9 @@
             }
             //console.log(n);
             return n;
+        }
+        function replaceAt(str, r, i) {
+            return str.slice(0, i) + r + str.slice(i + 1, str.length);
         }
         function multnvn(na, nb) {
             let ns = sameEnds(na, nb);
@@ -286,8 +326,30 @@
                 }
             }
             console.log(qoutient, remainder);
+            return qoutient;poop;
+        }
+    </script>    
+</body>
+</html>
+;poop;
+        }
+    </script>    
+</body>
+</html>
+                     continue;
+                    }
+                    q /= divisor;
+                    //console.log(q * factor);
+                    qoutient += Math.floor(q);
+                    if (r == 0) {
+                        break;
+                    }
+                }
+            }
+            console.log(qoutient, remainder);
             return qoutient;
         }
     </script>    
 </body>
 </html>
+

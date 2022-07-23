@@ -7,9 +7,7 @@
 }
 
 canvas {
-    background-color: black;
     border: solid 1px black;
-    //display: inline;
 }
 
 body {
@@ -21,7 +19,7 @@ slider {
 }
 
 
-.slider {
+/* .slider {
     -webkit-appearance: none;
     width: clamp(30%, 200px, 300px);
     height: 15px;
@@ -67,4 +65,4 @@ slider {
 .sliderCont {
     //border: 1px double black;
     display:inline;
-}
+} */

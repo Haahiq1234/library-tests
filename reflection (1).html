@@ -12,7 +12,7 @@
         let angleVel = 1;
         let shaped = [];
         function setUp() {
-            createCanvas(600, 600, color(241));
+            createCanvas(600, 600, color(255));
             frameRate(60);
             pos = new Vector2(200, CanvasHeight / 2);
             lineWidth(2);
@@ -28,7 +28,8 @@
         }
         log();
         function draw() {
-            backGround(241);
+            //backGround(241);
+            clear();
             let ap = a.position;
             //console.log(ap)
             let bp = b.position;
@@ -40,12 +41,6 @@
                 line(cast.point.x, cast.point.y, ap.x, ap.y);
                 let v = Vector.reflect(ray, cast.normal);
                 rcast(cast.point, v);
-                //line(cast.point.x, cast.point.y, cast.point.x + v.x, cast.point.y + v.y);
-                //let cast1 = RayCast.farthest.Vector.shape(cast.point, v, ...shaped);
-                //if (cast1.intersected) {
-                //    //console.log(cast1.point)
-                //    circle(cast1.point.x, cast1.point.y, 10);
-                //}
             }
         }
         function rcast(o, r, t = 20) {
