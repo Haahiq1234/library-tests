@@ -173,6 +173,29 @@ loadFile("/shader.fs.glsl", function (e, ftext) {
         //console.log(fragMentShaderText, ftext);
     }
 });
+class Light {
+    ambientCol;
+    sunlightCol;
+    direction;
+    ambientUl;
+    sunLightUl;
+    directionUl;
+    constructor() {
+        this.ambientCol = color(0.4);
+        this.sunlightCol = color(1.0);
+        this.direction = new Vector3(0.0, 0.0, 1.0);
+        program.use();
+        this.ambientUl = program.getUL("ambientLight");
+        this.sunLightUl = program.getUL("light.color");
+        this.directionUl = program.getUL("light.direction");
+        this.Update();
+    }
+    Update() {
+        gl.uniform3f(this.ambientUl, ...this.ambientCol);
+        gl.uniform3f(this.sunLightUl, ...ArrayMath.sub(this.sunlightCol, this.ambientCol));
+        gl.uniform3f(this.directionUl, ...this.direction.array());
+    }
+}
 function createGLCanvas(width, height) {
     let canvas = document.createElement("canvas");
     document.body.appendChild(canvas);
@@ -189,7 +212,9 @@ function createGLCanvas(width, height) {
     glCamera.Init(program, canvas);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
-    //gl.cullFace(gl.FRONT);
+    program.use();
+
+    new Light();
 }
 var glCamera;
 var GL = {
@@ -365,16 +390,34 @@ class Mesh {
     recalculateNormals() {
         let vert = this.vertices;
         let norms = [];
+        let avgs = new Array(this.vertices.length).fill(0);
+        console.log(norms);
+        for (var i = 0; i < vert.length; i++) {
+            norms.push(new Vector3(0, 0, 0));
+        }
+        console.log(norms);
         //let norms2 = [];
         for (var i = 0; i < this.indices.length; i += 3) {
-            let a = vert[this.indices[i + 0]];
-            let b = vert[this.indices[i + 1]];
-            let c = vert[this.indices[i + 2]];
+            let ai = this.indices[i + 0];
+            let bi = this.indices[i + 1];
+            let ci = this.indices[i + 2];
+            let a = vert[ai];
+            let b = vert[bi];
+            let c = vert[ci];
+            //console.log(ai, bi, ci, vert);
             let normal = Vector3D.normal(a, b, c);
-            norms[this.indices[i]] = normal;
-            norms[this.indices[i + 1]] = normal;
-            norms[this.indices[i + 2]] = normal;
+            //console.log(a, b, c, normal);
+            avgs[ai] += 1;
+            avgs[bi] += 1;
+            avgs[ci] += 1;
+            norms[ai].add(normal);
+            norms[bi].add(normal);
+            norms[ci].add(normal);
         }
+        for (var i = 0; i < norms.length; i++) {
+            norms[i].div(avgs[i]);
+        }
+        console.log(...norms)
         this.normals = Vector.array(...norms);
     }
     draw() {

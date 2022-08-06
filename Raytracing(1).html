@@ -91,7 +91,7 @@
             frameRate(60);
             step = CanvasWidth * 5;
             loadPixels();
-            sphere = new Sphere(0, 0, -3, 0.5);
+            sphere = new Sphere(0, 0, 0, 0.5);
             //colorMode(HSL);
         }
         function draw() {
@@ -116,27 +116,10 @@
             }
 
         }
-        let light = createVector3(-2, -2, 0);
         function RayTrace(o, r, t = 1) {
-            let cast = Mesh2.cast(o, r)
-            let cast1 = Sphere.cast(o, r, t);
-            let fc = cast;
-            let len = Infinity;
-            if (fc[0]) {
-                let d = Vector.dist(cast[0], o);
-                if (d < len) {
-                    len = d;
-                }
-            }
-            if (cast1[0]) {
-                let d = Vector.dist(cast1[0], o);
-                //console.log(d, len);
-                if (d < len) {
-                    //console.log();
-                    fc = cast1;
-                }
-            }
-            return fc;
+            let cast1 = sphere.cast(o, r, t);     
+            //console.log(cast1);       
+            return cast1;
         }
     </script>    
 </body>

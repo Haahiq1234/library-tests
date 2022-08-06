@@ -25,7 +25,10 @@
             graph(fs);
         }
         function fs(x) {
-            return Math.sin(radians(x / smoothness.value)) * scaleSl.value * 2;
+            return lerp(-CanvasWidth / 2, CanvasWidth / 2, (x / CanvasWidth) ** 2);
+        }
+        function lerp(a, b, t) {
+            return a * (1 - t) + b * t;
         }
         function setGraph(xstep = 1, xdstep = 1, ystep = xstep, ydstep = xdstep) {
             graphing.xstep = xstep;

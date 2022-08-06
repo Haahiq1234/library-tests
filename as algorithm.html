@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let res = 40;
+        let w;
+        let h;
+        let grid;
+        let target = new Vector2(res - 1, res - 1);
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            w = CanvasWidth / res;
+            h = CanvasHeight / res;
+            grid = new Grid();
+            for (var i = 0; i < 500; i++) {
+                grid.set(Random.rangeInt(res), Random.rangeInt(res), 3);
+            }
+            for (var x = res - 3; x < grid.width; x++) {
+                for (var y = res - 3; y < grid.height; y++) {
+
+                }
+            }
+            fill(255, 0, 0);
+        }
+        var n = 0;
+        let path = [new Vector2(0, 0)];
+        function draw() {
+            clear();
+            //for (var p of path) {
+            //    rect(p.x * w, p.y * h, w, h);
+            //}
+            grid.render();
+            let lp = path[path.length - 1];
+            
+            let d = follow(lp, target);
+            //console.log(d);
+            let ns = grid.neighbours(lp);
+            if (ns.length == 0) {
+                grid.set(lp.x, lp.y, 1);
+                n--;
+                grid.render();
+                path.pop();
+                return;
+            }
+            let ne = Vector.fromOrigin.nearest(Vector.add(lp, d), ns)[0];
+            path.push(ne);
+            n++;
+            grid.set(lp.x, lp.y, 2);
+            grid.render();
+            if (Vector.Equal(ne, target)) {
+                grid.render();
+                fill(255, 255, 0);
+                rect(target.x * w, target.y * h, w, h);
+                noLoop();
+                console.log("Path Found.");
+            }
+        }
+        class Grid extends Array2D {
+            constructor() {
+                super(res, res);
+                this.array.fill(0);
+            }
+            render() {
+                for (var x = 0; x < this.width; x++) {
+                    for (var y = 0; y < this.height; y++) {
+                        let val = this.get(x, y);
+                        //console.log(val);
+                        if (val == 1) {
+                            fill(255, 0, 0);
+                            rect(x * w, y * h, w, h);
+                        } else if (val == 2) {
+                            fill(0, 255, 0);
+                            rect(x * w, y * h, w, h);
+                        } else if (val == 3) {
+                            fill(0, 0, 255);
+                            rect(x * w, y * h, w, h);
+                        }
+                    }
+                }
+            }
+            neighbours(p) {
+                let ns = [];
+                if (p.x > 0) {
+                    let val = this.get(p.x - 1, p.y);
+                    if (val == 0) {
+                        ns.push(new Vector2(p.x - 1, p.y));
+                    }
+                }
+                if (p.y > 0) {
+                    let val = this.get(p.x, p.y - 1);
+                    if (val == 0) {
+                        ns.push(new Vector2(p.x, p.y - 1));
+                    }
+                }
+                if (p.x < (this.width - 1)) {
+                    let val = this.get(p.x + 1, p.y);
+                    if (val == 0) {
+                        ns.push(new Vector2(p.x + 1, p.y));
+                    }
+                }
+                if (p.y < (this.height - 1)) {
+                    let val = this.get(p.x, p.y + 1);
+                    if (val == 0) {
+                        ns.push(new Vector2(p.x, p.y + 1));
+                    }
+                }
+                return ns;
+            }
+            recalculate() {
+                this.array.fill(0);
+            }
+        }
+        function follow(pos, target) {
+            let dir = Vector.sub(target, pos);
+            let vel = new Vector2(0, 0);
+            if (abs(dir.y) >= abs(dir.x)) {
+                vel = new Vector2(0, Math.sign(dir.y));
+            }
+            if (abs(dir.x) >= abs(dir.y)) {
+                vel = new Vector2(Math.sign(dir.x), 0);
+            }
+            //console.log(dir);
+            return vel;
+        }
+    </script>
+</body>
+</html>

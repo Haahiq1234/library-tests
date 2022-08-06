@@ -19,7 +19,7 @@ slider {
 }
 
 
-/* .slider {
+ .slider {
     -webkit-appearance: none;
     width: clamp(30%, 200px, 300px);
     height: 15px;
@@ -60,9 +60,9 @@ slider {
 
 .sliderText {
     width: fit-content;
-}
+} 
 
 .sliderCont {
     //border: 1px double black;
     display:inline;
-} */
+} 

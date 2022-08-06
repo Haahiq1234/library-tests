@@ -6,23 +6,42 @@
     <div></div>
     <script src="Canvas.js"></script>
     <script>
+        let a;
+        let b;
         function setUp() {
-            console.log(arctan(16, 5) - arctan(4, 239));
+            a = new arctan(16, 5);
+            b = new arctan(4, 239);
+            //console.log(strings.sub(arctan(16, 5), arctan(4, 239)));
             console.log(16 * Math.atan(1 / 5));
+            frameRate(0.2);
         }
-        function pi() {
-            let pi = 1;
-            let val = 0;
-
+        function draw() {
+            a.update();
+            b.update();
+            console.log(a.val, b.val);
+            //console.log(strings.sub(a.val, b.val));
         }
-        function arctan(num, den) {
-            let val = 0n;
-            let multiplier = 100000000000000000000000000000000000000000000n;
-            for (var i = 1; i < 81; i += 4) {
-                val += BigInt(((multiplier * BigInt(num)) / BigInt((den ** i) * i)) - ((multiplier * BigInt(num)) / BigInt((den ** (i + 2)) * (i + 2))));
-                //print(val);
+        class arctan {
+            constructor(num, den) {
+                this.val = "0";
+                this.i = 1;
+                this.update = function () {
+                    //console.log(this.val);
+                    let ana = "" + num;
+                    let anb = strings.trim(strings.mult(strings.powint("" + den, "" + this.i), "" + this.i));
+                    console.log(ana, anb, this.i);
+                    //let an = strings.div(ana, anb);
+                    //let bna = ana;
+                    //let bnb = strings.mult(strings.powint("" + den, "" + (this.i + 2)), "" + (this.i + 2));
+                    //let bn = strings.div(bna, bnb);
+                    ////console.log(an, bn);
+                    //this.val = strings.add(
+                    //        strings.sub(an, bn)
+                    //    , this.val);
+                    this.i += 4;
+                    //return val;
+                }
             }
-            return val;
         }
     </script>
 </body>

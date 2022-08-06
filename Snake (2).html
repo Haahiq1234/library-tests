@@ -22,7 +22,8 @@
             frameRate(60);
             w = CanvasWidth / res;
             h = CanvasHeight / res;
-            new Snake(0, 0);
+            //new Snake(0, 0);
+            new Snake(0, 0, color(0, 0, 255));
             grid = new Grid();
             //new Snake(res - 1, res - 1, color(0, 0, 255));
         }
@@ -57,6 +58,12 @@
                         let val = this.get(x, y);
                         if (val == 1) {
                             fill(255, 0, 0);
+                            //rect(x * w, y * h, w, h);
+                        } else if (val == 2) {
+                            fill(255, 255, 0);
+                            rect(x * w, y * h, w, h);
+                        } else if (val == 3) {
+                            fill(255, 255, 0);
                             rect(x * w, y * h, w, h);
                         }
                     }
@@ -88,6 +95,7 @@
                         ns.push(new Vector2(p.x, p.y + 1));
                     }
                 }
+                return ns;
             }
             recalculate() {
                 this.array.fill(0);
@@ -105,8 +113,18 @@
                     snake.update();
                 }
             }
+            static get saved() {
+                let snakes = [];
+                for (var i = 0; i < Snake.snakes.length; i++) {
+                    snakes.push(...Snake.snakes[i].saved);
+                }
+                return snakes;
+            }
             constructor(x, y, ac = color(255, 255, 0), bc = color(255, 0, 0)) {
                 Snake.snakes.push(this);
+                this.current;
+                this.targets = [];
+                this.path = [];
                 this.pos = new Vector2(x, y);
                 this.vel = new Vector2(0, 0);
                 this.saved = [];
@@ -114,64 +132,88 @@
                 this.segments = 1;
                 this.ac = ac;
                 this.bc = bc;
-                this.calculateTarget();
+                this.cc = color(0, 255, 0);
+                //this.calculateTarget();
+                for (var i = 0; i < 10; i++) {
+                    this.calculateTarget();
+                }
+            }
+            closestTarget(pos = this.pos) {
+                let clos = Vector.fromOrigin.nearest(pos, this.targets);
+                return clos[1];
+            }
+            sortTargets() {
+                let targets = [];
+                let len = this.targets.length;
+                for (var i = 0; i < len; i++) {
+                    let pos = this.pos;
+                    if (i > 0) {
+                        pos = targets[i - 1];
+                    }
+                    let tar = this.closestTarget(pos);
+                    targets[i] = this.targets[tar];
+                    this.targets.splice(tar, 1);
+                }
+                this.targets = targets;
             }
             calculateTarget() {
-                this.target = new Vector2(Random.rangeInt(0, res), Random.rangeInt(0, res));
+                this.targets.push(new Vector2(Random.rangeInt(0, res), Random.rangeInt(0, res)));
             }
-            follow(p) {
-                let dir = Vector.sub(p, this.pos);
-                if (dir.x == 0 && dir.y == 0) {
+            follow(i) {
+                let p = this.targets[i];
+                this.current = p;
+                let vel = follow(this.pos, p);
+                if (vel.x == 0 && vel.y == 0) {
                     this.calculateTarget();
+                    this.targets.splice(i, 1);
                     this.segments++;
+                    this.follow(this.closestTarget());
                 } else {
-                    let lv = this.vel;
-                    let path = [];
-                    for (var i = 0; i < 5; i++) {
-                        let vel = new Vector2(0, 0);
-                        if (abs(dir.y) >= abs(dir.x)) {
-                            vel = new Vector2(0, Math.sign(dir.y));
+                    vel = follow(this.pos, p);
+                    let path = [this.pos.copy()];
+                    let gi = 0;
+                    let reached = [];
+                    for (var i = 0; (i < 250 && gi < 1000 && path.length > 0); i++) {
+                        let lp = path[path.length - 1];
+                        vel = follow(lp, p);
+                        //console.log(lp);
+                        let ns = grid.neighbours(lp);
+                        if (ns.length == 0) {
+                            path.pop();
+                            grid.set(lp.x, lp.y, 2);
+                            i--;
+                        } else {
+                            if (Vector.Equal(lp, p)) {
+                                reached.push(i);
+                                if (reached.length - 1 < this.targets.length) {
+                                    p = this.targets[reached.length - 1];
+                                    this.current = p;
+                                }
+                            }
+                            if (i < reached[reached.length - 1]) {
+                                reached.pop();
+                                if (reached.length - 1 < this.targets.length) {
+                                    p = this.targets[reached.length - 1];
+                                    this.current = p;
+                                }
+                            }
+                            //if (!reached) {
+                            //    grid.set(lp.x, lp.y, 3);
+                            //}
+                            let nearest = Vector.fromOrigin.nearest(Vector.add(lp, vel), ns)[0];
+                            path.push(nearest);
                         }
-                        if (abs(dir.x) >= abs(dir.y)) {
-                            vel = new Vector2(Math.sign(dir.x), 0);
-                        }
-                        let ns = [];
+                        gi++;
+                    }
+                    if (gi < 1000 && path.length > 100) {
+                        //console.log(path);
+                        this.vel = Vector.sub(path[1], path[0]);
+                        this.path = path;
+                    } else {
+                        this.vel = new Vector2(0,0);
                     }
                 }
                 //console.log(dir);
-            }
-            rotate3() {
-                if (this.vel.x == 1 && this.vel.y == 0) {
-                    this.vel.x = 0;
-                    this.vel.y = 1;
-                } else if (this.vel.x == 0 && this.vel.y == 1) {
-                    this.vel.x = -1;
-                    this.vel.y = 0;
-                } else if (this.vel.x == -1 && this.vel.y == 0) {
-                    this.vel.x = 0;
-                    this.vel.y = -1;
-                } else if (this.vel.x == 0 && this.vel.y == -1) {
-                    this.vel.x = 1;
-                    this.vel.y = 0;
-                }
-            }
-            rotate1() {
-                this.vel = this.vel.neg();
-            }
-            rotate() {
-                if (this.vel.x == 1 && this.vel.y == 0) {
-                    this.vel.x = 0;
-                    this.vel.y = -1;
-                } else if (this.vel.x == 0 && this.vel.y == 1) {
-                    this.vel.x = 1;
-                    this.vel.y = 0;
-                } else if (this.vel.x == -1 && this.vel.y == 0) {
-                    this.vel.x = 0;
-                    this.vel.y = 1;
-                } else if (this.vel.x == 0 && this.vel.y == -1) {
-                    this.vel.x = -1;
-                    this.vel.y = 0;
-                }
             }
             collided(pts) {
                 //return false;
@@ -195,11 +237,13 @@
                 return coll;
             }
             update() {
-                this.follow(this.target);
                 if (frameNo % 6 == 0) {
-
-                    if (this.collided(this.saved)) {
-                        //endGame();
+                    this.sortTargets();
+                    this.follow(0);
+                    if (this.collided(Snake.saved)) {
+                        grid.render();
+                        this.render();
+                        endGame();
                     }
                     this.saved.push(this.pos.copy());
                     this.last = this.saved[0].copy();
@@ -209,11 +253,15 @@
                     }
                     this.pos.add(this.vel);
                 }
-                fill(0, 255, 0);
-                rect(this.target.x * w, this.target.y * h, w, h);
-
-
-                //this.render();
+                for (var pt of this.path) {
+                    fill(255, 100, 100);
+                    rect(pt.x * w, pt.y * h, w, h);
+                    //if (Vector.Equal(pt, this.current)) {
+                    //    break;
+                    //}
+                }
+                this.render();
+                this.render2();
             }
             get x() {
                 return this.pos.x;
@@ -236,6 +284,24 @@
                     rect(p.x * w, p.y * w, w, h);
                 }
             }
+            render2() {
+                fill(this.cc);
+                for (var p of this.targets) {
+                    //console.log(p);
+                    rect(p.x * w, p.y * h, w, h);
+                }
+            }
+        }
+        function follow(pos, targ) {
+            let dir = Vector.sub(targ, pos);
+            let vel;
+            if (abs(dir.y) >= abs(dir.x)) {
+                vel = new Vector2(0, Math.sign(dir.y));
+            }
+            if (abs(dir.x) >= abs(dir.y)) {
+                vel = new Vector2(Math.sign(dir.x), 0);
+            }
+            return vel;
         }
         function endGame() {
             alert("gameOver");

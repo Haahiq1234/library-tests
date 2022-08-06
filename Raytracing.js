@@ -1,4 +1,5 @@
-
+let light = createVector3(1, -1, 1).normalize();
+let lightPos = createVector3(0, -1, 1);
 function rayAt(x, y) {
     let r = Camera2.dir.copy();
     //x -= CanvasWidth / 2;
@@ -46,6 +47,7 @@ class Sphere {
     cast(o, r, t) {
         //console.log(r.z);
         let cast = sphereCast(o.x, o.y, o.z, r.x, r.y, r.z, this.x, this.y, this.z, this.r);
+        //console.log(cast.length);
         let pt;
         let len = Infinity;
         for (var i = 0; i < cast.length; i++) {
@@ -55,20 +57,15 @@ class Sphere {
                 pt = cast[i];
             }
         }
-        if (pt) {
-            //if (t > 0) {
-            //    //console.log(pt, th);
-            //    let norm = Vector.sub(pt, this.p).normalize();
-            //    let reflected = reflection(r, norm);
-            //    let p2 = RayTrace(pt, reflected, t - 1);
-            //    if (p2[0]) {
-            //        console.log(p2[1]);
-            //        return [pt, p2[1]];
-            //    }
-            //}
-            return [pt, [...this.color]];
+        if (pt) {       
+            let norm = Vector.sub(pt, this.p).normalize();
+            let light = Vector.sub(pt, lightPos).normalize();
+            let d = Vector.dot(norm, light);
+            //console.log(d);
+            return [pt, Color.mult([...this.color], max(d, 0))];
         }
-        return [pt, [...this.color]];
+        //console.log(pt);
+        return [pt];
     }
 }
 class Mesh2 {
@@ -121,7 +118,7 @@ class Mesh2 {
     }
 }
 class Camera2 {
-    static pos = createVector3(0, 0, -5);
+    static pos = createVector3(0, 0, -2);
     static dir = createVector3(0, 0, 1);
 }
 
