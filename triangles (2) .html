@@ -1,0 +1,68 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let m = createVector(200, 200);
+        var a = Vector.add(m, Vector.AngleToVector(270, 200));
+        var b = Vector.add(m, Vector.AngleToVector(30, 200));
+        var c = Vector.add(m, Vector.AngleToVector(150, 200));
+
+        var ag = new Gizmo(a.x, a.y);
+        var bg = new Gizmo(b.x, b.y);
+        var cg = new Gizmo(c.x, c.y);
+
+        var ac = color(255, 0, 0);
+        var bc = color(0, 255, 0);
+        var cc = color(0, 0, 255);
+        let re = 1;
+        var slider = createSlider(2, 20, 1, 10, "resolution");
+        function setUp() {
+            createCanvas(400, 400);
+        }
+        function draw() {
+            a = ag.position;
+            b = bg.position;
+            c = cg.position;
+            clear();
+            Shapes.shape.forPixel(p, slider.value, a, b, c);
+            nofill();
+            triangle(a.x, a.y, b.x, b.y, c.x, c.y);
+        }
+        function pixel(x, y) {
+            let p = createVector(x, y);
+            let dpa = Vector.dist(p, a);
+            let dpb = Vector.dist(p, b);
+            let dpc = Vector.dist(p, c);
+
+            let mx = dpa + dpb + dpc;
+            dpa = mx - dpa;
+            dpb = mx - dpb;
+            dpc = mx - dpc;
+
+            mx = dpa + dpb + dpc;
+            dpa = dpa / mx;
+            dpb = dpb / mx;
+            dpc = dpc / mx;
+
+            let col = Colors.weighted(ac, dpa, bc, dpb, cc, dpc);
+            col = Color.mult(col, 2);
+            //console.log(p.x, p.y, re, re);
+            noStroke();
+            fill(col);
+            rect(p.x, p.y, slider.value, slider.value);
+        }
+        function p(x, y) {
+            let pt = new Vector2(x, y);
+            let ws = CartesianToBarycentric(pt, a, b, c);
+            let col = Colors.weighted(ac, ws[0], bc, ws[1], cc, ws[2]);
+            fill(col);
+            noStroke();
+            rect(x, y, slider.value, slider.value);
+        }
+    </script>
+
+</body>
+</html>

@@ -11,22 +11,25 @@
     <script src="Canvas.js"></script>
     <script>
         let res = 50;
+        let resSlider = createSlider(1, 400, 1, 50, "resolution");
         let w;
         let h;
         let ag = new Gizmo(200, 200);
         let bg = new Gizmo(50, 0);
-        let fov = 45;
+        let fov = createSlider(0, 360, 1, 45, "Field of View");
         let gt = cos(fov / 2);
         bg.setParent(ag);
         function setUp() {
             createCanvas(400, 400);
             //frameRate(60);
-            w = CanvasWidth / res;
-            h = CanvasHeight / res;
+            noStroke();
             fill(255, 255, 0);
         }
         function draw() {
             clear();
+            res = resSlider.value;
+            w = CanvasWidth / res;
+            h = CanvasHeight / res;
             let a = ag.position.copy();
             let b = bg.position.copy().normalize();
             for (var i = 0; i < res; i++) {
@@ -34,9 +37,7 @@
                     let x = i * w;
                     let y = j * h;
                     let p = createVector(x, y);
-                    let ap = p.copy().sub(a).normalize();
-                    let dot = Vector.dot(ap, b);
-                    if (dot >= gt) {
+                    if (Vector.InFov(p, a, b, fov.value)) {
                         rect(x, y, w, h);
                     }
                 }
