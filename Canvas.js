@@ -12,6 +12,7 @@ function download(filename, text) {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+    let bod = document.body;
 }
 function downloadCanvasImage() {
     var link = document.createElement("a");
@@ -1194,7 +1195,7 @@ const strings = {
         //console.log(pos, neg, ans);
         return preOff + ans;
     },
-    trim: function trim(n) {
+    trim: function (n) {
         for (var i = 0; i < n.length; i++) {
             if (n[i] == 0) {
                 n = n.slice(1, n.length);

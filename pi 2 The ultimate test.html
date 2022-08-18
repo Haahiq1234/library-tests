@@ -8,18 +8,15 @@
     <script>
         function setUp() {
             console.log(arctan(16, 5) - arctan(4, 239));
-            console.log(16 * Math.atan(1 / 5));
-        }
-        function pi() {
-            let pi = 1;
-            let val = 0;
-
+            console.log(16 * Math.atan(1 / 5) - 4 * Math.atan(1 / 239));
         }
         function arctan(num, den) {
-            let val = 0n;
-            let multiplier = 100000000000000000000000000000000000000000000n;
+            let val = 0;
             for (var i = 1; i < 81; i += 4) {
-                val += BigInt(((multiplier * BigInt(num)) / BigInt((den ** i) * i)) - ((multiplier * BigInt(num)) / BigInt((den ** (i + 2)) * (i + 2))));
+                //console.log(val);
+                let an = (num / ((den ** i) * i));
+                let bn = (num / ((den ** (i + 2)) * (i + 2)))
+                val += an - bn;
                 //print(val);
             }
             return val;
