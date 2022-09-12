@@ -1,11 +1,16 @@
 <html>
 <head>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <script src="Canvas.js"></script>
     <script>
+        let img = loadImage("kitten.jpg", function (im) {
+            im.loadPixels();
+        });
+        
         let m = createVector(200, 200);
+
         var a = Vector.add(m, Vector.AngleToVector(270, 200));
         var b = Vector.add(m, Vector.AngleToVector(30, 200));
         var c = Vector.add(m, Vector.AngleToVector(150, 200));
@@ -18,9 +23,18 @@
         var bc = color(0, 255, 0);
         var cc = color(0, 0, 255);
         let re = 1;
+
+
+        var auv = new Vector2(0.0);
+        var buv = new Vector2(0.0, 1.0);
+        var cuv = new Vector2(1.0, 0.0);
+
+
         var slider = createSlider(2, 20, 1, 10, "resolution");
         function setUp() {
             createCanvas(400, 400);
+            Shapes.shape.forPixel(p, slider.value, a, b, c);
+
         }
         function draw() {
             a = ag.position;
@@ -31,33 +45,24 @@
             nofill();
             triangle(a.x, a.y, b.x, b.y, c.x, c.y);
         }
-        function pixel(x, y) {
-            let p = createVector(x, y);
-            let dpa = Vector.dist(p, a);
-            let dpb = Vector.dist(p, b);
-            let dpc = Vector.dist(p, c);
-
-            let mx = dpa + dpb + dpc;
-            dpa = mx - dpa;
-            dpb = mx - dpb;
-            dpc = mx - dpc;
-
-            mx = dpa + dpb + dpc;
-            dpa = dpa / mx;
-            dpb = dpb / mx;
-            dpc = dpc / mx;
-
-            let col = Colors.weighted(ac, dpa, bc, dpb, cc, dpc);
-            col = Color.mult(col, 2);
-            //console.log(p.x, p.y, re, re);
-            noStroke();
-            fill(col);
-            rect(p.x, p.y, slider.value, slider.value);
-        }
         function p(x, y) {
             let pt = new Vector2(x, y);
             let ws = CartesianToBarycentric(pt, a, b, c);
-            let col = Colors.weighted(ac, ws[0], bc, ws[1], cc, ws[2]);
+            //let col = Colors.weighted(ac, ws[0], bc, ws[1], cc, ws[2]);
+            let v = Vector.add(
+                Vector.mult(auv, (ws[0] < 0 || ws[0] > 1) ? 0 : ws[0]),
+                Vector.mult(buv, (ws[1] < 0 || ws[1] > 1) ? 0 : ws[1]),
+                Vector.mult(cuv, (ws[2] < 0 || ws[2] > 1) ? 0 : ws[2]))
+
+            v.x = mod.pos(v.x);
+            v.y = mod.pos(v.y);
+
+            let xu = floor(v.x * img.width);
+            let yv = floor(v.y * img.height);
+            let i = xu + yv * img.width;
+            let col = img.pixels[i];
+            //console.log(col);
+
             fill(col);
             noStroke();
             rect(x, y, slider.value, slider.value);

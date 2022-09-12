@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let subns = "s p d f g h i k l".split(" ");
+        let symbols = [];
+        for (var i = 0; i < subns.length; i++) {
+            for (var j = 0; j <= i; j++) {
+                symbols.push([i, j]);
+            }
+        }
+        symbols.sort((a, b) => (a[1] - b[1]));
+        symbols.sort((a, b) => (a[0] - b[0]));
+        symbols.sort((a, b) => ((a[0] + a[1]) - (b[0] + b[1])));
+        let sym = "";
+        for (var i = 0; i < symbols.length; i++) {
+            sym += (symbols[i][0] + 1) + subns[symbols[i][1]] + " ";
+        }
+        
+        console.log(symbols);
+        console.log(sym);
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+        }
+        function draw() {
+            clear();
+        }
+        function key_Press() {
+
+        }
+    </script>    
+</body>
+</html>

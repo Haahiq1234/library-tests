@@ -259,7 +259,7 @@ const Vector3D = {
         return arr;
     },
 };
-function Vector3(x = 0, y = 0, z = 0) {
+function Vector3(x = 0, y = x, z = x) {
     this.x = x;
     this.y = y;
     this.z = z;
@@ -267,8 +267,8 @@ function Vector3(x = 0, y = 0, z = 0) {
         return new Vector3(this.x, this.y, this.z);
     };
     this.add = function (vec) {
-        this.x += vec.x || 0;
         this.y += vec.y || 0;
+        this.x += vec.x || 0;
         this.z += vec.z || 0;
         return this;
     };
@@ -621,13 +621,8 @@ Vector.heading = function (vec) {
     if (vec.x == 0 && vec.y == 0) {
         return 0;
     }
-    var ang = Math.atan2(vec.x, vec.y);
-    ang = 180 - degrees(ang);
-    ang -= 90;
-    if (ang < 0) {
-        ang = 360 + ang;
-    }
-    return ang;
+    var ang = atan2(vec.y, vec.x);
+    return (ang);
 };
 Vector.dot = function (v, v2) {
     if (v instanceof Vector3) {
@@ -671,7 +666,7 @@ Vector.setDist = function (a, b, dst) {
     let d = Vector.AngleToVector(ang, dst);
     return Vector.add(a, d);
 };
-function Vector2(x, y) {
+function Vector2(x = 0, y = x) {
     this.x = x;
     this.y = y;
     this.add = function (addition, y) {
@@ -708,8 +703,12 @@ function Vector2(x, y) {
         return this;
     };
     this.rotate = function (ang) {
-        let mat = Matrices.rotation2(ang)
-        this.transform2(mat);
+        let x = this.x;
+        let y = this.y;
+        let ax = cos(ang);
+        let ay = sin(ang);
+        this.x = x * ax + y * ay;
+        this.y = x * -ay + y * ax;
         return this;
     };
     this.set = function (nx, ny) {
@@ -1047,7 +1046,7 @@ function redraw(timeStamp) {
         if (UnSetFps && !loopGoing) {
             Time.time = timeStamp;
         }
-        //Camera.update();
+        Camera.update();
         if (Canvas.enabled) {
             //ctx.scale(pixelDensity(), pixelDensity());
             Gizmo2.update();
@@ -1077,6 +1076,9 @@ function redraw(timeStamp) {
 // #endregion
 
 // #region Math
+function ciel(no, mod = 1) {
+    return Math.ceil(no / mod) * mod;
+}
 const strings = {
     blend: function (no1, no2) {
         let decimal1 = no1.indexOf(".");
@@ -1648,37 +1650,37 @@ function round(n, r = 1) {
     return Math.round(n / r) * r;
 }
 const mod = {
-    neut: function (n, modu) {
+    neut: function (n, modu = 1) {
         return n % modu;
     },
-    pos: function (n, modu) {
+    pos: function (n, modu = 1) {
         return ((n % modu) + modu) % modu;
     },
-    neg: function (n, modu) {
+    neg: function (n, modu = 1) {
         return ((n % modu) - modu) % modu;
     },
 };
 function sin(ang) {
-    if (ang == 0 || ang == 180) {
-        return 0;
-    }
-    let c = Math.sin(getAngle(ang));
-    //console.log(c);
+    let c = Math.sin(getAngle(ang)) * 1;
     return c;
 }
+function atan2(y, x) {
+    return getAngleInverse(Math.atan2(y, x));
+}
 function cos(ang) {
-    ang = ang % 360;
-    if (ang == 90 || ang == -90) {
-        return 0;
-    }
     let c = Math.cos(getAngle(ang));
-    //console.log(c);
-    //console.trace();
     return c;
 }
 function getAngle(ang) {
     if (Canvas.AngleMode == AngleModes.degrees) {
-        return radians(ang);
+        return radians(ang % 360);
+    } else {
+        return ang % (2 * PI);
+    }
+}
+function getAngleInverse(ang) {
+    if (Canvas.AngleMode == AngleModes.degrees) {
+        return degrees(ang);
     } else {
         return ang;
     }
@@ -3442,7 +3444,7 @@ const CLOSE = 1;
 {
     let vertices = [];
     function vertex(x, y) {
-        vertices.push(new Vector(Canvas.x(x), Canvas.y(y)));
+        vertices.push(new Vector2(Canvas.x(x), Canvas.y(y)));
     }
     function beginShape() {
         vertices = [];
@@ -3451,12 +3453,13 @@ const CLOSE = 1;
         ctx.beginPath();
         ctx.lineTo(vertices[0].x, vertices[0].y);
         for (var i = 1; i < vertices.length; i++) {
-            ctx.lineTo(arguments[i].x, vertices[i].y);
+            ctx.lineTo(vertices[i].x, vertices[i].y);
         }
         if (close == CLOSE) {
+        console.log(close);
             ctx.lineTo(vertices[0].x, vertices[0].y);
+            ctx.closePath();
         }
-        ctx.closePath();
         if (fl && close == CLOSE) {
             ctx.fill();
         }
@@ -4088,9 +4091,9 @@ class Image2 {
         ctx2.drawImage(this.image, 0, 0);
         this.data = ctx2.getImageData(0, 0, this.width, this.height);
         for (var i = 0; i < this.data.data.length; i += 4) {
-            let col = this.data.data.slice(i, i + 4);
+            let col = [...this.data.data.slice(i, i + 4)];
             if (Canvas.colorMode == HSL) {
-                col = RGBToHSL(...col);
+                //col = [...RGBToHSL(...col)];
             }
             this.pixels.push(col);
         }
@@ -4487,6 +4490,7 @@ class Gizmo {
         this.selfDraw = true;
         this.id = Gizmo.gizmos.length;
         this.setColor(col);
+        this.mouseOffset = new Vector2(0, 0);
         Gizmo.gizmos.push(this);
 
     }
@@ -4501,8 +4505,8 @@ class Gizmo {
         }
     }
     setConstraints(
-        a = craeteVector(),
-        b = createVector(CanvasWidth, CanvasHeight)
+        a = createVector(this.size[0], this.size[0]),
+        b = createVector(CanvasWidth - this.size[0], CanvasHeight - this.size[0])
     ) {
         this.constraintedA = a;
         this.constraintedB = b;
@@ -4565,8 +4569,8 @@ class Gizmo {
             }
         }
         if (this.snapped) {
-            this.position.x = floor(this.position.x, this.snapX);
-            this.position.y = floor(this.position.y, this.snapY);
+            this.position.x = floor(this.position.x + this.mouseOffset.x, this.snapX);
+            this.position.y = floor(this.position.y + this.mouseOffset.y, this.snapY);
         }
         this.lastPosition = this.position;
         return this;
