@@ -34,36 +34,27 @@
             //    pts.push(new Vector2(nx, ny));
             //}
             pts.push(...Shapes.rect.vertices.path(-50, -50, 100, 100, 2));
-            for (var i = 0; i < pts.length; i++) {
-                x.push(pts[i].x);
-                y.push(pts[i].y);
-            }
             //for (var i = 0; i < 5; i++) {
-            //    fourierY[i] = new Transform(radius * (4 / ((i * 2 + 1) * PI)), 0, i * 2 + 1);
+            //    fourierY[i] = new Epicycle(radius * (4 / ((i * 2 + 1) * PI)), 0, i * 2 + 1);
             //}
-            fourierY = dft(y);
-            fourierY.sort((a, b) => b.amp - a.amp);
+            fourier = dft(pts);
+            fourier.sort((a, b) => b.amp - a.amp);
 
-            fourierX = dft(x);
-            fourierX.sort((a, b) => b.amp - a.amp);
-            inc = 2 * PI / (fourierY.length * 1);
+            inc = 2 * PI / (fourier.length * 1);
             nofill();
         }
         function draw() {
             clear();
-            let y = recurse(100, 300, fourierY, PI / 2);
-            let x = recurse(300, 100, fourierX, 0);
+            let p = recurse(300, 300, fourier, PI / 2);
             beginShape();
             while (wave.length > pts.length + 1) {
                 //console.log("ok");
-                wave.pop();
+                wave = [];
             }
-            wave.unshift(new Vector2(x.x, y.y));
+            wave.unshift(p);
             for (var i = 0; i < wave.length; i++) {
                 vertex(wave[i].x, wave[i].y);
             }
-            line(y.x, y.y, wave[0].x, wave[0].y);
-            line(x.x, x.y, wave[0].x, wave[0].y);
             endShape(OPEN);
             time += inc;
         }
@@ -99,31 +90,54 @@
 
         }
         function dft(x) {
-            //console.log(x);
             const N = x.length;
             let X = [];
             for (var k = 0; k < N; k++) {
-                let re = 0;
-                let im = 0;
+                let c = new Complex();
                 for (var n = 0; n < N; n++) {
                     let ang = (PI * 2 * k * n) / N;
-                    re += cos(ang) * x[n];
-                    im -= sin(ang) * x[n];
+                    let pt = Complex.FromVector(x[n]);
+                    let com = new Complex(cos(ang), -sin(ang));
+                    //console.log(pt);
+                    let cy = Complex.mult(pt, com);
+                    c.add(cy);
                 }
-                re = re / N;
-                im = im / N;
-
-                X[k] = new Transform(re, im, k);
+                //console.log(c);
+                c.div(N);
+                X[k] = new Epicycle(c.re, c.im, k);
             }
             return X;
         }
-        class Transform {
+        class Epicycle {
 
             constructor(re, im, k) {
+                //console.log(re, im);
                 this.freq = k;
                 this.p = new Vector2(re, im);
                 this.amp = this.p.mag();
                 this.start = this.p.heading();
+            }
+        }
+        class Complex {
+            static FromVector(v) {
+                return new Complex(v.x, v.y);
+            }
+            constructor(a = 0, b = 0) {
+                this.re = a;
+                this.im = b;
+            }
+            div(no) {
+                this.re /= no;
+                this.im /= no;
+            }
+            add(com) {
+                this.re += com.re;
+                this.im += com.im;
+            }
+            static mult(com, ths) {
+                let re = ths.re * com.re - ths.im * com.im;
+                let im = ths.im * com.re + ths.re * com.im;
+                return new Complex(re, im);
             }
         }
     </script>    

@@ -4,3 +4,4 @@ pushd
 cd Control
 python Program.py
 popd
+pause

@@ -370,19 +370,18 @@
     </style>
 </head>
 <body>
-    <div id="area">
-    </div>
-    <div id="signin" style="display:none;">
+    <div id="MainArea"></div>
+    <div id="signInMenu" style="display:none">
         <h1 style="font-family:verdana;" class="sih"><center>SIGN IN</center></h1>
         <div class="suit">
             <div class="suit2"></div>
-            <input id="username" type="text" placeholder="Enter Username." class="un"><br>
-            <input id="password" Type="password" placeholder="Enter Password." class="pw"><br><br>
-            <button type="button" onclick=signin() class="si">Sign in</button>
-            <button type="button" onclick=signup() class="su">Sign up</button>
+            <input id="SignInUserName" type="text" placeholder="Enter Username." class="un"><br>
+            <input id="SignInPassword" Type="password" placeholder="Enter Password." class="pw"><br><br>
+            <button type="button" onclick=signIn() class="si">Sign in</button>
+            <button type="button" onclick=signUp() class="su">Sign up</button>
         </div>
     </div>
-    <div id="signup" style="display:none">
+    <div id="signUpMenu" style="display:none">
         <h1 style="font-family:verdana;" class="sih"><center>SIGN UP</center></h1>
         <div class="suit">
             <div class="suit2"></div>
@@ -392,16 +391,185 @@
             <button type="button" onclick=signout() class="su">Back</button>
         </div>
     </div>
+    <div id='error' class='error' style='display:none'></div>
+    <div id="AccountTemplate" style="display:none">
+        <div class='back'></div><article id='MainTab' class='article1'></article>
+        <header>
+            <div class='fixed2'>
+                <input id='MessageBox' Type='text' class='texted' placeholder='Type a message' autocomplete='off'>
+                <button type='button' class='sender' onclick='sendMessage()'>/\</button>
+            </div>
+            <button class='fixed' type='button' onclick='openMenu()'>
+                :Icon:
+            </button><div class='ahead'>
+                :Name:
+            </div> <div class='conn' id='conn'></div>
+        </header> <div class='fix2'>
+            <div class='adconh'>
+                <input type='text' placeholder='Add Contact' autocomplete='off' class='adcon' id='contactName' />
+                <button class='addcon' onclick='addContact()'>Add</button>
+            </div>
+        </div>
+        <div id="contacts"></div>
+    </div>
 
-    <div id="menu" class="menu" style="display:none;">
+    <div id="MenuBox" class="menu" style="display:none">
         <div class="options" onclick="signout()">Sign out</div>
-        <div class="option" onclick="sina()">Sign into new account</div>
+        <!--<div class="option" onclick="sina()">Sign into new account</div>-->
         <div id="exo">
             <div class="option"></div>
         </div>
-        <div class="optionf" id="back" onclick="closemenu()">Close Menu</div>
+        <div class="optionf" id="back" onclick="closeMenu()">Close Menu</div>
     </div>
+
     <script>
+        var accountNames = [];
+        var accounts = {};
+        var ActiveAccount;
+
+        var Template = document.getElementById("AccountTemplate");
+        var accountTemplate = Template.innerHTML;
+        Template.remove();
+        delete Template;
+
+        var fromMessageTemplate = "<div align='right'><div class='sm' align='right'><pre>:message:</pre></div></div><br>";
+        var toMessageTemplate = "<div class='rm'>:message:</div><br>";
+        var contactButtonTemplate = "<button class='cont' onclick=select(accounts.:name:)>:name1:</button>";
+
+        var signInMenu = document.getElementById("signInMenu");
+        var signInMenuDisplay = signInMenu.innerHTML;
+        signInMenu.remove();
+        delete signInMenu;
+
+        var signUpMenu = document.getElementById("signUpMenu");
+        var signUpMenuDisplay = signUpMenu.innerHTML;
+        signUpMenu.remove();
+        delete signUpMenu;
+
+        var mainArea = document.getElementById("MainArea");
+        var errorBox = document.getElementById("error");
+        mainArea.innerHTML = signInMenuDisplay;
+        var menuBox = document.getElementById("MenuBox");
+
+        var signInUserName = document.getElementById("SignInUserName");
+        var signInPassword = document.getElementById("SignInPassword");
+
+        var signUpUserName;
+        var signUpPassword;
+
+
+    </script>
+
+    <script>
+        new Account("Haahiq1234", 1234);
+        new Account("Haahiq2020", 4321);
+        new Account("Hamzaahsan12", 4321);
+        var selectedAccount = "";
+
+        class Account {
+            current;            
+            constructor(name, password) {
+                this.name = name;
+                this.data = accountTemplate.replace(":Name:", name).replace(":Icon:", name[0]);
+                this.contacts = "";
+                this.password = password;
+                this.messages = new Object();
+                this.contactNames = [];
+                accountNames.push(this.name);
+                accounts[name] = this;
+            }
+            signin() {
+
+            }
+        }
+        function sendMessage() {
+            if (selectedAccount != "") {
+                var messageBox = document.getElementById("MessageBox");
+                let text = messageBox.value;
+                if (!isEmpty(text)) {
+                    let text1 = fromMessageTemplate.replace(":message:", text);
+                    ActiveAccount.messages[selectedAccount.name] += text1;
+                    let text2 = toMessageTemplate.replace(":message:", text);
+                    selectedAccount.messages[ActiveAccount.name] += text2;
+                }
+            }
+        }
+        function ActivateAccount(name) {
+            if (accountNames.includes(name)) {
+                ActiveAccount = accounts[name];
+
+                mainArea.innerHTML = ActiveAccount.data;
+                let contacts = document.getElementById("contacts");
+
+                contacts.innerHTML = ActiveAccount.contacts;
+            }
+        }
+        function isEmpty(txt) {
+            let txt1 = ("" + txt).replace(" ", "");
+            return txt1.length == 0;
+        }
+        function addContact() {
+            var contactName = document.getElementById("contactName").value;
+            if (accountNames.includes(contactName) && contactName != ActiveAccount.name && !ActiveAccount.contactNames.includes(contactName)) {
+                ActiveAccount.contacts += contactButtonTemplate.replace(":name:", contactName).replace(":name1:", contactName);
+                ActiveAccount.messages[contactName] = "";
+                ActiveAccount.contactNames.push(contactName);
+
+                selectedAccount = accounts[contactName];
+                selectedAccount.contacts += contactButtonTemplate.replace(":name:", ActiveAccount.name).replace(":name1:", ActiveAccount.name);
+                selectedAccount.messages[ActiveAccount.name] = "";
+                selectedAccount.contactNames.push(ActiveAccount.name);
+
+                var tab = document.getElementById("MainTab");
+                tab.innerHTML = ActiveAccount.messages[contactName];
+                ActivateAccount(ActiveAccount.name);
+                console.log(ActiveAccount.contacts);
+                document.getElementById("contactName").value = "";
+            }
+        }
+        ActivateAccount("Haahiq1234");
+        function signIn() {
+            signInUserName = document.getElementById("SignInUserName");
+            signInPassword = document.getElementById("SignInPassword");
+
+            var userName = signInUserName.value;
+            var password = signInPassword.value;
+
+            if (accountNames.includes(userName)) {
+
+                if (password == accounts[userName].password) {
+                    selectedAccount = "";
+                    ActivateAccount(userName);
+                } else {
+                    error("Invalid password.");
+                }
+            } else {
+                error("UserName does not exist");
+            }
+        }
+        function signUp() {
+
+        }
+        function error(message) {
+            errorBox.style.display = "block";
+            errorBox.innerHTML = message;
+            setTimeout(function () {
+                errorBox.style.display = "none";
+                errorBox.innerHTML = "";
+            }, 4000);
+        }
+        function openMenu() {
+            menuBox.style.display = "block";
+        }
+        function closeMenu() {
+            menuBox.style.display = "none";
+        }
+        function signOut() {
+            ActiveAccount = undefined;
+            selectedAccount = "";
+        }
+    </script>
+    <!--<script>
         var menu = document.getElementById("menu");
         var actives = {
             count: 0,
@@ -421,17 +589,16 @@
             menu.style.display = "none";
             actives.names.shift
         }
-    </script>
-
-    <script>
+    </script>-->
+    <!--<script>
         function acoff() {
             document.getElementById("newpassword").autocomplete = "off";
             document.getElementById("password").autocomplete = "off";
             document.getElementById("newusername").autocomplete = "off";
             document.getElementById("username").autocomplete = "off";
         }
-    </script>
-    <script>
+    </script>-->
+    <!-- <script>
         var ad;
         var select;
         var mtab;
@@ -451,8 +618,8 @@
                     active.messagess[ad.value] = "";
                     selected = accounts[ad.value];
                     selected.contacts = selected.contacts +
-                        "<div class='cont' onclick=select(accounts." + active.name + ")>"
-                        + active.name + "</div>";
+                        "<buttom class='cont' onclick=select(accounts." + active.name + ")>"
+                        + active.name + "</button>";
                     selected.contactts.push(active.name);
                     selected.messagess[active.name] = "";
                     selected = "";
@@ -482,8 +649,8 @@
             selected.messagess[active.name] += text2;
             text.value = "";
         }
-    </script>
-    <script id="accholders">
+    </script>-->
+    <!--<script id="accholders">
         var accno = [];
         var accounts = {};
         function cracco(name, passss) {
@@ -509,8 +676,8 @@
         accounts["Haahiq1234"] = new cracco('Haahiq1234', 1234);
         accounts["Haahiq2020"] = new cracco('Haahiq2020', 1234);
         accounts["Hamzaahsan12"] = new cracco('Hamzaahsan12', 4321);
-    </script>
-    <script>
+    </script>-->
+    <!--<script>
         var signupp = document.getElementById("signup").innerHTML
             + "<div id='error' class='error' style='display:none'></div>";
         var conn = document.getElementById("conn");
@@ -574,8 +741,6 @@
             }
         }
         function cleare() {
-            e.style.display = "none";
-            e.innerHTML = "";
         }
         function signup() {
             asi.innerHTML = signupp;
@@ -588,6 +753,6 @@
 
             actives.count -= 1;
         }
-    </script>
+    </script>-->
 </body>
 </html>

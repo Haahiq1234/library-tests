@@ -16,6 +16,13 @@ def add(*fn):
     name = join(fn, " ");
     print(name);
 
+def server():
+    os.chdir("../");
+    os.system("start chrome http://localhost:8080/");
+    os.system("python http-server.py");
+    print("ok");
+    os.system("cd Control");
+
 def push():
     os.system("push.bat");
 
@@ -24,7 +31,7 @@ def quitProg():
     #time.sleep(2);
     quit();
     pass;
-funcs = {"add": add, "push": push, "quit": quitProg, "" : quitProg, "exit": quitProg};
+funcs = {"add": add, "push": push, "quit": quitProg, "" : quitProg, "exit": quitProg, "server": server};
 
 while True:
     keys = input("Enter Command: ").split(" ");

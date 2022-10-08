@@ -2297,7 +2297,7 @@ function factorize(no) {
         if (no % i == 0) {
             factors.push(i);
             no /= i;
-            i = 1;
+            i--;
         }
     }
     factors.push(no);
@@ -2546,7 +2546,7 @@ const Shapes = {
                 }
                 vs.push(b.copy());
                 return vs;
-            },
+            }
         },
     },
     circle: {
@@ -2602,6 +2602,22 @@ const Shapes = {
                     createVector(x, y + h),
                 ];
                 return vs;
+            },
+            path: function (ax, ay, aw, ah, res = 1) {
+                let left = [];
+                let right = [];
+                let top = [];
+                let bottom = [];
+                for (var x = 0; x < aw; x += res) {
+                    top.push(new Vector2(ax + x, ay));
+                    bottom.push(new Vector2(ax + aw - x, ay + ah));
+                }
+                for (var y = 0; y < ah; y += res) {
+                    right.push(new Vector2(ax + aw, ay + y));
+                    left.push(new Vector2(ax, ay + ah - y));
+                }
+                console.log(top, bottom, right, left);
+                return [...top, ...right, ...bottom, ...left];
             },
             get2: function (x, y, w, h) {
                 let vs = this.get(x, y, w, h);
@@ -4149,6 +4165,10 @@ class Image2 {
     }
 }
 {
+    function setSize(width, height) {
+        ctx.canvas.width = width;
+        ctx.canvas.height = height;
+    }
     var canvas2 = document.createElement("canvas");
     var ctx2 = canvas2.getContext("2d");
     function loadPixels() {
@@ -4156,11 +4176,12 @@ class Image2 {
         pixels = [];
         for (var i = 0; i < data.data.length; i += 4) {
             let arr = data.data.slice(i, i + 4);
+            //console.log(...arr);
             if (Canvas.colorMode == HSL) {
                 arr = RGBToHSL(...arr);
             }
             //console.log(arr);
-            pixels.push(arr);
+            pixels.push([...arr]);
         }
         Canvas.data = data;
     }
