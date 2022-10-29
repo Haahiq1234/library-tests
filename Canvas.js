@@ -1852,6 +1852,59 @@ const distance = {
 };
 Object.freeze(distance);
 const collision = {
+    RectToRect: function (ax, ay, aw, ah, avx, avy, bx, by, bw, bh, bvx = 0, bvy = 0) {
+        let aob = ay + ah;
+        let aot = ay;
+        let aor = aw + ax;
+        let aol = ax;
+
+        let ab = aob + avy;
+        let at = aot + avy;
+        let ar = aor + avx;
+        let al = aol + avx;
+
+        let bot = by;
+        let bob = by + bh;
+        let bor = bx + bw;
+        let bol = bx;
+
+        let bb = bob + bvy;
+        let bt = bot + bvy;
+        let br = bor + bvx;
+        let bl = bol + bvx;
+
+        if (ab < bt || at > bb || al > br || ar < bl) return [ax + avx, ay + avy, avx, avy];
+
+        let afx = ax + avx;
+        let afy = ay + avy;
+        let afvx = avx;
+        let afvy = avy;
+        //console.log(avx);
+        //console.log(afx, afy);
+        /* You can only collide with one side at a time, so "else if" is just fine. You don't need to separate the checks for x and y. Only one check can be true, so only one needs to be done. Once it's found, the other's don't need to be done. */
+        if (ab >= bt && aob < bot) {
+            afy = (bt - 0.1 - ah);
+            afvy = 0;
+
+        } else if (at <= bb && aot > bob) {
+
+            afy = (bb + 0.1);
+            afvy = 0; // ... regardless of what side the player collides with
+
+        } else if (ar >= bl && aor < bol) {
+
+            afx = (bl - 0.1) - aw;
+            afvx = 0;
+
+        } else if (al <= br && aol > bor) {
+            afx = (br + 0.1);
+            afvx = 0;
+        }
+        let fx = afx;
+        let fy = afy;
+        //console.log(fx, fy);
+        return [fx, fy, afvx, afvy];
+    },
     circleToLine: function (ax, ay, bx, by, cx, cy, cr) {
         let coll = distance.line(ax, ay, bx, by, cx, cy);
         let dst = coll.dist;
@@ -3472,7 +3525,7 @@ const CLOSE = 1;
             ctx.lineTo(vertices[i].x, vertices[i].y);
         }
         if (close == CLOSE) {
-        console.log(close);
+            console.log(close);
             ctx.lineTo(vertices[0].x, vertices[0].y);
             ctx.closePath();
         }
