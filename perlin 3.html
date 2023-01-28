@@ -17,6 +17,7 @@
             for (var x = 0; x < CanvasWidth; x++) {
                 let ht = noise(x / smoothness + frameNo / smoothness * speed) * map(x, 0, CanvasWidth, 0, CanvasHeight) * 1.5;
                 ht = CanvasHeight - ht;
+                stroke(x / CanvasWidth * 200)
                 line(x, ht, x, CanvasHeight);
             }
         }

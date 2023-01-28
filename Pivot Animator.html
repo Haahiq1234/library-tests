@@ -59,18 +59,20 @@
                     this.gizmo.size[0] = 7;
                     var ths = this;
                     if (this.parent) {
-                        this.gizmo.onchange = function (p) {
+                        this.gizmo.bind("move", function (dt, gzmo) {
+                            let p = gzmo.position;
                             let a = ths.parent.gizmo.position;
                             let ang = Vector.Direction(a, p);
                             ths.angle = ang;
-                            this.position = ths.position;
-                        }
+                            //this.position = ths.position;
+                        });
                     } else {
                         this.gizmo.setColor(color(255, 127, 0));
-                        this.gizmo.onchange = function (p) {
-                            this.position = p;
-                            ths.position = p;
-                        }
+                        this.gizmo.bind("move", function (dt, a) {
+                            //a.position = a.position.add(dt);
+                            console.log("ok");
+                            ths.position.add(dt);
+                        });
                     }
                     this.#generated = true;
                 }

@@ -13,25 +13,22 @@
         let textColor = color(1, 100, 32);
         function setUp() {
             createCanvas();
-            frameRate(FramesPerSecond);
+            //frameRate(FramesPerSecond);
             //noLoop();
             fireworks.push(new FireWork());
-            gravity = new Vector2(0, 0.2);
-            textAlign(TEXT.CENTER, TEXT.MIDDLE);
-            textSize(50);
-            fill(textColor);
-            stroke(textColor);
+            gravity = new Vector2(0, 0.25);
         }
         function draw() {
-            backGround(255, 30);
+            
+            backGround(255, 50);
             //Canvas.flipY();
-            if (frameNo % 160 == 0) {
-                textColor = Color.RandomColor(255, 255, 255);
-                //console.log(textColor);
-                fill(textColor);
-                stroke(textColor);
-            }
-            saveColor();
+            //if (frameNo % 160 == 0) {
+            //    textColor = Color.RandomColor(255, 255, 255);
+            //    //console.log(textColor);
+            //    fill(textColor);
+            //    stroke(textColor);
+            //}
+            //saveColor();
             for (let i = 0; i < fireworks.length; i++) {
                 fireworks[i].Update();
                 if (fireworks[i].done()) {
@@ -42,8 +39,8 @@
             if (Random.range(1) < 0.01 * fireworkChance) {
                 fireworks.push(new FireWork());
             }
-            loadColor();
-            text("Eid Mubarak", CanvasWidth / 2, CanvasHeight / 2);
+            //loadColor();
+            //text("Eid Mubarak", CanvasWidth / 2, CanvasHeight / 2);
         }
         function drawText() {
 
@@ -113,7 +110,7 @@
             }
             this.explode = function () {
                 for (var i = 0; i < 50; i++) {
-                    this.particles.push(new Particle(this.firework.position, Random.range(2, 3), Vector.AngleToVector(Random.rangeInt(360), Random.range(1, 4)), this.color, true));
+                    this.particles.push(new Particle(this.firework.position, Random.range(2, 3), Vector.AngleToVector(Random.rangeInt(360), Random.range(1, 5)), this.color, true));
                 }
             }
             this.done = function () {

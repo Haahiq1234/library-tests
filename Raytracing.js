@@ -1,4 +1,4 @@
-let light = createVector3(1, -1, 1).normalize();
+let light = createVector3(0, 3, -3).normalize();
 let lightPos = createVector3(0, -1, 1);
 function rayAt(x, y) {
     let r = Camera2.dir.copy();
@@ -62,6 +62,7 @@ class Sphere {
             let light = Vector.sub(pt, lightPos).normalize();
             let d = Vector.dot(norm, light);
             //console.log(d);
+            console.log();
             return [pt, Color.mult([...this.color], max(d, 0))];
         }
         //console.log(pt);
@@ -118,7 +119,7 @@ class Mesh2 {
     }
 }
 class Camera2 {
-    static pos = createVector3(0, 0, -2);
+    static pos = createVector3(0, 0, -4);
     static dir = createVector3(0, 0, 1);
 }
 

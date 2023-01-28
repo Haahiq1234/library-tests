@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        //let button = new Button(50, 50, 20, 20);
+        //button.bind("click", function () {
+        //    console.log("clicked Button 1");
+        //});
+        //button.layer = 1;
+        //button.Disable();
+
+        //let button2 = new Button(60, 60, 20, 20, color(255, 0, 0));
+        //button2.bind("click", function () {
+        //    console.log("clicked Button 2");
+        //});
+
+        //let gzmo = new Gizmo(200, 200);
+
+        let slider = new Slider(50, 100, 50, 300, 0, 100, 50, color(255, 0, 0));
+        slider.lineWidth = 5;
+        slider.name = "S";
+        slider.change.bind(function () {
+            console.log("changed");
+        });
+
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+        }
+        function draw() {
+            clear();
+        }
+        function key_Press() {
+            //if (keyCode == "s") {
+            //    button2.enabled = button.enabled;
+            //    button.enabled = !button.enabled;
+            //}
+            //if (keyCode == "d") {
+            //    button2.Destroy();
+            //    button.Destroy();
+            //}
+        }
+    </script>    
+</body>
+</html>

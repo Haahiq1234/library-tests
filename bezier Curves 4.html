@@ -1,3 +1,4 @@
+
 <html>
 <head>
     <link rel="stylesheet" href="style.css"/>
@@ -5,115 +6,96 @@
 <body>
     <script src="Canvas.js"></script>
     <script>
-        let curve;
-        let pnts = [];
+        var curve;
+        Gizmo.DEFAULTRADIUS = 8.5;
         function setUp() {
-            createCanvas(1350, 650, color(255));
-            pnts[0] = new Point(
-                createVector(200, 200),
-                createVector(100, 100),
-                createVector(300, 300)
-            );
-            pnts[1] = new Point(
-                createVector(200, 200),
-                createVector(100, 100),
-                createVector(300, 300)
-            );
+            //console.log("ok");
+            createCanvas();
+            //frameRate(30);
+            curve = new Spline(100, 300, 300, 300, 100, 100, 300, 100);
+            curve.add(500, 100, 500, 300);
+            curve.add(500, 100, 500, 300);
+            curve.add(500, 100, 500, 300);
         }
         function draw() {
             clear();
-            pnts[0].update();
-            pnts[0].draw();
-            for (var i = 0; i < pnts.length; i++) {
-                pnts[i].update();
-                pnts[i].draw();
-            }
+            curve.draw();
         }
-        function BezierCurve(times) {
-            //var ths = this;
-            this.gizmos = [];
-            for (var i = 0; i < times; i++) {
-                this.gizmos.push(new Gizmo(new Vector2(CanvasWidth / 2, CanvasHeight / 2), color(0, 255, 0)));
-            }
-            this.points = [];
-            this.t = 0;
-            this.inc = 0.01;
-            this.update = function () {
-                let positions = [];
-                for (var i = 0; i < this.gizmos.length; i++) {
-                    positions.push(this.gizmos[i].position);
-                }
-                stroke(0);
-                lineWidth(2);
-                fill(0);
-                for (var i = 1; i < positions.length; i++) {
-                    ln(positions[i], positions[i - 1]);
-                    //console.log(i);
-                }
-                for (var t = 0; t <= 1; t += this.inc) {
-                    let poss = [];
-                    for (var i = 0; i < positions.length; i++) {
-                        poss.push(positions[i].copy());
-                    }
-                    let iss = poss.length;
-                    for (var i = 0; i < iss; i++) {
-                        for (var j = 0; j < poss.length - 1; j++) {
-                            if (j + 1 < poss.length) {
-                                poss[j] = Vector.lerp(poss[j], poss[j + 1], t);
-                            }
-                            //poss.pop();
-                        }
-                        //ln(poss[0], poss[1]);
-                    }
-                    stroke(0);
-                    lineWidth(2);
-                    pt(poss[0]);
-                }
-            }
+        function bound() {
+            console.log(this);
         }
-        function Point(anchor, a, b, isEnd = false) {
-            this.draw = function () {
-                for (let i in this.cons) {
-                    ln(this.pos, this.cons[i]);
-                }
-            }
-            this.flipNo = (no) => this.cons.length - no - 1;
-            var ths = this;
-            this.isEnd = isEnd;
-            this.pos = anchor;
-            this.cons = [];
-            (a) ? this.cons.push(a): 0;
-            (b) ? this.cons.push(b) : 0;
-            this.consGs = [];
-            for (let i in this.cons) {
-                let a = this.cons[i];
-                let gz = new Gizmos(a, color(255, 0, 0))
-                this.consGs.push(gz);
-                if (this.cons.length > 1) {
-                    let j = this.flipNo(i);
-                    gz.setPos = function (pos) {
-                        ths.consGs[j].position = Vector.setRotation(ths.posGizmo.position, ths.consGs[j].position, Vector.Direction(ths.posGizmo.position, pos) + 180);
-                        gz.position = pos;
+        let slider = new Slider(50, 300, 50, 100, 0, 100, 50);
+        function bCurve(a, b, pa, pb) {
+            let lp = a;
+            lineWidth(3);
+            stroke(150, 100);
+            ln(pa, a);
+            ln(pb, b);
+            let val = slider.value;
+            saveLineState();
+            stroke(0);
+            lineWidth(2);
+            //console.log(val);
+            for (var t = 0; t <= 1; t += 1 / val) {
+                let c = Vector.lerp(a, pa, t);
+                let d = Vector.lerp(pa, pb, t);
+                let e = Vector.lerp(pb, b, t);
 
-                    }
+                let f = Vector.lerp(c, d, t);
+                let g = Vector.lerp(d, e, t);
+
+                let h = Vector.lerp(f, g, t);
+
+                ln(lp, h);
+                lp = h;
+            }
+            ln(lp, b);
+            loadLineState();
+        }
+        class Spline {
+            constructor(ax, ay, bx, by, pax, pay, pbx, pby) {
+                this.a = new Gizmo(ax, ay);
+                //this.a.pair("fart");
+                this.pa = new Gizmo(pax, pay);
+                this.pa.setParent(this.a);
+
+
+                this.b = new Gizmo(bx, by);
+                this.pb = new Gizmo(pbx, pby);
+                this.pb.setParent(this.b);
+
+
+                this.spline = [];
+            }
+            add(bx, by, bcx, bcy) {
+                this.spline.push(new Curve(this.spline[this.spline.length - 1] ?? this, bx, by, bcx, bcy));
+            }
+            draw() {
+                bCurve(this.a.position, this.b.position, this.pa.position, this.pb.position);
+                for (var curve of this.spline) {
+                    curve.draw();
                 }
             }
-            this.posGizmo = new Gizmos(anchor, color(255, 0, 0));
-            this.setPosition = function (pos) {
-                for (let i in this.cons) {
-                    let a = this.consGs[i];
-                    let offset = Vector.sub(a.position, this.pos);
-                    a.position = Vector.add(pos, offset);
-                }
-                this.posGizmo.position = pos;
+        }
+        class Curve {
+            constructor(previous, bx, by, bcx, bcy) { // ac = a control, bc = b control, previuos = previous curve piece, b = position of point
+                this.previous = previous;
+                this.a = previous.b;
+                this.b = new Gizmo(bx, by);
+                let x = 2 * previous.b.x - previous.pb.x;
+                let y = 2 * previous.b.y - previous.pb.y;
+                this.pa = new Gizmo(x, y);
+                this.pa.setParent(this.a);
+                this.pb = new Gizmo(bcx, bcy);
+                this.pb.setParent(this.b);
+                //console.log(previous.b, this.pa);
+                previous.pb.pair(this.pa, "move", (dt, a, b) => {
+                    //console.log(dt);
+                    b.position = Vector.sub(b.parentPosition.copy().mult(2), a.position.copy());
+                });
             }
-            this.posGizmo.setPos = function (pos) { ths.setPosition(pos); };
-            this.update = function () {
-                for (let i in this.cons) {
-                    let aG = this.consGs[i];
-                    this.cons[i] = aG.position;
-                }
-                this.pos = this.posGizmo.position;
+            draw() {
+                bCurve(this.a.position, this.b.position, this.pa.position, this.pb.position);
             }
         }
         function ln(A, B) {

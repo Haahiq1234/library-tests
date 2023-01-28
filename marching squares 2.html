@@ -14,23 +14,18 @@
             let rows = 80;
             let grid = new Array2D(cols, rows);
             let smoothness = 8;
-            let ga = new Gizmo2(100, 100, color(0, 255, 0));
-            ga.setSelectedColor(color(255, 0, 0));
-            let gb = new Gizmo2(300, 100, color(0, 255, 0));
-            gb.setSelectedColor(color(255, 0, 0));
-            let gc = new Gizmo2(300, 300, color(0, 255, 0));
-            gc.setSelectedColor(color(255, 0, 0));
-            let gd = new Gizmo2(100, 300, color(0, 255, 0));
-            gd.setSelectedColor(color(255, 0, 0));
-            ga.onClick = logCode;
-            gb.onClick = logCode;
-            gc.onClick = logCode;
-            gd.onClick = logCode;
+            let ga = new CheckBox(100, 100, color(0, 255, 0));
+            let gb = new CheckBox(300, 100, color(0, 255, 0));
+            let gc = new CheckBox(300, 300, color(0, 255, 0));
+            let gd = new CheckBox(100, 300, color(0, 255, 0));
 
-            ga.setShape(GizmoShapes.rect, 20, 20);
-            gb.setShape(GizmoShapes.rect, 20, 20);
-            gc.setShape(GizmoShapes.rect, 20, 20);
-            gd.setShape(GizmoShapes.rect, 20, 20);
+            let gs = [ga, gb, gc, gd];
+            for (var g of gs) {
+                g.setCheckedColor(color(255, 0, 0));
+                g.bind("click", logCode);
+                g.setShape(UI.RECT, 20, 20);
+            }
+
             function setUp() {
                 createCanvas(400, 400, color(255));
                 frameRate(60);
@@ -39,11 +34,11 @@
                 return (bl) ? "1": "0";
             }
             function getCode() {
-                let a = state(ga.selected);
-                let b = state(gb.selected);
-                let c = state(gc.selected);
-                let d = state(gd.selected);
-                return a + b + c + d;
+                let a = state(ga.checked);
+                let b = state(gb.checked);
+                let c = state(gc.checked);
+                let d = state(gd.checked);
+                return "" + (+!!ga.checked) + (+!!gb.checked) + (+!!gc.checked) + (+!!gd.checked);
             }
             function logCode() {
                 let cd = getCode();

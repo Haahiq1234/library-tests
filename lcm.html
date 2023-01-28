@@ -1,6 +1,7 @@
 ﻿
 <html>
 <head>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <div></div>
@@ -8,6 +9,16 @@
     <script>
         function setUp() {
             console.log(LCM(12, 4));
+        }
+        function LCM2(a, b) {
+            while (a % b != 0) {
+                at = a;
+                bt = b;
+                b = Math.min(at, bt);
+                a = Math.max(at, bt);
+                b = a % b;
+            }
+            return b;
         }
     </script>
 </body>

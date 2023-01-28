@@ -2,6 +2,7 @@
 <head>
 </head>
 <body>
+    <script src="Canvas.js"></script>
     <script>
         var FramesPerSecond = 100;
         let restLength = 200;
@@ -29,11 +30,11 @@
                     springs.push(new Spring(i + width, i, distanceBetweenPoints - 10));
                 }
                 if ((i + width + 1) % width != 0 && points[i + width + 1] != undefined) {
-                    springs.push(new Spring(i + width + 1, i, Vector.mag(distanceBetweenPoints, distanceBetweenPoints)));
+                    springs.push(new Spring(i + width + 1, i, mag(distanceBetweenPoints, distanceBetweenPoints)));
                 }
 
                 if (i - width + 1 % width != 0 && points[i - width + 1] != undefined) {
-                    springs.push(new Spring(i - width + 1, i, Vector.mag(distanceBetweenPoints, distanceBetweenPoints)));
+                    springs.push(new Spring(i - width + 1, i, mag(distanceBetweenPoints, distanceBetweenPoints)));
                 }
             }
         }
@@ -76,16 +77,19 @@
             constructor(x, y) {
                 this.pos = new Vector2(x, y);
                 this.vel = new Vector2(0, 0);
-                this.acc = new Vector2(0, 0);
+                this.acca = [];
                 this.r = 10;
             }
             addForce(force) {
                 this.acc.add(force);
             }
+            get acc() {
+                return Vector.add(...this.acca).div(this.acca.length);
+            }
             Update() {
                 this.vel.add(this.acc);
                 this.pos.add(this.vel);
-                this.acc.reset();
+                this.acca.length = 0;
 
                 this.pos.x = constraint(this.pos.x, this.r, CanvasWidth - this.r);
                 this.pos.y = constraint(this.pos.y, this.r, CanvasHeight - this.r);
@@ -95,7 +99,7 @@
             }
         }
     </script>
-    <script>
+    <!--<script>
         var colliders = [];
         var ctx, CanvasWidth, CanvasHeight, CanvasColor, mouseOverCanvas, drawEnabled, floor, CanvasOffset, mouseClicked;
         var fl = true;
@@ -615,7 +619,7 @@
             r += Math.random() * args[a];
             return r;
         }
-    </script>
+    </script>-->
 
 </body>
 </html>

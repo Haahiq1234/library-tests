@@ -5,61 +5,164 @@
 <body>
     <script src="Canvas.js"></script>
     <script>
-        let grid = new Array2D(10, 19);
-        let blocks = [];
+        let types = [
+            [
+                [[-1, 0], [0, 0], [-1, 1], [0, 1]],
+                [[-1, 0], [0, 0], [-1, 1], [0, 1]],
+                [[-1, 0], [0, 0], [-1, 1], [0, 1]],
+                [[-1, 0], [0, 0], [-1, 1], [0, 1]],
+            ],
+            [
+                [[0, 0], [0, 1], [0, 2], [1, 2]],
+                [[1, 1], [0, 1], [-1, 1], [-1, 2]],
+                [[0, 2], [0, 1], [0, 0], [-1, 0]],
+                [[-1, 1], [0, 1], [1, 1], [1, 0]],
+            ],
+            [[0, 0], [0, 1], [0, 2], [-1, 2]],
+            [[0, 0], [-1, 0], [1, 0], [0, 1]],
+            [[0, 0], [-1, 0], [-2, 0], [1, 0]]
+        ];
+        let cols = [[255, 0, 0], [0, 0, 255], [0, 255, 0], [255, 255, 0], [0, 255, 255], [255, 0, 255]];
+        let grid = new Array2D(10, 18, () => []);
+        let current;
         let width = 30;
-        let outerWidth = 4;
+        let lw = 5;
         function setUp() {
             createCanvas(grid.width * width, grid.height * width);
-            frameRate(60);
-            blocks.push(new Block(0, 0, color(255, 255, 0)));
+            frameRate(2);
+            current = new Piece();
+            //for (var i = 0; i < grid.width; i++) {
+            //    grid.set(i, grid.height - 1, Random.element(cols));
+            //}
+            //grid.set(2, grid.height - 2, [100, 0, 0]);
         }
         function draw() {
             clear();
-            for (var block of blocks) {
-                block.draw();
+            current.render();
+            let moved = current.update();
+            if (moved) {
+                current = new Piece();
             }
-            for (var i = 0; i < grid.array.length; i++) {
-                let col = grid.array[i];
-                if (col) {
-                    let pos = grid.pos(i);
-                    console.log(pos);
-                    fill(col);
-                    rect(pos.col, pos.row, width, width);
+        }
+        function drawGrid() {
+            for (var j = 0; j < grid.height; j++) {
+                let done = 0;
+                for (var i = 0; i < grid.width; i++) {
+                    let col = grid.get(i, j);
+                    if (col.length > 0) {
+                        rct(i, j, col);
+                        done++;
+                    } 
+                }
+                if (done == grid.width) {
+                    for (var i = 0; i < grid.width; i++) {
+                        let col = grid.getCol(i);
+                        col.splice(j, 1);
+                        col = [[], ...col];
+                        //console.log(col);
+                        grid.setCol(col, i);
+                    }
                 }
             }
         }
-        class Block {
-            constructor(x, y, col) {
-                this.id = blocks.length;
-                this.x = x;
-                this.y = y;
-                this.posX = x * width;
-                this.posY = y * width;
-                this.color = splitRGB(col);
-                this.outerColor = this.color.mult(0.8);
-                this.color = this.color.string();
+        function key_Press() {
+            if (keyCode == key.down) {
+                current.move(0, 1);
             }
-            draw() {
-                this.y = floor(this.posY / width);
-                if (!grid.get(this.x, this.y + 1) && this.y < grid.height - 1) {
-                    this.posY += width / 10;
-                } else {
-                    grid.set(this.x, this.y, color(0, 255, 0));
-                    console.log(grid.index(this.x, this.y));
-                    blocks.splice(this.id, 1);
+            if (keyCode == key.up) {
+                current.rotate();
+            }
+            current.move(GetAxis("horizontal"), 0);
+            clear();
+            current.render();
+        }
+        function unbound(ip, jp) {
+            return !(ip > -1 && ip < grid.width && jp < grid.height);
+        }
+        class Piece {
+            id;
+            constructor() {
+                this.id = 1;//Random.rangeInt(types.length);
+                this.rot = 0;
+                let id = this.id;
+                this.color = Random.element(cols);
+                this.boxes = [];
+                for (var i = 0; i < types[id].length; i++) {
+                    let ip = grid.width / 2 + types[id][0][i][0];
+                    let jp = types[id][0][i][1];
+                    let col = grid.get(ip, jp);
+                    if (col.length > 0) {
+                        console.log("gameOver");
+                        return;
+                        noLoop();
+                    }
+                    this.boxes.push([ip, jp]);
                 }
-
-
-                noStroke();
-                fill(this.color);
-                rect(this.posX + outerWidth / 2, this.posY + outerWidth / 2, width - outerWidth / 2, width - outerWidth / 2);
-
-                stroke(this.outerColor);
-                lineWidth(outerWidth);
-                nofill();
-                rect(this.posX + outerWidth / 2, this.posY + outerWidth / 2, width - outerWidth / 2, width - outerWidth / 2);
             }
+            rotate() {
+                let x = this.x;
+                let y = this.y;
+                this.rot = (this.rot + 1) % 4;
+                let arr = [];
+                for (var i in this.boxes) {
+                    let ip = x + types[this.id][this.rot][i][0];
+                    let jp = y + types[this.id][this.rot][i][1];
+                    if (unbound(ip, jp) || grid.get(ip, jp).length > 0) {
+                        this.rot = (3 + this.rot) % 4;
+                        return;
+                    }
+                    arr.push([ip, jp]);
+                }
+                this.boxes = arr;
+            }
+            get x() {
+                return this.boxes[0][0] - types[this.id][this.rot][0][0];
+            }
+            get y() {
+                return this.boxes[0][1] - types[this.id][this.rot][0][1];
+            }
+            update() {
+                let moved = this.move(0, 1);
+                if (moved) {
+                    for (var b of this.boxes) {
+                        grid.set(...b, this.color);
+                    }
+                    this.render();
+                }
+                return moved;
+            }
+            move(id, jd) {
+                for (var box of this.boxes) {
+                    let i = box[0];
+                    let j = box[1];
+                    let ip = i + id;
+                    let jp = j + jd;
+                    let col = grid.get(i + id, j + jd);
+                    if (unbound(ip, jp) || col.length > 0) {
+                        return true;
+                    }
+                }
+                for (var k = 0; k < this.boxes.length; k++) {
+                    this.boxes[k][0] += id;
+                    this.boxes[k][1] += jd;
+                }
+                return false;
+            }
+            render() {
+                nofill();
+                drawGrid();
+                for (var box of this.boxes) {
+                    rct(...box, this.color);
+                }
+            }
+        }
+        function rct(i, j, col) {
+            let x = i * width + lw / 2;
+            let y = j * width + lw / 2;
+            stroke(col);
+            lineWidth(lw);
+            rect(x, y, width - lw, width - lw);
+
         }
         function ln(A, B) {
             line(A.x, A.y, B.x, B.y);

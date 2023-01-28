@@ -91,13 +91,15 @@ class Event1 {
     bound;
     constructor() {
         this.bound = [];
+        this.args = [];
     }
-    bind(func) {
+    bind(func, ...args) {
         this.bound.push(func);
+        this.args.push(args);
     }
     Fire(...args) {
         for (var i = 0; i < this.bound.length; i++) {
-            this.bound[i](...args);
+            this.bound[i](...args, ...this.args[i]);
         }
     }
     getFire() {
@@ -950,6 +952,10 @@ var mouse2 = new Vector2(0, 0);
 //#endregion
 
 // #region constants
+const CONSTANTS = {
+
+};
+Object.freeze(CONSTANTS);
 const PI = Math.PI;
 const RGB = 0;
 const HSB = 1;
@@ -965,12 +971,6 @@ LINE.BEVEL = "bevel";
 LINE.MITER = "miter";
 LINE.BUTT = "butt";
 LINE.SQUARE = "square";
-const GizmoShapes = {
-    circle: 0,
-    square: 1,
-    rect: 2,
-};
-Object.freeze(GizmoShapes);
 const AngleModes = {
     radians: 0,
     degrees: 1,
@@ -988,17 +988,17 @@ autoStartLoop = true;
 var UnSetFps = true;
 let drawIntervalId;
 let animationFrameLoopId;
+var STARTED = false;
 var setupEvent = new Event1();
 {
-    var settedUP = false;
     var loaded = false;
     function checkForStart() {
-        if (!(loadingResources > 0) && !settedUP && loaded) {
-            settedUP = true;
-            setupEvent.Fire();
+        if (!(loadingResources > 0) && !STARTED && loaded) {
+            STARTED = true;
             if (window.setUp) {
                 setUp();
             }
+            InitializeLibrary();
             if (autoStartLoop) {
                 requestAnimationFrame(redraw);
             }
@@ -1009,6 +1009,16 @@ document.body.onload = function () {
     loaded = true;
     checkForStart();
 };
+function InitializeLibrary() {
+    setupEvent.Fire();
+    for (var i = 0; i < UI.Elements.length; i++) {
+        let element = UI.Elements[i];
+        if ((element.constructor == Gizmo)) {
+            element.a = new Vector2(0, 0);
+            element.b = new Vector2(CanvasWidth, CanvasHeight);
+        }
+    }
+}
 function frameRate(rate) {
     UnSetFps = false;
     Time.frameRate = rate;
@@ -1049,8 +1059,7 @@ function redraw(timeStamp) {
         Camera.update();
         if (Canvas.enabled) {
             //ctx.scale(pixelDensity(), pixelDensity());
-            Gizmo2.update();
-            Gizmo.update();
+            UI.Update();
             ctx.save();
         }
         draw();
@@ -1058,8 +1067,7 @@ function redraw(timeStamp) {
             saveColor();
             ctx.restore();
             loadColor();
-            Gizmo2.draw();
-            Gizmo.draw();
+            UI.Draw();
         }
         frameNo += 1;
         if (UnSetFps) {
@@ -1558,13 +1566,13 @@ function PointInTriangle(p, a, b, c) {
     return true;
 }
 function sphereCast(ox, oy, oz, rx, ry, rz, cx, cy, cz, cr) {
-    let orig = createVector3(ox, oy, oz);
-    let dir = createVector3(rx, ry, rz);
-    let cv = createVector3(cx, cy, cz);
-    orig.sub(cv);
     ox -= cx;
     oy -= cy;
     oz -= cz;
+    let orig = createVector3(ox, oy, oz);
+    let dir = createVector3(rx, ry, rz);
+    let cv = createVector3(cx, cy, cz);
+
     let a = Vector.dot(dir, dir);
     let b = 2 * Vector.dot(dir, orig);
     let c = Vector.dot(orig, orig) - cr ** 2;
@@ -2345,12 +2353,17 @@ const RayCast = {
 };
 Object.freeze(RayCast);
 function factorize(no) {
-    let factors = [];
-    for (let i = 1; i < no; i++) {
+    //return [1, no];
+    let factors = [1];
+    if (no < 0) {
+        factors.push(-1);
+        no = -no;
+    }
+    for (let i = 2; i < no; i++) {
         if (no % i == 0) {
             factors.push(i);
             no /= i;
-            i--;
+            i = 2;
         }
     }
     factors.push(no);
@@ -3092,10 +3105,7 @@ const Colors = {
     },
 };
 const Color = {
-    mult: function (col, t) {
-        let c = splitRGB(col);
-        return c.mult(t);
-    },
+    mult: (col, t) => col.map((a, i) => (i == 3)? a: a * t),
     setAlpha: function (col, alpha) {
         let c = splitRGB(col);
         c.a = alpha;
@@ -3166,31 +3176,24 @@ function create2DArray(cols, rows, fillVal) {
     return arr;
 }
 function includes(arr, item) {
-    let farr = arr.filter(function (it) {
-        if (it == item) {
-            return item;
-        }
-    });
-    return farr.length > 0;
+    return arr.some(a => a == item);
 }
 function includesVector(arr, item) {
-    let farr = arr.filter(function (it) {
-        if (it.x == item.x && it.y == item.y) {
-            return item;
-        }
-    });
-    return farr.length > 0;
+    return arr.some(a => Vector.Equal(a, item));
 }
 function fillArray(len, ...fls) {
-    let arr = new Array(len);
-    for (var i = 0; i < len; i++) {
-        let th = i % fls.length;
-        arr[i] = fls[th];
-    }
+    let arr = new Array(len).map((n, i) => fls[i % fls.length]);
     return arr;
 }
-function Array2D(width, height) {
+function Array2D(width, height, defaultVal = 0) {
     this.array = new Array(width * height);
+    for (var i = 0; i < this.array.length; i++) {
+        if (typeof defaultVal == "function") {
+            this.array[i] = defaultVal();
+        } else {
+            this.array[i] = defaultVal;
+        }
+    }
     this.width = width;
     this.height = height;
     this.getCol = function (col) {
@@ -3215,8 +3218,8 @@ function Array2D(width, height) {
         this.array.splice(this.width * row, this.width * (row + 1), ...rw);
     };
     this.setCol = function (cl, col) {
-        for (var i = 0; i < this.width; i++) {
-            this.array[this.index(i, col)] = cl[i];
+        for (var i = 0; i < this.height; i++) {
+            this.array[this.index(col, i)] = cl[i];
         }
     };
     this.shuffleCol = function (cl) {
@@ -3295,47 +3298,17 @@ function shuffle(arr) {
 }
 const ArrayMath = {
     number: function (arr1) {
-        return arr1.reduce((prev, next) => { return prev + next });
+        return arr1.reduce((prev, next) => prev + next , 0);
     },
-    mult: function (arr1, arr2) {
-        arr1 = [...arr1];
-        for (var i = 0; i < arr1.length; i++) {
-            arr1[i] *= arr2[i];
-        }
-        return arr1;
-    },
-    add: function (arr1, arr2) {
-        arr1 = [...arr1];
-        for (var i = 0; i < arr1.length; i++) {
-            arr1[i] += arr2[i];
-        }
-        return arr1;
-    },
-    sub: function (arr1, arr2) {
-        arr1 = [...arr1];
-        for (var i = 0; i < arr1.length; i++) {
-            arr1[i] -= arr2[i];
-        }
-        return arr1;
-    },
+    mult: (arr1, arr2) => arr1.map((a, i) => a * arr2[i]),
+    add: (arr1, arr2) => arr1.map((a, i) => a + arr2[i]),
+    sub: (arr1, arr2) => arr1.map((a, i) => a - arr2[i]),
     scalar: {
-        mult: function (arr, scal) {
-            arr = [...arr];
-            for (var i = 0; i < arr.length; i++) {
-                arr[i] *= scal;
-            }
-            return arr;
-        },
+        mult: (arr, scal) => arr.map(a => a * scal)
     },
 };
-function filterArray(arr1, val) {
-    let arr = [];
-    for (var i = 0; i < arr1.length; i++) {
-        if (arr1[i] != val) {
-            arr.push(arr1[i]);
-        }
-    }
-    return arr;
+function filterArray(arr, val) {
+    return [...arr].filter(n => n != val);
 }
 function splitArray(arr) {
     let obj = {};
@@ -3351,9 +3324,8 @@ function splitArray(arr) {
 }
 function indicesOf(arr, val) {
     let arr1 = [];
-    for (var i = 0; i < arr.length; i++) {
-        if (arr[i] == val) arr1.push(i);
-    }
+    let arr2 = (arr.map((a, i) => (a == val) ? arr1.push(i) : arr1.length));
+    console.log(arr2);
     return arr1;
 }
 // #endregion
@@ -3452,12 +3424,22 @@ class LineEquation {
             fl = fls;
         }
     }
-    function saveLineWidth() {
+    let savedLineCap;
+    let savedLineColor;
+    let savedStroke;
+    function saveLineState() {
         savedLineWidth = ctx.lineWidth;
+        savedLineCap = ctx.lineCap;
+        savedLineColor = ctx.strokeStyle;
+        savedStroke = st;
     }
-    function loadLineWidth() {
+    function loadLineState() {
         if (savedLineWidth) {
             ctx.lineWidth = savedLineWidth;
+            ctx.lineCap = savedLineCap;
+            ctx.strokeStyle = savedLineColor;
+            st = savedStroke;
+
         }
     }
 }
@@ -3584,7 +3566,7 @@ function ellipse(x, y, d, d1) {
     x = Canvas.x(x);
     y = Canvas.y(y);
     var c = ctx.strokeStyle;
-    ctx.strokeStyle = ctx.fillStyle;
+    //ctx.strokeStyle = ctx.fillStyle;
     ctx.beginPath();
     ctx.ellipse(x, y, d / 2, d1 / 2, 0, 0, 2 * Math.PI);
     ctx.closePath();
@@ -3615,6 +3597,8 @@ function rect(x, y, w, h) {
     }
 }
 const Canvas = {
+    textFontFamily: "Verdana",
+    textFontSize: 10,
     lineWidth: undefined,
     lineCap: "butt",
     strokeStyle: undefined,
@@ -3681,8 +3665,12 @@ function textAlign(al, aly) {
     ctx.textAlign = al;
     ctx.textBaseline = aly;
 }
+function textFont(font) {
+    Canvas.textFontFamily = font;
+    ctx.font = Canvas.textFontSize + "px " + font;
+}
 function textSize(size) {
-    ctx.font = size + "px Arial";
+    ctx.font = size + "px " + Canvas.textFontFamily;
 }
 function text(txt, x, y) {
     x = Canvas.x(x);
@@ -3728,8 +3716,9 @@ function createCanvas(
     canvas.addEventListener("mouseout", function () {
         mouseOverCanvas = false;
     });
-    ctx.textAlign = "start";
-    ctx.textBaseline = "top";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = Canvas.textFontSize + "px " + Canvas.textFontFamily;
     Canvas.canvas = canvas;
     calculateCanvasOffset();
     return canvas;
@@ -3752,34 +3741,31 @@ function clear() {
     ctx.setTransform(t);
 }
 function backGround() {
+    let t = ctx.getTransform();
+    ctx.resetTransform();
     var col = color(arguments[0], arguments[1], arguments[2], arguments[3]);
     var cl = ctx.fillStyle;
-    ctx.fillStyle = col;
+    //console.log(col);
+    ctx.fillStyle = rgb(...col);
     ctx.fillRect(
-        -CanvasWidth * 5,
-        -CanvasHeight * 5,
-        CanvasWidth * 10,
-        CanvasHeight * 10
+        0,
+        0,
+        CanvasWidth,
+        CanvasHeight
     );
     ctx.fillStyle = cl;
+    ctx.setTransform(t);
 }
 function line(x, y, x1, y1) {
     x = Canvas.x(x);
     y = Canvas.y(y);
     x1 = Canvas.x(x1);
     y1 = Canvas.y(y1);
-
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x1, y1);
-    ctx.closePath();
     ctx.stroke();
-
-    if (ctx.lineCap == "round") {
-        //console.log(ctx.lineWidth);
-        circle(x, y, Canvas.lineWidth / 2);
-        circle(x1, y1, Canvas.lineWidth / 8);
-    }
+    ctx.closePath();
 }
 function rotate(deg) {
     ctx.rotate(radians(deg));
@@ -4077,11 +4063,11 @@ class Turtle {
         div.appendChild(slider);
         div.appendChild(input);
         //console.log(slider.value);
-        let cls = new Slider(slider, input, div);
+        let cls = new SliderHTML(slider, input, div);
         //console.log(slider.value);
         return cls;
     }
-    class Slider {
+    class SliderHTML {
         slider;
         input;
         div;
@@ -4328,325 +4314,278 @@ function setArray(arr1, arr2) {
 }
 // #endregion
 
-//#region Gizmos
+//#region UI
 
-let gizmos = [];
-let gizmoSelected = false;
-class Button {
+class UIElement {
+    static Selected = false;
+    localPosition;
     id;
+    #_layer = 0;
+
+    enabled = true;
+    drawing = true;
+    updating = true;
+
+    outlined = false;
+    outlineCol = color(0);
+
+    baseColor;
+    color;
 
     size;
-
     shape;
 
-    selected;
+    clicked = false;
+    hovered = false;
 
-    hovered;
-
-    name;
-
-    stateChanged;
-
-    hoveredColor;
-
-    hoveredColor2;
-
-    normalColor;
-
-    clickedColor;
-
-    onClick;
-
-    static gizmos = [];
-    static update() {
-        for (var i = Button.gizmos.length - 1; i >= 0; i--) {
-            let gizmo = Button.gizmos[i];
-            if (gizmo.selfUpdate) {
-                gizmo.update();
-            }
-        }
-    }
-    static draw() {
-        for (var i = 0; i < Button.gizmos.length; i++) {
-            let gizmo = Button.gizmos[i];
-            if (gizmo.selfDraw) {
-                gizmo.draw();
-            }
-        }
-    }
-    constructor(x, y, col = color(0, 255, 0)) {
-        this.size = [];
-        this.event = new Event1();
+    constructor(x, y, ...shapeArgs) {
         this.offset = createVector();
-        this.size[0] = 10;
-        this.shape = GizmoShapes.circle;
         this.position = createVector(x, y);
-        this.selfUpdate = true;
-        this.selfDraw = true;
-        this.id = Gizmo2.gizmos.length;
-        Button.gizmos.push(this);
-        this.setColor(col);
-        this.setShape(GizmoShapes.circle, 10);
-        this.name = "";
-        this.nameSize = 5 * this.size[0];
+        this.id = UI.Elements.length;
+        this.click = new Event1();
+        UI.Elements.push(this);
+        UI.Relayer();
+        this.setShape(...shapeArgs);
+    }   
+    get position() {
+        return this.localPosition;
     }
-    setName(nm) {
-        this.name = nm;
+    get x() {
+        return this.position.x;
     }
-    setShape(shape, ...sizes) {
-        if (shape == GizmoShapes.square) {
-            this.offset = createVector(-sizes[0] / 2, -sizes[0] / 2);
-        } else if (shape == GizmoShapes.rect) {
-            this.offset = createVector(-sizes[0] / 2, -sizes[1] / 2);
-        } else if (shape == GizmoShapes.circle) {
-            this.offset = createVector(0, 0);
-        }
-        this.size = [...sizes];
-        this.shape = shape;
+    get y() {
+        return this.position.y;
     }
-    getHoveredInfo() {
-        if (this.shape == GizmoShapes.circle) {
-            return (
-                Vector.dist(Vector.add(this.position, this.offset), mouse) <=
-                this.size[0]
-            );
-        } else if (this.shape == GizmoShapes.square) {
-            let vec = Vector.add(this.position, this.offset);
-            return Between.square(vec, this.size[0], mouse);
-        } else if (this.shape == GizmoShapes.rect) {
-            let vec = Vector.add(this.position, this.offset);
-            return Between.rect(vec, this.size[0], this.size[1], mouse);
-        }
-        return false;
+    set position(val) {
+        this.localPosition = val;
     }
-    setColor(col) {
-        let col2 = splitRGB(col);
-        this.normalColor = col;
-        this.hoveredColor = col2.mult(0.85);
-        this.hoveredColor2 = col2.mult(0.85);
-        this.clickedColor = col2.mult(0.7);
+    set layer(layer) {
+        this.#_layer = layer;
+        UI.Relayer();
     }
-    setNormalColor(col) {
-        let col2 = splitRGB(col);
-        this.normalColor = col;
-        this.hoveredColor = col2.mult(0.85);
+    get layer() {
+        return this.#_layer;
     }
-    setSelectedColor(col) {
-        let col2 = splitRGB(col);
-        this.clickedColor = col;
-        this.hoveredColor2 = col2.mult(0.85);
+    Disable() {
+        this.enabled = false;
     }
-    destroy() {
-        Button.gizmos.splice(this.id, 1);
-        for (var i = this.id; i < Button.gizmos.length; i++) {
-            Button.gizmos[i].id--;
-        }
-        return this;
+    updateUI() {
+        this.color = this.baseColor;
+        this.hovered = this.getHoveredInfo();
+        this.update();
     }
     update() {
-        this.hovered = this.getHoveredInfo();
         if (mousePressed) {
-            if (!this.stateChanged && this.hovered) {
-                this.selected = true;
-                if (this.onClick) {
-                    this.onClick();
-                }
-                this.event.Fire();
-                this.stateChanged = true;
-            } else {
-                this.selected = false;
+            let clicked = this.clicked;
+            this.clicked = (this.clicked || (this.hovered && !UIElement.Selected));
+            //console.log(this.clicked);
+            if (!clicked && this.clicked) {
+                UIElement.Selected = this;
+                this.OnClick();
+                this.click.Fire();
             }
         } else {
-            this.stateChanged = false;
+            this.clicked = false;
+            UIElement.Selected = false;
         }
     }
-    bind(func) {
-        this.event.bind(func);
-    }
-    draw() {
+    drawUI() {
         saveColor();
-        noStroke();
-        if (this.selected && this.hovered) {
-            fill(this.hoveredColor2);
-        } else if (this.selected) {
-            fill(this.clickedColor);
-        } else if (this.hovered) {
-            fill(this.hoveredColor);
-            //console.log("ok");
+        fill(this.color);
+        if (this.outlined) {
+            stroke(this.outlineCol);
         } else {
-            fill(this.normalColor);
+            noStroke();
         }
-        //fill(0);
-        this.drawShape();
-        if (this.hovered) {
-            textSize(this.nameSize);
-            text(this.name, this.position.x, this.position.y);
-        }
+        this.draw();
         loadColor();
     }
-    drawShape() {
-        if (this.shape == GizmoShapes.circle) {
+    Enable() {
+        this.enabled = true;
+    }
+    Destroy() {
+        UI.Elements.splice(this.id, 1);
+        UI.Reorder();
+        delete this;
+    }
+    getMouse() {
+        return mouse.copy();
+    }
+    setShape(shape, ...sizes) {
+        if (shape == UI.SQUARE) {
+            this.offset = createVector(-sizes[0] / 2, -sizes[0] / 2);
+            shape = UI.RECT;
+            sizes = [sizes[0], sizes[0]];
+        } else if (shape == UI.RECT) {
+            this.offset = createVector(-sizes[0] / 2, -sizes[1] / 2);
+            //sizes = [sizes[0], sizes[1]];
+        } else if (shape == UI.CIRCLE) {
+            this.offset = createVector(0, 0);
+            sizes = [sizes[0], sizes[0]];
+        }
+        this.shape = shape;
+        this.size = sizes;
+    }
+    draw() {
+        let position = this.position;
+        if (this.shape == UI.CIRCLE) {
             circle(
-                this.position.x + this.offset.x,
-                this.position.y + this.offset.y,
+                position.x + this.offset.x,
+                position.y + this.offset.y,
                 this.size[0]
             );
-        } else if (this.shape == GizmoShapes.square) {
+        } else if (this.shape == UI.RECT) {
             rect(
-                this.position.x + this.offset.x,
-                this.position.y + this.offset.y,
-                this.size[0],
-                this.size[0]
-            );
-        } else if (this.shape == GizmoShapes.rect) {
-            rect(
-                this.position.x + this.offset.x,
-                this.position.y + this.offset.y,
+                position.x + this.offset.x,
+                position.y + this.offset.y,
                 this.size[0],
                 this.size[1]
             );
         }
+        if (this.name.length > 0) {
+            ctx.save();
+            //ctx.clip();
+            //console.log(position.x, position.y);
+            fill(0);
+            textSize((this.size[0] + this.size[1]) / 1.5);
+            text(this.name, position.x, position.y);
+            ctx.restore();
+        }
+    }
+    name = "";
+    OnClick() {
+
+    }
+    getHoveredInfo() {
+        let mouse1 = mouse.copy();
+        let position = this.position;
+        if (this.shape == UI.CIRCLE) {
+            return (
+                Vector.dist(Vector.add(position, this.offset), mouse1) <=
+                this.size[0]
+            );
+        } else if (this.shape == UI.RECT) {
+            let vec = Vector.add(position, this.offset);
+            return Between.rect(vec, this.size[0], this.size[1], mouse1);
+        }
+        return false;
+    }
+    bind(type, func, ...args) {
+        if (type == "click") {
+            this.click.bind(func, ...args);
+        }
     }
 }
-class Gizmo {
-    static gizmos = [];
-    static update() {
-        for (var i = Gizmo.gizmos.length - 1; i >= 0; i--) {
-            let gizmo = Gizmo.gizmos[i];
-            if (gizmo.selfUpdate) {
-                gizmo.update();
-            }
-        }
+class Button extends UIElement {
+    name;
+
+    hoveredColor;
+    normalColor;
+    clickedColor;
+
+
+    constructor(x, y, w, h, col = color(0, 255, 0)) {
+        super(x, y, UI.RECT, w, h);
+        this.setColor(col);
     }
-    static draw() {
-        for (var i = 0; i < Gizmo.gizmos.length; i++) {
-            let gizmo = Gizmo.gizmos[i];
-            if (gizmo.selfDraw) {
-                gizmo.draw();
-            }
-        }
+    setColor(col2) {
+        this.baseColor = col2;
+        this.hoveredColor = col2.map((a, i) => (i == 3) ? a : a * 0.85);
+        this.clickedColor = col2.map((a, i) => (i == 3)? a : a * 0.7);
     }
-    id;
-    shape;
+    update() {
+        super.update();
+        if (this.clicked) {
+            this.color = this.clickedColor;
+        } else if (this.hovered) {
+            this.color = this.hoveredColor;
+        } 
+    }
+}
+class Gizmo extends UIElement {
+    static DEFAULTRADIUS = 10;
+
     parent;
-    hovered;
-    selected;
     snapX = 0;
     snapY = 0;
-    size = [];
     mouseOffset;
     lastPosition;
     children = [];
     snapped = false;
-    rotatingChildren = [];
 
-    setParent(par, rotate = false) {
+    setColor(col2) {
+        this.baseColor = col2;
+        this.hoveredColor = col2.map((a, i) => (i == 3) ? a : a * 0.85);
+        this.clickedColor = col2.map((a, i) => (i == 3) ? a : a * 0.7);
+    }
+    setParent(par) {
         par.children.push(this);
         this.parent = par;
-        par.rotatingChildren.push(rotate);
+        console.log(this.localPosition);
+        this.localPosition.sub(this.parent.position);
     }
-    setChild(child, rotate = false) {
-        this.children.push(child);
-        child.parent = this;
-        this.rotatingChildren.push(rotate);
+    setChild(child) {
+        child.setParent(this);
+    }
+    pair(pair, type, func) {
+        //console.log(func);
+        this.bind(type, func, pair);
+        pair.bind(type, func, this);
     }
     constructor(x, y, col = color(0, 255, 0)) {
-        this.constraintedA = createVector();
-        this.onchange = function () { };
-        this.constraintedB = createVector(CanvasWidth, CanvasHeight);
-        this.position = createVector(x, y);
-        this.constrainted = false;
-        this.size = [];
-        this.offset = createVector();
-        this.size[0] = 10;
-        this.shape = GizmoShapes.circle;
-        this.selfUpdate = true;
-        this.selfDraw = true;
-        this.id = Gizmo.gizmos.length;
+        super(x, y, UI.CIRCLE, Gizmo.DEFAULTRADIUS);
+        //console.log(x, y);
         this.setColor(col);
         this.mouseOffset = new Vector2(0, 0);
-        Gizmo.gizmos.push(this);
-
+        this.move = new Event1();
     }
-    getPosition() {
-        return Vector.add(this.position, this.getParentPosition());
+    get position() {
+        return Vector.add(this.localPosition, this.parentPosition);
     }
-    getParentPosition() {
+    set position(pos) {
+        this.localPosition = Vector.sub(pos, this.parentPosition);
+    }
+    get parentPosition() {
         if (this.parent) {
-            return this.parent.getPosition();
+            return this.parent.position;
         } else {
             return createVector(0, 0);
         }
     }
-    setConstraints(
-        a = createVector(this.size[0], this.size[0]),
-        b = createVector(CanvasWidth - this.size[0], CanvasHeight - this.size[0])
-    ) {
-        this.constraintedA = a;
-        this.constraintedB = b;
-        return this;
-    }
-    constraintToCircle(c, r) {
-        this.position = Vector.limitDistance(c, this.position, r);
-        return this;
-    }
-    setName(nm) {
-        this.name = nm;
-        return this;
-    }
-    setColor(col) {
-        this.col = splitRGB(col);
-        this.normalColor = this.col.string();
-        this.hoveredColor = this.col.mult(0.9);
-        this.clickedColor = this.col.mult(0.8);
-        return this;
-    }
-    destroy() {
-        Gizmo.gizmos.splice(this.id, 1);
-        for (var i = this.id; i < Gizmo.gizmos.length; i++) {
-            Gizmo.gizmos[i].id--;
-        }
-        return this;
-    }
-    setPos(pos) {
-        this.position = pos;
-        if (this.lastPosition != pos) {
-            this.onchange(pos);
-            this.lastPosition = this.position;
-        }
-        return this;
-    }
     getMouse() {
-        //console.log(mouse);
-        let par = this.getParentPosition();
+        let par = this.parentPosition;
         return Vector.sub(mouse, par);
     }
+    bind(type, func, ...args) {
+        super.bind(type, func, ...args);
+        if (type == "move") {
+            //console.log("ok");
+            this.move.bind(func, ...args);
+        }
+    }
     update() {
-        this.hovered = this.getHoveredInfo();
-        if (this.hovered || this.selected) {
-            if (!gizmoSelected || this.selected) {
-                if (mousePressed) {
-                    let mouse = this.getMouse();
-                    if (!this.selected) {
-                        this.mouseOffset = Vector.sub(mouse, this.position);
-                        this.selected = true;
-                        gizmoSelected = true;
-                        if (this.onclick) {
-                            this.onClick();
-                        }
-                    }
-                    this.setPos(Vector.sub(mouse.copy(), this.mouseOffset));
-                } else if (this.selected) {
-                    this.selected = false;
-                    gizmoSelected = false;
-                }
+        //console.log(this.position);
+        super.update();
+        let lastPosition = this.localPosition;
+        if (this.clicked) {
+            this.localPosition = Vector.sub(this.getMouse(), this.mouseOffset);
+            if (!!this.parent) {
+                this.position = Vector.constraint(this.position, this.a, this.b);
             }
-        }
+            this.color = this.clickedColor;
+        } else if (this.hovered) {
+            this.color = this.hoveredColor;
+        } 
         if (this.snapped) {
-            this.position.x = floor(this.position.x + this.mouseOffset.x, this.snapX);
-            this.position.y = floor(this.position.y + this.mouseOffset.y, this.snapY);
+            this.localPosition.x = floor(this.localPosition.x + this.mouseOffset.x, this.snapX);
+            this.localPosition.y = floor(this.localPosition.y + this.mouseOffset.y, this.snapY);
         }
-        this.lastPosition = this.position;
+        if (!this.parent) {
+            this.localPosition = Vector.constraint(this.localPosition, this.a, this.b);
+        }
+        if (!Vector.Equal(lastPosition, this.localPosition)) {
+            this.move.Fire(Vector.sub(this.localPosition, lastPosition), this);
+        }
         return this;
     }
     setSnap(x, y = x) {
@@ -4655,266 +4594,160 @@ class Gizmo {
         this.snapY = y;
         return this;
     }
-    constraintToLineSeg(a, b) {
-        let point = distance.line(
-            a.x,
-            a.y,
-            b.x,
-            b.y,
-            this.position.x,
-            this.position.y
-        );
-        ln(point, this.position);
-        this.position = point.point;
-        return this;
+    OnClick() {
+        this.mouseOffset = Vector.sub(this.getMouse(), this.localPosition);
+        //console.log(this.mouseOffset);
     }
-    get x() {
-        return this.getPosition().x;
-    }
-    get y() {
-        return this.getPosition().y;
-    }
+    //get x() {
+    //    return this.position.x;
+    //}
+    //get y() {
+    //    return this.position.y;
+    //}
     get px() {
-        return this.position.x;
+        return this.localPosition.x;
     }
     get py() {
-        return this.position.y;
-    }
-    draw() {
-        saveColor();
-        noStroke();
-        if (this.selected) {
-            //stroke(this.color);
-            fill(this.clickedColor);
-        } else if (this.hovered) {
-            fill(this.hoveredColor);
-        } else {
-            fill(this.normalColor);
-        }
-        this.drawShape();
-        loadColor();
-        return this;
-    }
-    drawShape() {
-        let pos = this.getPosition();
-        if (this.shape == GizmoShapes.circle) {
-            circle(pos.x + this.offset.x, pos.y + this.offset.y, this.size[0]);
-        } else if (this.shape == GizmoShapes.square) {
-            rect(
-                pos.x + this.offset.x,
-                pos.y + this.offset.y,
-                this.size[0],
-                this.size[0]
-            );
-        } else if (this.shape == GizmoShapes.rect) {
-            rect(
-                pos.x + this.offset.x,
-                pos.y + this.offset.y,
-                this.size[0],
-                this.size[1]
-            );
-        }
-        return this;
-    }
-    setShape(shape, ...sizes) {
-        if (shape == GizmoShapes.square) {
-            this.offset = createVector(-sizes[0] / 2, -sizes[0] / 2);
-        } else if (shape == GizmoShapes.rect) {
-            this.offset = createVector(-sizes[0] / 2, -sizes[1] / 2);
-        } else if (shape == GizmoShapes.circle) {
-            this.offset = createVector(0, 0);
-        }
-        this.size = [...sizes];
-        this.shape = shape;
-        return this;
-    }
-    getHoveredInfo() {
-        let mouse1 = this.getMouse();
-        //console.log(mouse, mouse1);
-        if (this.shape == GizmoShapes.circle) {
-            return (
-                Vector.dist(Vector.add(this.position, this.offset), mouse1) <=
-                this.size[0]
-            );
-        } else if (this.shape == GizmoShapes.square) {
-            let vec = Vector.add(this.position, this.offset);
-            return Between.square(vec, this.size[0], mouse1);
-        } else if (this.shape == GizmoShapes.rect) {
-            let vec = Vector.add(this.position, this.offset);
-            return Between.rect(vec, this.size[0], this.size[1], mouse1);
-        }
-        return false;
+        return this.localPosition.y;
     }
 }
-class Gizmo2 {
-    id;
+class CheckBox extends UIElement {
 
-    size;
-
-    shape;
-
-    selected;
-
-    hovered;
-
-    name;
-
-    stateChanged;
+    checked = false;
 
     hoveredColor;
-
-    hoveredColor2;
-
+    hoveredAndCheckedColor;
     normalColor;
+    checkedColor;
 
-    clickedColor;
-
-    onClick;
-
-    static gizmos = [];
-    static update() {
-        for (var i = Gizmo2.gizmos.length - 1; i >= 0; i--) {
-            let gizmo = Gizmo2.gizmos[i];
-            if (gizmo.selfUpdate) {
-                gizmo.update();
-            }
-        }
-    }
-    static draw() {
-        for (var i = 0; i < Gizmo2.gizmos.length; i++) {
-            let gizmo = Gizmo2.gizmos[i];
-            if (gizmo.selfDraw) {
-                gizmo.draw();
-            }
-        }
-    }
     constructor(x, y, col = color(0, 255, 0)) {
-        this.size = [];
-        this.offset = createVector();
-        this.size[0] = 10;
-        this.shape = GizmoShapes.circle;
-        this.position = createVector(x, y);
-        this.selfUpdate = true;
-        this.selfDraw = true;
-        this.id = Gizmo2.gizmos.length;
-        Gizmo2.gizmos.push(this);
+        super(x, y, UI.CIRCLE, 10);
         this.setColor(col);
-        this.setShape(GizmoShapes.circle, 10);
-        this.name = "";
-        this.nameSize = 5 * this.size[0];
-    }
-    setName(nm) {
-        this.name = nm;
-    }
-    setShape(shape, ...sizes) {
-        if (shape == GizmoShapes.square) {
-            this.offset = createVector(-sizes[0] / 2, -sizes[0] / 2);
-        } else if (shape == GizmoShapes.rect) {
-            this.offset = createVector(-sizes[0] / 2, -sizes[1] / 2);
-        } else if (shape == GizmoShapes.circle) {
-            this.offset = createVector(0, 0);
-        }
-        this.size = [...sizes];
-        this.shape = shape;
-    }
-    getHoveredInfo() {
-        if (this.shape == GizmoShapes.circle) {
-            return (
-                Vector.dist(Vector.add(this.position, this.offset), mouse) <=
-                this.size[0]
-            );
-        } else if (this.shape == GizmoShapes.square) {
-            let vec = Vector.add(this.position, this.offset);
-            return Between.square(vec, this.size[0], mouse);
-        } else if (this.shape == GizmoShapes.rect) {
-            let vec = Vector.add(this.position, this.offset);
-            return Between.rect(vec, this.size[0], this.size[1], mouse);
-        }
-        return false;
     }
     setColor(col) {
-        let col2 = splitRGB(col);
-        this.normalColor = col;
-        this.hoveredColor = col2.mult(0.85);
-        this.hoveredColor2 = col2.mult(0.85);
-        this.clickedColor = col2.mult(0.7);
+        this.baseColor = col;
+        this.hoveredColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
+        this.hoveredAndCheckedColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
+        this.checkedColor = col.map((a, i) => (i == 3) ? a : a * 0.7);
     }
     setNormalColor(col) {
-        let col2 = splitRGB(col);
-        this.normalColor = col;
-        this.hoveredColor = col2.mult(0.85);
+        this.baseColor = col;
+        this.hoveredColor = col.map((a, i) => (i == 3)? a : a * 0.85);
     }
-    setSelectedColor(col) {
-        let col2 = splitRGB(col);
-        this.clickedColor = col;
-        this.hoveredColor2 = col2.mult(0.85);
+    setCheckedColor(col) {
+        this.checkedColor = col;
+        this.hoveredAndCheckedColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
     }
-    destroy() {
-        Gizmo2.gizmos.splice(this.id, 1);
-        for (var i = this.id; i < Gizmo2.gizmos.length; i++) {
-            Gizmo2.gizmos[i].id--;
-        }
-        return this;
+    OnClick() {
+        this.checked = !this.checked;
     }
     update() {
-        this.hovered = this.getHoveredInfo();
-        if (mousePressed) {
-            if (!this.stateChanged && this.hovered) {
-                this.selected = !this.selected;
-                if (this.onClick) {
-                    this.onClick();
-                }
-                this.stateChanged = true;
-            }
-        } else {
-            this.stateChanged = false;
-        }
-    }
-    draw() {
-        saveColor();
-        noStroke();
-        if (this.selected && this.hovered) {
-            fill(this.hoveredColor2);
-        } else if (this.selected) {
-            fill(this.clickedColor);
+        super.update();
+        if (this.checked && this.hovered) {
+            this.color = this.hoveredAndCheckedColor;
+        } else if (this.checked) {
+            this.color = this.checkedColor;
         } else if (this.hovered) {
-            fill(this.hoveredColor);
-            //console.log("ok");
-        } else {
-            fill(this.normalColor);
-        }
-        //fill(0);
-        this.drawShape();
-        if (this.hovered) {
-            textSize(this.nameSize);
-            text(this.name, this.position.x, this.position.y);
-        }
-        loadColor();
-    }
-    drawShape() {
-        if (this.shape == GizmoShapes.circle) {
-            circle(
-                this.position.x + this.offset.x,
-                this.position.y + this.offset.y,
-                this.size[0]
-            );
-        } else if (this.shape == GizmoShapes.square) {
-            rect(
-                this.position.x + this.offset.x,
-                this.position.y + this.offset.y,
-                this.size[0],
-                this.size[0]
-            );
-        } else if (this.shape == GizmoShapes.rect) {
-            rect(
-                this.position.x + this.offset.x,
-                this.position.y + this.offset.y,
-                this.size[0],
-                this.size[1]
-            );
+            this.color = this.hoveredColor;
         }
     }
 }
+class Slider extends UIElement {
+    lineWidth;
+    lineColor = color(200);
+    constructor(ax, ay, bx, by, min, max, value = (min + max) / 2, col = color(0, 255, 0)) {
+        super(normalize(value, min, max) * (bx - ax) + ax, normalize(value, min, max) * (by - ay) + ay, UI.CIRCLE, 10);
+        this.max = max;
+        this.min = min;
+        this.a = new Vector2(ax, ay);
+        this.b = new Vector2(bx, by);
+        this.lineWidth = 5;
+        this.setColor(col);
+        this.change = new Event1();
+    }
+    setColor(col2) {
+        this.baseColor = col2;
+        this.hoveredColor = col2.map((a, i) => (i == 3) ? a : a * 0.85);
+        this.clickedColor = col2.map((a, i) => (i == 3) ? a : a * 0.7);
+    }
+    update() {
+        super.update();
+        if (this.clicked) {
+            let lastposition = this.localPosition;
+            this.localPosition = distance.line(
+                this.a.x, this.a.y,
+                this.b.x, this.b.y,
+                mouse.x, mouse.y
+            ).point;
+            if (!Vector.Equal(this.localPosition, lastposition)) {
+                this.change.Fire();                
+            }
+        }
+        if (this.clicked && this.hovered) {
+            this.color = this.clickedColor;
+        } else if (this.hovered || this.clicked) {
+            //console.log("hovered");
+            this.color = this.hoveredColor;
+        }
+    }
+    get value() {
+        let den = Vector.dist(this.a, this.b);
+        let num = Vector.dist(this.localPosition, this.a);
+        //console.log(num, den);
+        //console.log(num / den);
+        return this.min + (this.max - this.min) * (num / den);
+    }
+    bind(type, func) {
+        super.bind(type, func);
+        if (type == "change") {
+            this.change.bind(func);
+        }
+    }
+    draw() {
+        saveLineState();
+        lineCap("round");
+        lineWidth(this.lineWidth * 2);
+        stroke(this.lineColor);
+        line(this.a.x, this.a.y, this.b.x, this.b.y);
+        loadLineState();
+
+        noStroke();
+        super.draw();
+    }
+}
+const UI = {
+    Elements: [],
+    Relayer: function () {
+        this.Elements.sort((a, b) => a.layer - b.layer);
+        this.Reorder();
+    },
+    Reorder: function () {
+        for (var i = 0; i < this.Elements.length; i++) {
+            this.Elements[i].id = i;
+        }
+    },
+    Draw: function () {
+        for (var i = 0; i < this.Elements.length; i++) {
+            let element = this.Elements[this.Elements.length - i - 1];
+            if (element.drawing && element.enabled) {
+                element.drawUI();
+            }
+        }
+    },
+    Update: function () {
+        for (var i = 0; i < this.Elements.length; i++) {
+            let element = this.Elements[i];
+            if (element.updating && element.enabled) {
+                element.updateUI();
+            }
+        }
+    },
+    Selected: false,
+    CIRCLE: 0,
+    SQUARE: 1,
+    RECT: 2,
+};
+Object.freeze(UI);
 // #endregion
 
 // #region Matrices
