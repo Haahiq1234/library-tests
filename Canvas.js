@@ -102,13 +102,17 @@ class Event1 {
             this.bound[i](...args, ...this.args[i]);
         }
     }
-    getFire() {
+    on() {
         let ths = this;
         return (...args) => {
             ths.Fire(...args);
         };
     }
 }
+const on = {
+    click: new Event1(),
+}
+document.onclick = on.click.on();
 // #endregion
 
 // #region Vector
@@ -4382,7 +4386,7 @@ class UIElement {
             if (!clicked && this.clicked) {
                 UIElement.Selected = this;
                 this.OnClick();
-                this.click.Fire();
+                this.click.Fire(this);
             }
         } else {
             this.clicked = false;
