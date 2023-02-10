@@ -8,8 +8,8 @@
     <script>
         var curve;
         Gizmo.DEFAULTRADIUS = 8.5;
+        
         function setUp() {
-            //console.log("ok");
             createCanvas();
             //frameRate(30);
             curve = new Spline(100, 300, 100, 100, 300, 300, 300, 100);
@@ -25,37 +25,6 @@
             console.log(this);
         }
         let slider = new Slider(50, 300, 50, 100, 0, 100, 50);
-        function bCurve(a, b, pa, pb, ena, enb) {
-            let lp = a;
-            lineWidth(3);
-            stroke(150, 100);
-            if (ena) {
-                ln(pa, a);
-            }
-            if (enb) {
-                ln(pb, b);
-            }
-            let val = slider.value;
-            saveLineState();
-            stroke(0);
-            lineWidth(2);
-            //console.log(val);
-            for (var t = 0; t <= 1; t += 1 / val) {
-                let c = Vector.lerp(a, pa, t);
-                let d = Vector.lerp(pa, pb, t);
-                let e = Vector.lerp(pb, b, t);
-
-                let f = Vector.lerp(c, d, t);
-                let g = Vector.lerp(d, e, t);
-
-                let h = Vector.lerp(f, g, t);
-
-                ln(lp, h);
-                lp = h;
-            }
-            ln(lp, b);
-            loadLineState();
-        }
         function SelectGizmo(gizmo) {            
             for (var child of currentSelectedGizmo.children) {
                 child.enabled = false;
@@ -83,7 +52,7 @@
             }
         }
         class Curve {
-            constructor(bx, by, bcx, bcy, previous, px, py, pbx, pby) { // ac = a control, bc = b control, previuos = previous curve piece, b = position of point
+            constructor(bx, by, bcx, bcy, previous, px, py, pbx, pby) {
 
                 this.b = new Gizmo(bx, by);
                 this.pb = new Gizmo(bcx, bcy);
