@@ -15,7 +15,7 @@
         let w;
         let h;
         let ag = new Gizmo(200, 200);
-        let bg = new Gizmo(50, 0);
+        let bg = new Gizmo(250, 200);
         let fov = createSlider(0, 360, 1, 45, "Field of View");
         let gt = cos(fov / 2);
         bg.setParent(ag);
@@ -31,7 +31,7 @@
             w = CanvasWidth / res;
             h = CanvasHeight / res;
             let a = ag.position.copy();
-            let b = bg.position.copy().normalize();
+            let b = bg.localPosition.copy().normalize();
             for (var i = 0; i < res; i++) {
                 for (var j = 0; j < res; j++) {
                     let x = i * w;

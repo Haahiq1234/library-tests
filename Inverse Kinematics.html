@@ -5,25 +5,27 @@
 <body>
     <script src="Canvas.js"></script>
     <script>
-        // using [Input]
         var FramesPerSecond = 100;
         var tentacle;
         var segmentLength = 50;
         var tentacle1;
         function setUp() {
-            createCanvas(500, 500, "black");
+            createCanvas(500, 500);
             frameRate(FramesPerSecond); //
             //Canvas.flipY();
             tentacle = new Tentacle(CanvasWidth / 2, CanvasHeight, 50, 30);
             tentacle1 = new Tentacle(CanvasWidth / 2, 0, 5, 150);
+
+            lineWidth(2);
         }
         function draw() {
-            backGround(0, 10);
-            Canvas.flipY();
+            clear();
+            //Canvas.flipY();
             tentacle.follow(mouse2);
             tentacle.show();
             tentacle1.follow(mouse2);
             tentacle1.show();
+            line(100, screen.availHeight, 0, screen.availHeight);
         }
         function segment(x, y, len) {
             this.a = new Vector2(x, y);
@@ -42,8 +44,6 @@
                 this.a.add(vec1);
             }
             this.show = function () {
-                stroke("white");
-                lineWidth(2);
                 this.calB();
                 line(this.a.x, this.a.y, this.b.x, this.b.y);
             }
@@ -54,7 +54,7 @@
             this.size = size;
             this.len = len;
             for (var i = 0; i < this.size; i++) {
-                this.segs.push(new segment(x, y - this.len * i, this.len));
+                this.segs.push(new segment(x, y + this.len * i, this.len));
             }
             this.follow = function (obj) {
                 this.segs[this.size - 1].follow(obj);

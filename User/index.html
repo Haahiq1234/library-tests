@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="signinscreen">
+        <div class="signincontainer">
+            <div class="signininnercontainer">
+                <input type="text" id="signinusername" name="signinusername" placeholder="Enter Username" /><br>
+                <input type="password" id="signinpassword" name="signinpassword" placeholder="Enter Password" /><br>
+                <button id="onsigninbutton">Sign In</button><button id="entersignupbutton">Sign In</button>
+            </div>
+        </div>
+    </div>
+    <div id="signupscreen">
+        <div class="signupcontainer">
+            <div class="signupinnercontainer">
+                <input type="text" id="signupusername" placeholder="Create Username" /><br>
+                <input type="password" id="signuppassword"placeholder="Create Password" /><br>
+                <button id="signupbutton">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../Canvas.js"></script>
+    <script src="script.js"></script>
+    <script>
+        function setUp() {
+            signin.init();
+            signup.init();
+
+            Account.register("Haahiq1234", 1234);
+            Account.register("Haahiq2020", 1234);
+            Account.register("Hamzahsan", 2020);
+        }
+        function draw() {
+
+        }
+        function key_Press() {
+
+        }
+    </script>
+</body>
+</html>

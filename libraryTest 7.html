@@ -5,18 +5,30 @@
 <body>
     <script src="Canvas.js"></script>
     <script>
-        var FramesPerSecond = 100;
-        let dir;
+        var a = new Gizmo(100, 200);
+        var b = new Gizmo(300, 200);
+        var ro = new Gizmo(200, 200);
+        var rd = new Gizmo(200, 100);
+        rd.setParent(ro);
         function setUp() {
             createCanvas(400, 400);
-            console.log(factorize(200));
-            console.log(factorize(20));
-            console.log(factorize(456));
-            console.log(factorize(345));
-            storeItem("key", new Vector2(5, 5));
-            console.log(getItem("key"));
+            
+        }        
+        function draw() {
+            clear();
+            line(a.localPosition.x, a.localPosition.y, b.localPosition.x, b.localPosition.y);
+            line(ro.localPosition.x, ro.localPosition.y, ro.localPosition.x +  rd.localPosition.x * 100, ro.localPosition.y + rd.localPosition.y * 100);
+            let rayHit = RayCast.line(
+                ro.localPosition.x, ro.localPosition.y,
+                rd.localPosition.x, rd.localPosition.y,
+                a.localPosition.x, a.localPosition.y,
+                b.localPosition.x, b.localPosition.y
+            );
+            if (rayHit.hit) {
+                //console.log("hit");
+                circle(rayHit.point.x, rayHit.point.y, 5);
+            }
         }
-        
     </script>
 
 </body>

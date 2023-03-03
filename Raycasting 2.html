@@ -30,19 +30,17 @@
             let bv = b.position.copy();
             //ray.constraintToCircle(rayOrigin.position, 100);
             let origin = rayOrigin.position;
-            let dir = Vector.sub(ray.position, rayOrigin.position)
-            let cast = RayCast.v2.Vector.square1(origin, dir, 100, 100, 200);
-            arrowVector(origin, dir);
+            let dir = ray.localPosition;
+            let cast = RayCast.rect(origin.x, origin.y, dir.x, dir.y, 100, 100, 200, 200);
+            line(origin.x, origin.y, origin.x + dir.x, origin.y + dir.y);
             nofill();
             rect(100, 100, 200, 200);
-            if (cast.intersected) {
-                for (var c of cast.points) {
-                    circle(c.x, c.y, 5);
-                }
+            if (cast.hit) {
+                circle(cast.point.x, cast.point.y, 5);
             }
-            let cast1 = RayCast.Vector.line(origin, dir, av, bv);
+            let cast1 = RayCast.line(origin.x, origin.y, dir.x, dir.y, av.x, av.y, bv.x, bv.y);
             line(av.x, av.y, bv.x, bv.y);
-            if (cast1.intersected) {
+            if (cast1.hit) {
                 circle(cast1.point.x, cast1.point.y, 5);
             }
         }

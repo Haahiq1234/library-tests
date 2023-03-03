@@ -1,11 +1,12 @@
-wssswss<html>
+<html>
 <head>
     <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
     <script src="Canvas.js"></script>
+    <script src="vec3.js"></script>
     <script>
-        let ds =6; // V
+        let ds = 6; // V
         var points = [];
         let pts = new Array(2 ** ds);
         let ptds = ds;
@@ -78,15 +79,8 @@ wssswss<html>
             rotateY(-90);
             //noLoop();
         }
-        function cal() {
-            let mat1 = Matrices.identity(4);
-            mat1.set(2, 2, 3);
-            let mat2 = new Matrix(1, 4);
-            mat2.array = [0, 0, 1, 1];
-            console.log(Matrices.mult(mat1, mat2));
-        }
         function draw() {
-            //return null; 
+            //return null;
             clear();
             let pts = [];
             //setRotationX(90);

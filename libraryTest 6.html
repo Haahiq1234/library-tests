@@ -5,18 +5,15 @@
 <body>
     <script src="Canvas.js"></script>
     <script>
-        var FramesPerSecond = 100;
-        let dir;
         function setUp() {
-            createCanvas(400, 400, "black");
-            frameRate(FramesPerSecond);
-            dir = createVector(50, 0);
+            createCanvas(400, 400);
         }
         function draw() {
             clear();
-            dir.rotate(1);
-            stroke(255);
-            line(CanvasWidth / 2, CanvasHeight / 2, CanvasWidth / 2 + dir.x, CanvasHeight / 2 + dir.y);
+            
+        }
+        document.onmousedown = function (event) {
+            console.log(event);
         }
     </script>
 

@@ -1,0 +1,32 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+}
+
+button {
+    cursor: pointer;
+}
+
+body {
+    background: rgb(230, 230, 230);
+}
+
+.signincontainer, .signupcontainer {
+    width: 50%;
+    height: 70%;
+    background: rgb(200, 200, 200);
+    position: absolute;
+    top: 15%;
+    left: 25%;
+    border-radius: 5px;
+}
+
+.signininnercontainer, .signupinnercontainer {
+    background: rgb(190, 190, 190);
+    width: 80%;
+    height: 80%;
+    position: relative;
+    top: 10%;
+    left: 10%;
+    border-radius: 5px;
+}

@@ -6,8 +6,9 @@
     <script src="Canvas.js"></script>
     <script>
         let res = 100;
-        let a = new Gizmo(300, 300);
-        let b = new Gizmo(400, 300);
+        let a = new Gizmo(400, 300);
+        let b = new Gizmo(100, 0);
+        b.setParent(a, false);
         let ang = 0;
         let angleVel = 1;
         let shaped = [];
@@ -16,40 +17,39 @@
             frameRate(60);
             pos = new Vector2(200, CanvasHeight / 2);
             lineWidth(2);
-            shaped.push(createVector(0, 0));
-            shaped.push(createVector(CanvasWidth, 0));
-            shaped.push(createVector(CanvasWidth, CanvasHeight));
-            shaped.push(createVector(0, CanvasHeight));
+            shaped.push(0, 0);
+            shaped.push(CanvasWidth, 0);
+            shaped.push(CanvasWidth, CanvasHeight);
+            shaped.push(0, CanvasHeight);
         }
-        function log() {
-            let arr = [new Vector2(0, 0), new Vector2(2, 2), new Vector2(0, 1), new Vector2(2, 5)];
-            let v1 = createVector(2, 2);
-            console.log(includesVector(arr, v1));
+        function cast(ro, rd) {
+            let shapeCast = Raycast.shape(ro.x, ro.y, rd.x, rd.y, ...shaped);
+            let circleCast = Raycast.circle(ro.x, ro.y, rd.x, rd.y, 300, 300, 50);
+            //console.log(circleCast.normal)
+            return RayCastHit.nearest(ro, shapeCast, circleCast);
         }
-        log();
         function draw() {
             //backGround(241);
             clear();
-            let ap = a.position;
-            //console.log(ap)
+            let ap = a.localPosition;
             let bp = b.position;
             line(ap.x, ap.y, bp.x, bp.y);
-            let ray = Vector.sub(bp, ap);
-            let cast = RayCast.Vector.shape(ap, Vector.sub(bp, ap), ...shaped);
-            if (cast.intersected) {
-                circle(cast.point.x, cast.point.y, 5);
-                line(cast.point.x, cast.point.y, ap.x, ap.y);
-                let v = Vector.reflect(ray, cast.normal);
-                rcast(cast.point, v);
-            }
+            nofill();
+            circle(300, 300, 50);
+            rcast(ap, b.localPosition);
         }
         function rcast(o, r, t = 20) {
-            let cast = RayCast.farthest.Vector.shape(o, r, ...shaped);
-            if (cast.intersected) {
-                line(o.x, o.y, cast.point.x, cast.point.y);
+            let hit = cast(o, r);
+            if (hit.hit) {
+                line(o.x, o.y, hit.point.x, hit.point.y);
                 if (t > 0) {
-                    let rr = Vector.reflect(r, cast.normal);
-                    rcast(cast.point, rr, t - 1);
+                    stroke(255, 0, 0);
+                    line(hit.point.x, hit.point.y, hit.point.x + hit.normal.x * 20, hit.point.y + hit.normal.y * 20);
+                    stroke(0);
+                    let rr = Vector.reflect(r, hit.normal);
+                    rcast(hit.point, rr, t - 1);
+                } else {
+                    circle(hit.point.x, hit.point.y, 5);
                 }
             }
         }

@@ -1,6 +1,50 @@
 // #region Misc
-let windowWidth = window.innerWidth;
+let windowWidth = screen.availWidth;
 let windowHeight = window.innerHeight;
+const WindowHandler = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    xo: 0,
+    yo: 0,
+    ym: 1,
+    xm: 1,
+    xo1: 0,
+    yo1: 0,
+    x: function (x) {
+        //console.log(x - this.xo1);
+        return this.xo + x * this.xm;
+    },
+    y: function (y) {
+        return this.yo + y * this.ym;
+    },
+    xi: function (x) {
+        return (x - this.xo) * this.xm;
+    },
+    yi: function (y) {
+        return (y - this.yo) * this.ym;
+    },
+    w: function (w) {
+        return w * this.xm;
+    },
+    h: function (h) {
+        return h * this.ym;
+    },
+    Vector2: function (vec) {
+        return new Vector2(this.x(vec.x), this.y(vec.y));
+    },
+    setOrigin: function (x = this.width / 2, y = this.height / 2) {
+        this.xo = x;
+        this.yo = y;
+    },
+    flipY: function (height) {
+        this.ym *= -1;
+        this.yo = height - this.yo;
+    },
+    flipX: function (width) {
+        this.xm *= -1;
+        this.xo = width - this.xo;
+    },
+}
 function download(filename, text) {
     var element = document.createElement("a");
     element.setAttribute(
@@ -12,7 +56,6 @@ function download(filename, text) {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    let bod = document.body;
 }
 function downloadCanvasImage() {
     var link = document.createElement("a");
@@ -87,338 +130,112 @@ function loadFile(url, callback) {
     request.send();
     return request;
 }
-class Event1 {
+// #endregion
+
+// #region Events
+class EventHanler {
     bound;
     constructor() {
         this.bound = [];
         this.args = [];
+        this.names = [];
     }
-    bind(func, ...args) {
+    bind(func, args = [], name = this.names.length) {
         this.bound.push(func);
         this.args.push(args);
+        this.names.push("" + name);
+    }
+    unbind(name) {
+        let ind = this.names.find(name);
+        this.names.splice(ind, 1);
+        this.args.splice(ind, 1);
+        this.bound.splice(ind, 1);
     }
     Fire(...args) {
+        let toReturn = {};
         for (var i = 0; i < this.bound.length; i++) {
-            this.bound[i](...args, ...this.args[i]);
+            toReturn[this.names[i]] = this.bound[i](...args, ...this.args[i]);
         }
+        return toReturn;
     }
     on() {
         let ths = this;
         return (...args) => {
-            ths.Fire(...args);
+            return ths.Fire(...args);
         };
     }
 }
 const on = {
-    click: new Event1(),
+    click: new EventHanler(),
+    mousemove: new EventHanler(),
+    setUp: new EventHanler(),
+    draw: new EventHanler(),
+    mousedown: new EventHanler(),
+    mouseup: new EventHanler(),
+    keydown: new EventHanler(),
+    keyup: new EventHanler(),
+    keypressed: new EventHanler(),
 }
 document.onclick = on.click.on();
+document.onmousemove = on.mousemove.on();
+document.onmouseup = on.mouseup.on();
+document.onmousedown = function (event) {
+    //console.log(event);
+    on.mousedown.Fire(event.buttons, event);
+}
+document.onkeyup = function (event) {
+    on.keyup.Fire(event.key, event);
+}
+document.onkeydown = function (event) {
+    on.keypressed.Fire(event.key, event);
+}
 // #endregion
 
 // #region Vector
-class Camera {
-    static position = new Vector3(0, 0, -10);
-    static update() {
-        let forward = new Vector3(0, 0, 1)
-            .rotate(this.rotationx, this.rotationy, this.rotationz)
-            .mult(-GetAxis("vertical") * this.zSpeed);
-        let right = new Vector3(1, 0, 0)
-            .rotate(this.rotationx, this.rotationy, this.rotationz)
-            .mult(GetAxis("horizontal", "key") * this.xSpeed);
-        let angle = GetAxis("horizontal", "arrow") * this.yrotationspeed;
-        //console.log(angle);
-        this.rotate(0, -angle, 0);
-        let up = new Vector3(0, GetAxis("vertical2") * this.ySpeed, 0);
-        this.position.add(forward);
-        this.position.add(right);
-        this.position.add(up);
-    }
-    static rotate(xr, yr, zr) {
-        this.rotationx += xr;
-        this.rotationy += yr;
-        this.rotationz += zr;
-        this.projectionMatrix = Matrices.mult(
-            Rotation.matrix(3, 2, 1, xr),
-            this.projectionMatrix
-        );
-        this.projectionMatrix = Matrices.mult(
-            Rotation.matrix(3, 0, 2, yr),
-            this.projectionMatrix
-        );
-        this.projectionMatrix = Matrices.mult(
-            Rotation.matrix(3, 0, 1, zr),
-            this.projectionMatrix
-        );
-    }
-    static xSpeed = 0;
-    static ySpeed = 90;
-    static zSpeed = 0;
-    static yrotationspeed = 2;
-    static rotationx = 0;
-    static rotationy = 0;
-    static rotationz = 0;
-    static projectionMatrix = 0;
-    static setSpeed(xs, ys, zs) {
-        this.xSpeed = xs;
-        this.ySpeed = ys;
-        this.zSpeed = zs;
-    }
-    static worldRotation = {
-        x: 0,
-        y: 0,
-        z: 0,
-    };
-    static resetWorldRotation() {
-        this.worldRotation = {
-            x: 0,
-            y: 0,
-            z: 0,
-        };
-    }
-    static radiusP(r, z) {
-        let v1 = new Vector3(0, 0, z);
-        let v2 = new Vector3(r, 0, z);
-        v1 = v1.persp();
-        v2 = v2.persp();
-        return Math.abs(v2.x - v1.x); //r / (z - 1);
-    }
-    static radiusO(r, z) {
-        let v1 = new Vector3(0, 0, z);
-        let v2 = new Vector3(r, 0, z);
-        v1 = v1.ortho();
-        v2 = v2.ortho();
-        //console.log(v2.array()
-        this.zSpeed = zs;
-    }
-    static worldRotation = {
-        x: 0,
-        y: 0,
-        z: 0,
-    };
-    static resetWorldRotation() {
-        this.worldRotation = {
-            x: 0,
-            y: 0,
-            z: 0,
-        };
-    }
-    static radiusP(r, z) {
-        let v1 = new Vector3(0, 0, z);
-        let v2 = new Vector3(r, 0, z);
-        v1 = v1.persp();
-        v2 = v2.persp();
-        return Math.abs(v2.x - v1.x); //r / (z - 1);
-    }
-    static radiusO(r, z) {
-        let v1 = new Vector3(0, 0, z);
-        let v2 = new Vector3(r, 0, z);
-        v1 = v1.ortho();
-        v2 = v2.ortho();
-        //console.log(v2.array());
-        return r / (z - 1);
-    }
-}
-function rotateX(ang) {
-    Camera.worldRotation.x += ang;
-}
-function rotateY(ang) {
-    Camera.worldRotation.y += ang;
-}
-function rotateZ(ang) {
-    Camera.worldRotation.z += ang;
-}
-const Vector3D = {
-    crossProduct: function (v, w) {
-        let y = -(v.x * w.z - w.x * v.z);
-        return new Vector3(v.y * w.z - v.z * w.y, y, v.x * w.y - w.x * v.y);
+const polar = {
+    fromVector: function (v) {
+        return [atan2(v.y, v.x), v.mag()];
     },
-    normal: function (a, b, c) {
-        a = a.copy().sub(c);
-        b = b.copy().sub(c);
-        return this.crossProduct(b, a).normalize();
+    toVector: function (p) {
+        return Vector.AngleToVector(p[0], p[1]);
     },
-    normal2: function (a, b, c) {
-        a = a.copy().sub(c);
-        b = b.copy().sub(c);
-        return this.crossProduct(b, a);
-    },
-    avg: function (...vs) {
-        let v = new Vector3(0, 0, 0);
-        for (var i = 0; i < vs.length; i++) {
-            v.add(vs[i]);
+    armToVector: function (arm, ni = arm.length - 1, o = Vector.zero) {
+        let ans = o.copy();
+        for (var i = 0; i < arm.length; i++) {
+            ans.add(this.toVector(arm[i]));
+            if (ni == i) {
+                return ans;
+            }
         }
-        v.div(vs.length || 1);
-        return v;
+        return ans;
     },
-    fromArray: function (...args) {
-        let arr = [];
-        for (var i = 0; i < args.length; i += 3) {
-            arr.push(new Vector3(args[i], args[i + 1], args[i + 2]));
+    armToPoints: function (arm, o = Vector.zero) {
+        let ans = [o.copy()];
+        for (var i = 0; i < arm.length; i++) {
+            ans.push(Vector.add(this.toVector(arm[i]), ans[ans.length - 1]));
         }
-        return arr;
-    },
-    array: function (...args) {
-        let arr = [];
-        for (var i = 0; i < args.length; i++) {
-            arr.push(...args[i].array());
-        }
-        return arr;
-    },
+        return ans;
+    }
 };
-function Vector3(x = 0, y = x, z = x) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-    this.copy = function () {
-        return new Vector3(this.x, this.y, this.z);
-    };
-    this.add = function (vec) {
-        this.y += vec.y || 0;
-        this.x += vec.x || 0;
-        this.z += vec.z || 0;
-        return this;
-    };
-    this.neg = function () {
-        return new Vector3(-this.x, -this.y, -this.z);
-    };
-    this.normalize = function () {
-        let m = this.mag();
-        if (m == 0) {
-            m = 1;
-        }
-        this.div(m);
-        return this;
-    };
-    this.mult = function (t) {
-        this.x *= t;
-        this.y *= t;
-        this.z *= t;
-        return this;
-    };
-    this.div = function (t) {
-        this.mult(1 / t);
-        return this;
-    };
-    this.mag = function () {
-        return Math.sqrt(this.x ** 2 + this.y ** 2 + this.z ** 2);
-    };
-    this.setMag = function (m) {
-        this.normalize().mult(m);
-        return this;
-    };
-    this.sub = function (vec) {
-        //console.log(vec);
-        this.add(vec.neg());
-        return this;
-    };
-    this.array = function () {
-        return [this.x, this.y, this.z];
-    };
-    this.matrix = function () {
-        return new Matrix(1, 4, [...this.array(), 1]);
-    };
-    this.transform = function (mat1) {
-        //console.log(mat1, this.matrix());
-        let mat = Matrices.mult(mat1, this.matrix());
-        //console.log(mat1.array, mat.array);
-        let arr = mat.array;
-        this.x = arr[0];
-        this.y = arr[1];
-        this.z = arr[2];
-        return this;
-    };
-    this.rotationX = function () {
-        let vec = new Vector2(this.z, this.y);
-        let ang = vec.heading();
-        vec.rotate(-ang);
-        return ang;
-    };
-    this.Vector2 = function () {
-        return new Vector2(this.x, this.y);
-    };
-    this.rotated = function (ax, ay, az) {
-        let v = this.copy();
-        v.rotate(ax, ay, az);
-
-        return v;
-    };
-    this.rotate = function (ax, ay, az, log = false) {
-        let mat = Matrices.rotation3(ax, ay, az);
-        if (log) {
-            console.log(this.array());
-            console.log(mat.array);
-        }
-        this.transform(mat);
-        if (log) {
-            console.log(this.array());
-        }
-        return this;
-    };
-    this.persp = function () {
-        let vec = this.fromCamera();
-        let z = 1 / vec.z;
-        if (z <= 0) {
-            z *= -1;
-            z *= CanvasWidth;
-        }
-        let projmat = new Matrix(4, 4, [
-            z,
-            0,
-            0,
-            0,
-            0,
-            z,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0,
-            0,
-            0,
-            0,
-            1,
-        ]);
-        let mat = Matrices.mult(projmat, vec.matrix()).array;
-        return new Vector3(mat[0], mat[1], mat[2]);
-    };
-    this.fromCamera = function () {
-        let vec = this.copy();
-        vec.rotate(
-            -Camera.worldRotation.x,
-            -Camera.worldRotation.y,
-            -Camera.worldRotation.z
-        );
-        vec.sub(Camera.position);
-        vec.rotate(
-            360 - Camera.rotationx,
-            360 - Camera.rotationy,
-            360 - Camera.rotationz
-        );
-        return vec;
-    };
-    this.ortho = function () {
-        let vec = this.copy();
-        vec.rotate(
-            -Camera.worldRotation.x,
-            -Camera.worldRotation.y,
-            -Camera.worldRotation.z
-        );
-        vec.sub(Camera.position);
-        let projmat = Camera.projectionMatrix;
-        let mat = Matrices.mult(projmat, vec.matrix()).array;
-        return new Vector3(mat[0], mat[1], mat[2]);
-    };
-    this.index = function () {
-        return parseInt(this.x) + ":" + parseInt(this.y) + ":" + parseInt(this.z);
-    };
-    //console.log(this.ortho());
-}
+const vec2 = {
+    add: function ([ax, ay], [bx, by]) {
+        return [ax + bx, ay + by];
+    },
+    sub: function ([ax, ay], [bx, by]) {
+        return [ax - bx, ay - by];
+    },
+    mult: function ([ax, ay], s) {
+        return [ax * s, ay * s];
+    },
+    dist: function ([ax, ay], [bx, by]) {
+        return Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2);
+    },
+    mag: function ([x, y]) {
+        return Math.sqrt(x * x + y * y);
+    }
+};
 function createVector(x = 0, y = 0) {
     return new Vector2(x, y);
-}
-function createVector3(x = 0, y = 0, z = 0) {
-    return new Vector3(x, y, z);
 }
 const Vector = {};
 Vector.InFov = function (p, o, d, fov) {
@@ -428,8 +245,9 @@ Vector.InFov = function (p, o, d, fov) {
     }
     return false;
 }
+Vector.zero = new Vector2(0, 0);
 Vector.Equal = function (a, b) {
-    return Boolean(a) && Boolean(b) && a.x == b.x && a.y == b.y && a.z == b.z;
+    return Boolean(a) && Boolean(b) && a.x == b.x && a.y == b.y;
 }
 Vector.fromIndex = function (str) {
     let arr = str.split(":");
@@ -481,7 +299,7 @@ Vector.InSquare = function (a, b, p) {
     }
     return false;
 };
-Vector.fromOrigin = {
+Vector.from = {
     farthest: function (o, arr) {
         let len = 0;
         let pt;
@@ -496,6 +314,7 @@ Vector.fromOrigin = {
         }
         return [pt, li];
     },
+
     nearest: function (o, arr) {
         let len = Infinity;
         let pt;
@@ -552,9 +371,9 @@ Vector.reflect = function (v, n) {
     return vr;
 };
 Vector.copy = function (vec) {
-    if (vec instanceof Vector3) {
-        return new Vector3(vec.x, vec.y, vec.z);
-    }
+    //if (Vector3 && vec instanceof Vector3) {
+    //    return new Vector3(vec.x, vec.y, vec.z);
+    //}
     return new Vector2(vec.x, vec.y);
 };
 Vector.side = function (a, b, p) {
@@ -631,10 +450,10 @@ Vector.heading = function (vec) {
     return (ang);
 };
 Vector.dot = function (v, v2) {
-    if (v instanceof Vector3) {
-        //console.log(v.x * v2.x + v.y * v2.y + v.z * v2.z);
-        return v.x * v2.x + v.y * v2.y + v.z * v2.z;
-    }
+    //if (v instanceof Vector3) {
+    //    //console.log(v.x * v2.x + v.y * v2.y + v.z * v2.z);
+    //    return v.x * v2.x + v.y * v2.y + v.z * v2.z;
+    //}
     return v.x * v2.x + v.y * v2.y;
 };
 Vector.AngleToVector = function (ang, rad = 1) {
@@ -675,12 +494,7 @@ Vector.setDist = function (a, b, dst) {
 function Vector2(x = 0, y = x) {
     this.x = x;
     this.y = y;
-    this.add = function (addition, y) {
-        if (y) {
-            this.x += addition;
-            this.y += y;
-            return this;
-        }
+    this.add = function (addition) {
         this.x += addition.x;
         this.y += addition.y;
         return this;
@@ -698,24 +512,15 @@ function Vector2(x = 0, y = x) {
         this.y = 0;
         return this;
     };
-    this.sub = function (vec, y) {
-        if (y) {
-            this.x -= vec;
-            this.y -= y;
-            return this;
-        }
+    this.sub = function (vec) {
         this.x -= vec.x;
         this.y -= vec.y;
         return this;
     };
     this.rotate = function (ang) {
-        let x = this.x;
-        let y = this.y;
         let ax = cos(ang);
         let ay = sin(ang);
-        this.x = x * ax + y * ay;
-        this.y = x * -ay + y * ax;
-        return this;
+        return this.set(this.x * ax - this.y * ay, this.x * ay + this.y * ax);
     };
     this.set = function (nx, ny) {
         this.x = nx;
@@ -723,23 +528,19 @@ function Vector2(x = 0, y = x) {
         return this;
     };
     this.transform2 = function (mat) {
-        //console.trace(mat);
         let v = Matrices.mult(mat, this.matrix());
-        this.set(v.x, v.y);
-        return this;
+        return this.set(v.x, v.y);
     };
     this.matrix = function () {
         return new Matrix(1, 2, [this.x, this.y]);
     }
     this.setMag = function (len) {
-        this.normalize().mult(len);
-        return this;
+        return this.normalize().mult(len);
     };
     this.setRotation = function (rot) {
         let mag = this.mag();
         let vec = Vector.AngleToVector(rot, mag);
-        this.set(vec.x, vec.y);
-        return this;
+        return this.set(vec.x, vec.y);
     };
     this.mag = function () {
         return Math.sqrt(this.x ** 2 + this.y ** 2);
@@ -748,16 +549,21 @@ function Vector2(x = 0, y = x) {
         return new Vector2(this.x, this.y);
     };
     this.normalize = function () {
-        this.div(this.mag() | 1);
-        return this;
+        return this.div(this.mag() | 1);
     };
     this.div = function (no) {
+        if (no == 0) {
+            //console.trace("Division by zero");
+            this.x = 0;
+            this.y = 0;
+            return this;
+        }
         this.x /= no;
         this.y /= no;
         return this;
     };
     this.neg = function () {
-        return Vector.neg(this);
+        return new Vector2(-this.x, -this.y);
     };
     this.limit = function (no) {
         if (this.mag() > no) this.setMag(no);
@@ -765,24 +571,6 @@ function Vector2(x = 0, y = x) {
     };
     this.heading = function () {
         return Vector.heading(this);
-    };
-    this.xSlope = function () {
-        return this.x / numberSign.positive(this.y);
-    };
-    this.ySlope = function () {
-        return this.y / numberSign.positive(this.x);
-    };
-    this.setX = function (val) {
-        let sl = this.ySlope();
-        this.x = val;
-        this.y = sl * numberSign.positive(val);
-        return this;
-    };
-    this.setY = function (val) {
-        let sl = this.xSlope();
-        this.x = sl * numberSign.positive(val);
-        this.y = val;
-        return this;
     };
     this.index = function () {
         return parseInt(this.x) + ":" + parseInt(this.y);
@@ -795,14 +583,12 @@ function Vector2(x = 0, y = x) {
 var mouse = new Vector2(0, 0);
 var mouse2 = new Vector2(0, 0);
 {
-    document.onmousemove = handleMouseMove;
-    function handleMouseMove(event) {
-        //console.log(Canvas.x(event.clientX), event.clientY, Canvas.xo1);
-        let x = Canvas.xi(event.clientX);
-        let y = Canvas.yi(event.clientY);
+    on.mousemove.bind(function (event) {
+        let x = WindowHandler.xi(event.clientX);
+        let y = WindowHandler.yi(event.clientY);
         mouse.set(x, y);
         mouse2.set(event.clientX, event.clientY);
-    }
+    });
     var key = {};
     key.up = "ArrowUp";
     key.down = "ArrowDown";
@@ -812,45 +598,6 @@ var mouse2 = new Vector2(0, 0);
     key.enter = "Enter";
     key.backSpace = "Backspace";
     var keyCode;
-    var pressedKeys = {
-        a: false,
-        b: false,
-        c: false,
-        d: false,
-        e: false,
-        f: false,
-        g: false,
-        h: false,
-        i: false,
-        j: false,
-        k: false,
-        l: false,
-        m: false,
-        n: false,
-        o: false,
-        p: false,
-        q: false,
-        r: false,
-        s: false,
-        t: false,
-        u: false,
-        v: false,
-        w: false,
-        x: false,
-        y: false,
-        z: false,
-        1: false,
-        2: false,
-        3: false,
-        4: false,
-        5: false,
-        6: false,
-        7: false,
-        8: false,
-        9: false,
-        0: false,
-        " ": false,
-    };
     let Axii = {
         horizontal: new Axis(key.right, key.left, "d", "a", "arrow", "key"),
         vertical: new Axis(key.down, key.up, "s", "w", "arrow", "key"),
@@ -878,13 +625,14 @@ var mouse2 = new Vector2(0, 0);
     function GetAxis(TAxis, TKey = "both") {
         let axis = Axii[TAxis];
         if (TKey == axis.Nm || TKey == "both") {
-            if (pressedKeys[axis.neg]) return -1;
-            if (pressedKeys[axis.pos]) return 1;
+            let neg = -(pressed[axis.neg] ?? false);
+            let pos = +(pressed[axis.pos] ?? false);
+            return neg + pos;
         }
         if (TKey == axis.altNm || TKey == "both") {
-            //console.log(axis.altN);
-            if (pressedKeys[axis.altN]) return -1;
-            if (pressedKeys[axis.altP]) return 1;
+            let neg = -(pressed[axis.altN] ?? false);
+            let pos = +(pressed[axis.altP] ?? false);
+            return neg + pos;
         }
         return 0;
     }
@@ -910,38 +658,38 @@ var mouse2 = new Vector2(0, 0);
             return false;
         }
     }
-    document.onmousedown = function () {
+    on.mousedown.bind(function () {
         mousePressed = true;
         if (window.mouse_Down) {
             mouse_Down();
         }
-    };
-    document.onmouseup = function () {
+    });
+    on.mouseup.bind(function () {
         mousePressed = false;
         if (window.mouse_Up) {
             mouse_Up();
         }
-    };
+    });
     function GetKey(keyCode) {
-        return Boolean(pressedKeys[keyCode]);
+        return Boolean(pressed[keyCode]);
     }
-
-    document.addEventListener("keydown", function (event) {
-        keyCode = event.key;
-        let justPressed = !keyCode in pressedKeys || !pressedKeys[keyCode];
-        pressedKeys[keyCode] = true;
-        if (justPressed) {
+    const pressed = {};
+    on.keypressed.bind(function (event) {
+        keyCode = event;
+        if (!pressed[keyCode]) {
+            on.keydown.Fire(keyCode);
             if (window.key_Press) {
                 key_Press();
             }
+            pressed[keyCode] = true;
         }
         if (window.key_Down) {
             key_Down();
         }
     });
-    document.addEventListener("keyup", function (event) {
-        keyCode = event.key;
-        pressedKeys[keyCode] = false;
+    on.keyup.bind(function (event) {
+        keyCode = event;
+        pressed[keyCode] = false;
         if (window.key_Up) {
             key_Up();
         }
@@ -959,6 +707,7 @@ var mouse2 = new Vector2(0, 0);
 const CONSTANTS = {
 
 };
+const SPACE = " ";
 Object.freeze(CONSTANTS);
 const PI = Math.PI;
 const RGB = 0;
@@ -975,10 +724,8 @@ LINE.BEVEL = "bevel";
 LINE.MITER = "miter";
 LINE.BUTT = "butt";
 LINE.SQUARE = "square";
-const AngleModes = {
-    radians: 0,
-    degrees: 1,
-};
+let DEGREES = 0;
+let RADIANS = 1;
 // #endregion
 
 // #region Control
@@ -993,7 +740,8 @@ var UnSetFps = true;
 let drawIntervalId;
 let animationFrameLoopId;
 var STARTED = false;
-var setupEvent = new Event1();
+let FIXEDFPS = false;
+
 {
     var loaded = false;
     function checkForStart() {
@@ -1002,10 +750,7 @@ var setupEvent = new Event1();
             if (window.setUp) {
                 setUp();
             }
-            InitializeLibrary();
-            if (autoStartLoop) {
-                requestAnimationFrame(redraw);
-            }
+            on.setUp.Fire();
         }
     }
 }
@@ -1013,8 +758,10 @@ document.body.onload = function () {
     loaded = true;
     checkForStart();
 };
-function InitializeLibrary() {
-    setupEvent.Fire();
+on.setUp.bind(function () {
+    if (autoStartLoop) {
+        requestAnimationFrame(redraw);
+    }
     for (var i = 0; i < UI.Elements.length; i++) {
         let element = UI.Elements[i];
         if ((element.constructor == Gizmo)) {
@@ -1022,7 +769,7 @@ function InitializeLibrary() {
             element.b = new Vector2(CanvasWidth, CanvasHeight);
         }
     }
-}
+});
 function frameRate(rate) {
     UnSetFps = false;
     Time.frameRate = rate;
@@ -1031,7 +778,7 @@ function frameRate(rate) {
     if (drawIntervalId) {
         clearInterval(drawIntervalId);
     }
-    FPS = rate;
+    FIXEDFPS = true;
     drawIntervalId = setInterval(redraw, 1000 / rate);
 }
 let loopGoing = true;
@@ -1056,392 +803,67 @@ function loop() {
     }
 }
 function redraw(timeStamp) {
+    if (UnSetFps && !loopGoing) {
+        Time.time = timeStamp;
+    }
+    if (Canvas.enabled) {
+        //ctx.scale(pixelDensity(), pixelDensity());
+        UI.Update();
+        ctx.save();
+    }
+    on.draw.Fire();
     if (window.draw) {
-        if (UnSetFps && !loopGoing) {
-            Time.time = timeStamp;
-        }
-        Camera.update();
-        if (Canvas.enabled) {
-            //ctx.scale(pixelDensity(), pixelDensity());
-            UI.Update();
-            ctx.save();
-        }
         draw();
-        if (Canvas.enabled) {
-            saveColor();
-            ctx.restore();
-            loadColor();
-            UI.Draw();
-        }
-        frameNo += 1;
-        if (UnSetFps) {
-            Time.deltaTime = timeStamp - Time.time;
-            Time.frameRate = 1000 / Time.deltaTime;
-            Time.time = timeStamp;
-            animationFrameLoopId = requestAnimationFrame(redraw);
-        } else {
-            Time.time += Time.deltaTime;
-        }
+    }
+    if (Canvas.enabled) {
+        UI.Draw();
+    }
+    frameNo += 1;
+    if (UnSetFps) {
+        Time.deltaTime = timeStamp - Time.time;
+        Time.frameRate = 1000 / Time.deltaTime;
+        Time.time = timeStamp;
+        animationFrameLoopId = requestAnimationFrame(redraw);
+    } else {
+        Time.time += Time.deltaTime;
+    }
+    if (window.lateDraw) {
+        lateDraw();
+    }
+    if (Canvas.enabled) {
+        saveColor();
+        ctx.restore();
+        loadColor();
     }
 }
 // interval stuff
+// #endregion
+
+// #region Strings
+function replaceAt(str, r, i) {
+    return str.slice(0, i) + r + str.slice(i + 1, str.length);
+}
+function insertAt(str, r, i) {
+    return str.slice(0, i) + r + str.slice(i, str.length);
+}
+function reverse(str) {
+    let ans = "";
+    for (var i = 0; i < str.length; i++) {
+        ans = str[i] + ans;
+    }
+    return ans;
+}
 // #endregion
 
 // #region Math
 function ciel(no, mod = 1) {
     return Math.ceil(no / mod) * mod;
 }
-const strings = {
-    blend: function (no1, no2) {
-        let decimal1 = no1.indexOf(".");
-        let d1 = decimal1;
-        if (decimal1 < 0) {
-            d1 = no1.length;
-            no1 += ".";
-        }
-        let decimal2 = no2.indexOf(".");
-        let d2 = decimal2;
-        if (decimal2 < 0) {
-            d2 = no2.length;
-            no2 += ".";
-        }
-        let dp1 = no1.length - d1 - 1;
-        let dp2 = no2.length - d2 - 1;
-        if (d1 < d2) {
-            for (var i = 0; i < d2 - d1; i++) {
-                no1 = "0" + no1;
-            }
-        }
-        if (d2 < d1) {
-            for (var i = 0; i < d1 - d2; i++) {
-                no2 = "0" + no2;
-            }
-        }
-        if (dp1 < dp2) {
-            for (var i = 0; i < dp2 - dp1; i++) {
-                no1 += "0";
-            }
-        }
-        if (dp2 < dp1) {
-            for (var i = 0; i < dp1 - dp2; i++) {
-                no2 += "0";
-            }
-        }
-        //console.log(d1, d2);
-        //console.log(dp1, dp2);
-        //console.log(no1, no2);
-        return [no1, no2];
-    },
-    sub: function (na, nb) {
-        let ns = strings.blend(na, nb);
-        na = ns[0];
-        nb = ns[1];
-
-        let d = na.indexOf(".");
-
-        na = na.replace(".", "");
-        nb = nb.replace(".", "");
-
-        let pos = "";
-        let neg = "";
-
-        for (var i = 0; i < na.length; i++) {
-            let a = parseInt(na[i]);
-            let b = parseInt(nb[i]);
-            let sum = a - b;
-            if (sum < 0) {
-                neg += "" + (-sum);
-                pos += "0";
-            } else {
-                pos += "" + sum;
-                neg += "0";
-            }
-        }
-
-        let preOff = "";
-        let mn = neg;
-        let mx = pos;
-        if (Equality.relation(neg, pos) == Equality.Greater) {
-            preOff = "-"
-            mx = neg;
-            mn = pos;
-        }
-        let ans = mx;
-        for (var i = mn.length - 1; i >= 0; i--) {
-            let a = parseInt(mn[i]);
-
-            if (a > 0) {
-                let b1 = parseInt(ans[i]);
-                if (b1 > 0 && b1 >= a) {
-                    a = b1 - a;
-                } else if (b1 > 0 && b1 < a) {
-                    a = 10 + b1 - a;
-                } else {
-                    a = 10 - a;
-                }
-                let j2 = i;
-                for (var j = i; j >= 0; j--) {
-                    let b = parseInt(ans[j]);
-                    //console.log(b, j);
-                    if (b > 0) {
-                        j2 = j;
-                        b--;
-                        //console.log(ans, b, j, i);
-                        ans = replaceAt(ans, b, j);
-                        //console.log(ans);
-                        //console.log(ans, b, j);
-                        break;
-                    }
-                    if (b > 0) {
-                        console.log("not broken");
-                    }
-                }
-                ans = replaceAt(ans, a, i);
-                //console.log(j2, i);
-                for (var j = j2 + 1; j < i; j++) {
-                    ans = replaceAt(ans, "9", j);
-                }
-            }
-        }
-        if (d >= 0 && d < ans.length) {
-            ans = insertAt(ans, ".", d);
-        }
-        //console.log(pos, neg, ans);
-        return preOff + ans;
-    },
-    trim: function (n) {
-        for (var i = 0; i < n.length; i++) {
-            if (n[i] == 0) {
-                n = n.slice(1, n.length);
-            } else {
-                break;
-            }
-        }
-        for (var i = n.length - 1; i >= 0; i--) {
-            if (n[i] == 0) {
-                n = n.slice(0, n.length - 1);
-            } else {
-                break;
-            }
-        }
-        if (n[n.length - 1] == ".") {
-            n = n.slice(0, n.length - 1);
-        }
-        //console.log(n);
-        return n;
-    },
-    add: function (na, nb) {
-        let ns = strings.blend(na, nb);
-        na = ns[0];
-        nb = ns[1];
-
-        let d = na.indexOf(".");
-        na = na.replace(".", "");
-        nb = nb.replace(".", "");
-        let carry = "";
-        let ans = "";
-        for (var i = na.length - 1; i >= 0; i--) {
-            let a = parseInt(na[i]);
-            let b = parseInt(nb[i]);
-            //console.log(a, b);
-            if (parseInt) {
-
-            }
-            let sum = a + b;
-            if (i < na.length - 1) {
-                sum = parseInt(carry[0]) + sum;
-            }
-            let m = floorDiv(sum, 10);
-            carry = "" + m + carry;
-            sum -= m * 10;
-            //console.log(sum, m);
-            ans = "" + sum + ans;
-        }
-        //console.log(ans);
-        if (d < ans.length) {
-            ans = insertAt(ans, ".", d);
-        }
-        //console.log(ans);
-        let c = parseInt(carry[0]);
-        if (c > 0) {
-            ans = "" + c + ans;
-        }
-
-
-        //console.log(na, nb, ans, carry);
-        return ans;
-
-    },
-    mult: function (na, nb) {
-        let ns = strings.blend(na, nb);
-        na = ns[0];
-        nb = ns[1];
-        //console.log(na);
-        //console.log(nb);
-        let d = na.indexOf(".");
-        let id = (nb.length - d - 1) * 2;
-
-        na = na.replace(".", "");
-        nb = nb.replace(".", "");
-        let arr = [];
-        let lstn;
-        for (var i = na.length - 1; i >= 0; i--) {
-            let ii = na.length - i;
-            let a = na[i];
-            //console.log(nb, a);
-            let sum = strings.multnv1(a, nb);
-            //console.log(sum);
-            for (var j = 0; j < ii - 1; j++) {
-                sum = sum + "0";
-            }
-            arr.push(sum);
-        }
-        //let lsts = arr[arr.length - 1];
-        //if (lsts.length > d) {
-        //    id++;
-        //}
-
-        let ans = "";
-        for (var i = 0; i < arr.length; i++) {
-            ans = strings.add(ans, arr[i]);
-            //console.log(arr[i]);
-        }
-        //console.log(d * 2 - nb.length, id);
-        ans = insertAt(ans, ".", ans.length - id);
-        return ans;
-    },
-    multnv1: function (n, na) {
-        let d = na.indexOf(".");
-        na = na.replace(".", "");
-        let carry = "";
-        let ans = "";
-        let b = parseInt(n);
-        for (var i = na.length - 1; i >= 0; i--) {
-            let a = parseInt(na[i]);
-            let sum = a * b;
-            if (i < na.length - 1) {
-                sum = parseInt(carry[0]) + sum;
-            }
-            let m = floorDiv(sum, 10);
-            carry = "" + m + carry;
-            sum -= m * 10;
-            //console.log(sum, m);
-            ans = "" + sum + ans;
-        }
-        //console.log(ans);
-        if (d < ans.length && d >= 0) {
-            ans = insertAt(ans, ".", d);
-        }
-        let c = parseInt(carry[0]);
-        if (c > 0) {
-            ans = "" + c + ans;
-        }
-
-
-        //console.log(na, nb, ans, carry);
-        return ans;
-    },
-    getDec: function (no) {
-        let d = no.indexOf(".");
-        if (d < 0) {
-            d = no.length;
-        }
-        return d;
-    },
-    addZeros: function (no, noToMatch) {
-        let st = no.length;
-        let en = ((strings.getDec(noToMatch)) - st);
-        //console.log(st, getDec(noToMatch), en);
-        for (var i = 0; i < en; i++) {
-            no += "0";
-        }
-        //console.log(no);
-        if (en < 0) {
-            no = insertAt(no, ".", strings.getDec(noToMatch));
-        }
-        return no;
-    },
-    div: function (no, divi) {
-        let ans = "";
-        let d = strings.getDec(no);
-        var lst = "0";
-        for (var i = 0; i < no.length + 100; i++) {
-            //console.log(i);
-            for (var j = 0; j < 10; j++) {
-                let a = strings.addZeros(ans + j, no);
-                let num = strings.mult(a, divi);
-                if (Equality.relation(num, no) == Equality.Greater) {
-                    break;
-                }
-                lst = j;
-            }
-            ans += lst;
-        }
-        //return;
-        //console.log(lst);
-        lst = "0";
-        return insertAt(ans, ".", d);
-    },
-    sqrt: function (no) {
-        let ans = "";
-        let d = strings.getDec(no);
-        var lst = "0";
-        for (var i = 0; i < no.length + 100; i++) {
-            //console.log(i);
-            for (var j = 0; j < 10; j++) {
-                let a = strings.addZeros(ans + j, no);
-                let num = strings.mult(a, a);
-                let rel = Equality.relation(num, no);
-                //console.log();
-                if (rel == Equality.Equal) {
-                    return a;
-                }
-                if (rel == Equality.Greater) {
-                    break;
-                }
-                lst = j;
-            }
-            ans += lst;
-        }
-        //return;
-        //console.log(lst);
-        lst = "0";
-        return insertAt(ans, ".", d);
-    },
-    powint: function (no, p) {
-        let num = "1";
-        for (var i = 0; i < parseInt(p); i++) {
-            num = strings.mult(num, no);
-        }
-        return num;
-    }
+function interpolate(a, b, t) {
+    return a * (1 - t) + b * t;
 }
-const Equality = {
-    relation: function (a, b) {
-        let ns = strings.blend(a, b);
-        a = ns[0];
-        b = ns[1];
-        for (var i = 0; i < a.length; i++) {
-            if (a[i] == b[i]) {
-                continue;
-            } else if (a[i] < b[i]) {
-                return this.Lesser;
-            } else {
-                return this.Greater;
-            }
-        }
-        return this.Equal;
-    },
-    Equal: 0,
-    Greater: 1,
-    Lesser: 2,
-};
-Object.freeze(Equality);
-function replaceAt(str, r, i) {
-    return str.slice(0, i) + r + str.slice(i + 1, str.length);
-}
-function insertAt(str, r, i) {
-    return str.slice(0, i) + r + str.slice(i, str.length);
+function normalize(x0, x1, x) {
+    return (x - x0) / (x1 - x0);
 }
 function ceil(no, res = 1) {
     return floor(no, res) + res;
@@ -1457,7 +879,6 @@ const Intersection = {
     ILTL: function (ax, ay, bx, by, cx, cy, dx, dy) {
         let inti = lineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
         if (inti.intersected) {
-            //console.log(inti.point);
             return inti.point;
         } else if (inti.u <= 1 && inti.u >= 0) {
             let pt = Vector.interpolate(
@@ -1465,11 +886,7 @@ const Intersection = {
                 new Vector2(bx, by),
                 inti.t
             );
-            if (Boolean(pt.x)) {
-                return pt;
-            } else {
-                console.log(pt);
-            }
+            return pt;
         }
     },
     ILTS: function (ax, ay, bx, by, verts) {
@@ -1530,15 +947,49 @@ const Intersection = {
         let verts1 = Shapes.rect.vertices.get2(bx, by, bw, bh);
         return this.STS(verts, verts1);
     },
-    CTL: function (ax, ay, bx, by, cx, cy, r) {
-        let verts = Shapes.circle.vertices.get2(cx, cy, r);
-
-        return this.LTS(ax, ay, bx, by, verts);
+    CTL: function (ax, ay, bx, by, cx, cy, cr) {
+        let ox = ax - cx;
+        let oy = ay - cy
+        let rx = bx - ax;
+        let ry = by - ay;
+        let a = rx ** 2 + ry ** 2;
+        let b = 2 * ox * rx + 2 * oy * ry;
+        let c = ox ** 2 + oy ** 2 - cr ** 2;
+        let eq = QuadraticFormula(a, b, c);
+        let arr = [];
+        for (var i = 0; i < eq.length; i++) {
+            if (eq[i] >= 0 && eq[i] <= 1) {
+                let x = cx + ox + rx * eq[i];
+                let y = cy + oy + ry * eq[i];
+                let p = createVector(x, y);
+                arr.push(p);
+            }
+        }
+        return arr;
     },
     CTC: function (ax, ay, ar, bx, by, br) {
-        let verts = Shapes.circle.vertices.get2(ax, ay, ar);
-        let verts1 = Shapes.circle.vertices.get2(bx, by, br);
-        return this.STS(verts, verts1);
+        let c1 = { x: ax, y: ay, r: ar };
+        let c2 = { x: bx, y: by, r: br };
+        let dx = c2.x - c1.x;
+        let dy = c2.y - c1.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+
+        // Circles too far apart
+        if (d > c1.r + c2.r) { return []; }
+
+        // One circle completely inside the other
+        if (d < Math.abs(c1.r - c2.r)) { return []; }
+
+        dx /= d;
+        dy /= d;
+
+        const a = (c1.r * c1.r - c2.r * c2.r + d * d) / (2 * d);
+        const px = c1.x + a * dx;
+        const py = c1.y + a * dy;
+
+        const h = Math.sqrt(c1.r * c1.r - a * a);
+
+        return [new Vector2(px + h * dy, py - h * dx), new Vector2(px - h * dy, py + h * dx)];
     },
 };
 Object.freeze(Intersection);
@@ -1556,85 +1007,6 @@ function CartesianToBarycentric(p, a, b, c) {
     let w2 = ((y3 - y1) * (x - x3) + (x1 - x3) * (y - y3)) / den;
     let w3 = 1 - w1 - w2;
     return [w1, w2, w3];
-}
-function PointInTriangle(p, a, b, c) {
-    let cp1 = Vector3D.normal2(p, a, b);
-    let cp2 = Vector3D.normal2(p, b, c);
-    let cp3 = Vector3D.normal2(p, c, a);
-    if (Vector.dot(cp2, cp1) < 0.0) {
-        return false;
-    }
-    if (Vector.dot(cp2, cp3) < 0.0) {
-        return false;
-    }
-    return true;
-}
-function sphereCast(ox, oy, oz, rx, ry, rz, cx, cy, cz, cr) {
-    ox -= cx;
-    oy -= cy;
-    oz -= cz;
-    let orig = createVector3(ox, oy, oz);
-    let dir = createVector3(rx, ry, rz);
-    let cv = createVector3(cx, cy, cz);
-
-    let a = Vector.dot(dir, dir);
-    let b = 2 * Vector.dot(dir, orig);
-    let c = Vector.dot(orig, orig) - cr ** 2;
-    let eq = QuadraticFormula(a, b, c);
-    let arr = [];
-    for (var i = 0; i < eq.length; i++) {
-        if (eq[i] >= 0) {
-            //console.log(eq[i]);
-            let p = cv.add(orig.copy().add(dir.copy().mult(eq[i])));
-            arr.push(p);
-        }
-    }
-    return arr;
-}
-function linePlaneIntersection(av, bv, af, bf, cf) {
-    let eq = getPlaneEq(af, bf, cf);
-    let a = eq[0];
-    let b = eq[1];
-    let c = eq[2];
-    let d = eq[3];
-    let t =
-        (-a * av.x - b * av.y - c * av.z + d) / (a * bv.x + b * bv.y + c * bv.z);
-    //console.log(t);
-    let p = av.copy().add(bv.copy().mult(t));
-
-    return p;
-}
-function PlaneCast(av, bv, af, bf, cf) {
-    let eq = getPlaneEq(af, bf, cf);
-    let a = eq[0];
-    let b = eq[1];
-    let c = eq[2];
-    let d = eq[3];
-    let t =
-        (-a * av.x - b * av.y - c * av.z + d) / (a * bv.x + b * bv.y + c * bv.z);
-    if (t >= 0) {
-        let p = av.copy().add(bv.copy().mult(t));
-        return p;
-    }
-}
-function RaycastFace(av, bv, af, bf, cf) {
-    //console.log(af, bf, cf);
-    let cast = linePlaneIntersection(av, bv, af, bf, cf);
-    if (cast && PointInTriangle(cast, af, bf, cf)) {
-        return cast;
-    }
-}
-function getPlaneEq(p, q, r) {
-    //console.log(p, q, r);
-    let a1 = Vector.sub(q, p);
-    let b1 = Vector.sub(r, p);
-    let norm = Vector3D.crossProduct(a1, b1);
-    let a = norm.x;
-    //console.log(a);
-    let b = norm.y;
-    let c = norm.z;
-    let d = a * q.x + b * q.y + c * q.z;
-    return [a, b, c, d];
 }
 function floorDiv(n, d) {
     return floor(n / d);
@@ -1654,17 +1026,12 @@ function sqrt(n) {
     return n ** 0.5;
 }
 function avg(...ns) {
-    let n = ArrayMath.number(ns);
-    n /= ns.length;
-    return n;
+    return ns.reduce((prev, current) => prev + current, 0) / ns.length;
 }
 function round(n, r = 1) {
     return Math.round(n / r) * r;
 }
 const mod = {
-    neut: function (n, modu = 1) {
-        return n % modu;
-    },
     pos: function (n, modu = 1) {
         return ((n % modu) + modu) % modu;
     },
@@ -1672,52 +1039,52 @@ const mod = {
         return ((n % modu) - modu) % modu;
     },
 };
+let Angle = {
+    AngleMode: DEGREES,
+    degrees: function (rad) {
+        return (180 * rad) / PI;
+    },
+    radians: function (deg) {
+        return (deg * PI) / 180;
+    },
+    convert: function (ang) {
+        if (this.AngleMode == DEGREES) {
+            return this.radians(ang % 360);
+        } else {
+            return ang % (2 * PI);
+        }
+    },
+    convertI: function (ang) {
+
+        if (this.AngleMode == DEGREES) {
+            return this.degrees(ang);
+        } else {
+            return ang;
+        }
+    }
+}
 function sin(ang) {
-    let c = Math.sin(getAngle(ang)) * 1;
+    let c = Math.sin(Angle.convert(ang)) * 1;
     return c;
 }
 function atan2(y, x) {
-    return getAngleInverse(Math.atan2(y, x));
+    return Angle.convertI(Math.atan2(y, x));
 }
 function cos(ang) {
-    let c = Math.cos(getAngle(ang));
-    return c;
-}
-function getAngle(ang) {
-    if (Canvas.AngleMode == AngleModes.degrees) {
-        return radians(ang % 360);
-    } else {
-        return ang % (2 * PI);
-    }
-}
-function getAngleInverse(ang) {
-    if (Canvas.AngleMode == AngleModes.degrees) {
-        return degrees(ang);
-    } else {
-        return ang;
-    }
+    return Math.cos(Angle.convert(ang));
 }
 function AngleMode(mode) {
-    Canvas.AngleMode = mode;
+    Angle.AngleMode = mode;
 }
 function parity(no) {
-    if (no % 2 == 1) {
-        return 1;
-    }
-    return 2;
+    return no % 2 == 1 ? 1 : 2;
 }
 const is = {};
 is.odd = function (no) {
-    if (parity(no) == 1) {
-        return true;
-    }
-    return false;
+    return parity(no) == 1;
 };
 is.even = function (no) {
-    if (parity(no) == 2) {
-        return true;
-    }
-    return false;
+    return parity(no) == 2;
 };
 function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
     let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
@@ -1740,8 +1107,8 @@ function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
         };
     }
 }
-function abs(...n) {
-    return Math.abs(...n);
+function abs(n) {
+    return Math.abs(n);
 }
 const distance = {
     Vector: {
@@ -1765,8 +1132,6 @@ const distance = {
             return {
                 point: pt,
                 dist: Vector.dist(p, pt),
-                t: prod / bo.mag(),
-                normal: Vector.normal(a, b, p),
             };
         },
         line: function (a, b, p) {
@@ -1777,30 +1142,17 @@ const distance = {
             return {
                 point: pt,
                 dist: Vector.dist(p, pt),
-                t: prod / bo.mag(),
-                normal: Vector.normal(a, b, p),
-            };
-        },
-        line3d: function (a, b, p) {
-            let bo = Vector.sub(b, a);
-            let po = Vector.sub(p, a);
-            let prod = constraint(Vector.dot(po, bo) / bo.mag(), 0, bo.mag());
-            let pt = Vector.add(bo.copy().setMag(prod), a);
-            return {
-                point: pt,
-                dist: Vector.dist(p, pt),
-                t: prod / bo.mag(),
             };
         },
     },
     line: function (ax, ay, bx, by, px, py) {
         return this.Vector.line(
-            createVector(ax, ay),
-            createVector(bx, by),
-            createVector(px, py)
+            new Vector2(ax, ay),
+            new Vector2(bx, by),
+            new Vector2(px, py)
         );
     },
-    rect: function (x, y, x1, y1, w, h) {
+    rect: function (x, y, rx, ry, rw, rh) {
         if (w < 0) {
             w *= -1;
             x1 -= w;
@@ -1843,22 +1195,18 @@ const distance = {
         let ps = Vector.fromArray(...args);
         let pt;
         let length = Infinity;
-        let norm;
         for (let i = 0; i < ps.length; i++) {
             let ai = i;
             let bi = (i + 1) % ps.length;
             let coll = this.line(ps[ai].x, ps[ai].y, ps[bi].x, ps[bi].y, x, y);
             if (coll.dist < length) {
-                //console.log(coll);
                 length = coll.dist;
                 pt = coll.point;
-                norm = coll.normal;
             }
         }
         return {
             dist: length,
             point: pt,
-            normal: norm,
         };
     },
 };
@@ -1992,247 +1340,47 @@ const Between = {
             return true;
         }
     },
+    circle: function (c, r, p) {
+        return Vector.dist(c, p) < r + EPSILON;
+    }
 };
 Object.freeze(Between);
-const RayCast = {
-    farthest: {
-        Vector: {
-            shape: function (origin, dir, ...verts) {
-                return RayCast.farthest.shape(
-                    origin.x,
-                    origin.y,
-                    dir.x,
-                    dir.y,
-                    ...Vector.array(...verts)
-                );
-            },
-            rect: function (origin, dir, a, bx, by) {
-                return RayCast.farthest.rect(
-                    origin.x,
-                    origin.y,
-                    dir.x,
-                    dir.y,
-                    a.x,
-                    a.y,
-                    bx,
-                    by
-                );
-            },
-            rect1: function (origin, dir, ax, ay, bx, by) {
-                return this.rect(
-                    origin.x,
-                    origin.y,
-                    dir.x,
-                    dir.y,
-                    createVector(ax, ay),
-                    bx,
-                    by
-                );
-            },
-            square: function (origin, dir, a, b) {
-                return this.rect(origin, dir, a, b, b);
-            },
-            square1: function (origin, dir, ax, ay, b) {
-                return this.rect(origin, dir, createVector(ax, ay), b, b);
-            },
-            circle: function (o, r, c, rad) {
-                return RayCast.farthest.circle(o.x, o.y, r.x, r.y, c.x, c.y, rad);
-            },
-        },
-        rect: function (origX, origY, dirX, dirY, ax, ay, bx, by) {
-            return this.shape(
-                origX,
-                origY,
-                dirX,
-                dirY,
-                ax,
-                ay,
-                ax + bx,
-                ay,
-                ax + bx,
-                ay + by,
-                ax,
-                ay + by
-            );
-        },
-        shape: function (originX, originY, dirX, dirY, ...args) {
-            let origin = createVector(originX, originY);
-            let dir = createVector(dirX, dirY);
-            let verts = [];
-            for (var i = 0; i < args.length; i += 2) {
-                verts.push(createVector(args[i], args[i + 1]));
+const EPSILON = 0.5;
+class RayCastHit {
+    constructor(intersected, point, normal) {
+        this.hit = intersected;
+        this.normal = normal;
+        this.point = point;
+    }
+    length(or) {
+        if (this._length ?? false) return this.length;
+        if (this.hit) {
+            this._length = Vector.dist(or, this.point);
+        } else {
+            this._length = Infinity;
+        }
+        return this._length;
+    }
+    static nearest(o, ...hits) {
+        let currentCast = hits[0];
+        for (var i = 1; i < hits.length; i++) {
+            let len = hits[i].length(o);
+            //console.log(currentCast.length(o), len);
+            if (hits[i].hit && len < currentCast.length(o)) {
+                //console.log(hits[i]);
+                currentCast = hits[i];
             }
-
-            let finalCast = {
-                intersected: false,
-            };
-            var len = 0;
-            for (var i = 0; i < verts.length; i++) {
-                let a = verts[i];
-                let b = verts[(i + 1) % verts.length];
-                let cast = RayCast.Vector.line(origin, dir, a, b);
-                if (cast.intersected) {
-                    let d = Vector.dist(origin, cast.point);
-                    if (d > len) {
-                        len = d;
-                        finalCast = cast;
-                    }
-                }
-            }
-            return finalCast;
-        },
-        square: function (origX, origY, dirX, dirY, ax, ay, b) {
-            return this.rect(origX, origY, dirX, dirY, ax, ay, b, b);
-        },
-        circle: function (ox, oy, rx, ry, cx, cy, cr) {
-            let o = createVector(ox, oy);
-            ox -= cx;
-            oy -= cy;
-            let a = rx ** 2 + ry ** 2;
-            let b = 2 * ox * rx + 2 * oy * ry;
-            let c = ox ** 2 + oy ** 2 - cr ** 2;
-            let eq = QuadraticFormula(a, b, c);
-            let len = I0;
-            let pt;
-            let n;
-            for (var i = 0; i < eq.length; i++) {
-                if (eq[i] >= 0) {
-                    let x = cx + ox + rx * eq[i];
-                    let y = cy + oy + ry * eq[i];
-                    let p = createVector(x, y);
-                    let d = Vector.dist(p, o);
-                    if (d > len) {
-                        len = d;
-                        pt = p;
-                        n = Vector.sub(pt, new Vector2(cx, cy)).normalize();
-                    }
-                }
-            }
-            if (pt) {
-                return {
-                    intersected: true,
-                    point: pt,
-                    normal: n,
-                };
-            }
-            return {
-                intersected: false,
-            };
-        },
-    },
-    v2: {
-        Vector: {
-            shape: function (origin, dir, ...verts) {
-                //console.log(...Vector.array(...verts));
-                return RayCast.v2.shape(
-                    origin.x,
-                    origin.y,
-                    dir.x,
-                    dir.y,
-                    ...Vector.array(...verts)
-                );
-            },
-            rect: function (origin, dir, a, bx, by) {
-                return RayCast.v2.rect(
-                    origin.x,
-                    origin.y,
-                    dir.x,
-                    dir.y,
-                    a.x,
-                    a.y,
-                    bx,
-                    by
-                );
-            },
-            rect1: function (origin, dir, ax, ay, bx, by) {
-                return this.rect(
-                    origin.x,
-                    origin.y,
-                    dir.x,
-                    dir.y,
-                    createVector(ax, ay),
-                    bx,
-                    by
-                );
-            },
-            square: function (origin, dir, a, b) {
-                return this.rect(origin, dir, a, b, b);
-            },
-            square1: function (origin, dir, ax, ay, b) {
-                return this.rect(origin, dir, createVector(ax, ay), b, b);
-            },
-            circle: function (o, r, c, rad) {
-                return RayCast.v2.circle(o.x, o.y, r.x, r.y, c.x, c.y, rad);
-            },
-        },
-        rect: function (origX, origY, dirX, dirY, ax, ay, bx, by) {
-            return this.shape(
-                origX,
-                origY,
-                dirX,
-                dirY,
-                ax,
-                ay,
-                ax + bx,
-                ay,
-                ax + bx,
-                ay + by,
-                ax,
-                ay + by
-            );
-        },
-        shape: function (originX, originY, dirX, dirY, ...args) {
-            let origin = createVector(originX, originY);
-            //line(originX, originY, originX + dirX * 50, originY + dirY * 50);
-            let dir = createVector(dirX, dirY);
-            let verts = [];
-            for (var i = 0; i < args.length; i += 2) {
-                verts.push(createVector(args[i], args[i + 1]));
-            }
-
-            //for (var vert of verts) {
-            //    circle(vert.x, vert.y, 10);
-            //}
-            let finalCast = {
-                intersected: false,
-                points: [],
-                normals: [],
-            };
-            for (var i = 0; i < verts.length; i++) {
-                let a = verts[i];
-                let b = verts[(i + 1) % verts.length];
-                let cast = RayCast.Vector.line(origin, dir, a, b);
-                if (cast.intersected) {
-                    finalCast.intersected = true;
-                    finalCast.points.push(cast.point);
-                    finalCast.normals.push(cast.normal);
-                }
-            }
-            return finalCast;
-        },
-        square: function (origX, origY, dirX, dirY, ax, ay, b) {
-            return this.rect(origX, origY, dirX, dirY, ax, ay, b, b);
-        },
-        circle: function (ox, oy, rx, ry, cx, cy, r) {
-            let c = new Vector2(cx, cy);
-            let perimeter = 2 * PI * r;
-            let vertices = [];
-            for (var i = 0; i <= perimeter; i += 0.25) {
-                let angle = map(i, 0, perimeter, 0, 360);
-                let vert = Vector.add(c, Vector.AngleToVector(angle, r));
-                vertices.push(...vert.array());
-            }
-            let cast = RayCast.v2.shape(ox, oy, rx, ry, ...vertices);
-            return cast;
-        },
-    },
-
+        }
+        return currentCast;
+    }
+}
+const Raycast = {
     Vector: {
         line: function (rs, r, a, b) {
-            return RayCast.line(rs.x, rs.y, r.x, r.y, a.x, a.y, b.x, b.y);
+            return Raycast.line(rs.x, rs.y, r.x, r.y, a.x, a.y, b.x, b.y);
         },
         shape: function (origin, dir, ...verts) {
-            return RayCast.shape(
+            return Raycast.shape(
                 origin.x,
                 origin.y,
                 dir.x,
@@ -2241,18 +1389,7 @@ const RayCast = {
             );
         },
         rect: function (origin, dir, a, bx, by) {
-            return RayCast.rect(origin.x, origin.y, dir.x, dir.y, a.x, a.y, bx, by);
-        },
-        rect1: function (origin, dir, ax, ay, bx, by) {
-            return this.rect(
-                origin.x,
-                origin.y,
-                dir.x,
-                dir.y,
-                createVector(ax, ay),
-                bx,
-                by
-            );
+            return Raycast.rect(origin.x, origin.y, dir.x, dir.y, a.x, a.y, bx, by);
         },
         square: function (origin, dir, a, b) {
             return this.rect(origin, dir, a, b, b);
@@ -2261,79 +1398,59 @@ const RayCast = {
             return this.rect(origin, dir, createVector(ax, ay), b, b);
         },
         circle: function (o, r, c, rad) {
-            return RayCast.circle(o.x, o.y, r.x, r.y, c.x, c.y, rad);
+            return Raycast.circle(o.x, o.y, r.x, r.y, c.x, c.y, rad);
         },
     },
     line: function (rsx, rsy, rx, ry, ax, ay, bx, by) {
         let rs = createVector(rsx, rsy);
-        let rd = createVector(rsx + rx, rsy + ry);
         let a = createVector(ax, ay);
         let b = createVector(bx, by);
-        let norm = Vector.normal(a, b, rs);
         let ln = lineIntersection(ax, ay, bx, by, rsx, rsy, rsx + rx, rsy + ry);
-        if (ln.intersected) {
-            return {
-                intersected: true,
-                point: ln.point,
-                normal: norm,
-            };
+        if (ln.intersected && Vector.dist(rs, ln.point) > EPSILON) {
+            return new RayCastHit(true, ln.point, Vector.normal(a, b, rs));
         }
         if (ln.t >= 0 && ln.t <= 1 && ln.u > 0) {
-            let pt = Vector.add(a, Vector.mult(Vector.sub(b, a), ln.t));
-            if (Vector.dist(pt, rs) > Vector.dist(pt, rd)) {
-                return {
-                    intersected: true,
-                    point: pt,
-                    normal: norm,
-                };
+            let pt = Vector.interpolate(a, b, ln.t);
+            if (Vector.dist(rs, pt) > EPSILON) {
+                return new RayCastHit(true, pt, Vector.normal(a, b, rs));
             }
         }
-        return {
-            intersected: false,
-        };
+        return new RayCastHit(false);
     },
-    rect: function (origX, origY, dirX, dirY, ax, ay, bx, by) {
+    rect: function (rox, roy, dirX, dirY, ax, ay, aw, ah) {
         return this.shape(
-            origX,
-            origY,
+            rox,
+            roy,
             dirX,
             dirY,
             ax,
             ay,
-            ax + bx,
+            ax + aw,
             ay,
-            ax + bx,
-            ay + by,
+            ax + aw,
+            ay + ah,
             ax,
-            ay + by
+            ay + ah
         );
     },
-    square: function (origX, origY, dirX, dirY, ax, ay, b) {
-        return this.rect(origX, origY, dirX, dirY, ax, ay, b, b);
-    },
-    shape: function (originX, originY, dirX, dirY, ...args) {
+    shape: function (originX, originY, dirX, dirY, ...vertices) {
+        //console.log(vertices);
         let origin = createVector(originX, originY);
-        //line(originX, originY, originX + dirX * 50, originY + dirY * 50);
-        let dir = createVector(dirX, dirY);
         let verts = [];
-        for (var i = 0; i < args.length; i += 2) {
-            verts.push(createVector(args[i], args[i + 1]));
+        for (var i = 0; i < vertices.length; i += 2) {
+            verts.push(createVector(vertices[i], vertices[i + 1]));
         }
 
-        //for (var vert of verts) {
-        //    circle(vert.x, vert.y, 10);
-        //}
         let length = Infinity;
-        let finalCast = {
-            intersected: false,
-        };
-        for (var i = 0; i < verts.length; i++) {
+        let finalCast = new RayCastHit(false);
+        for (var i = 0; i < vertices.length / 2; i++) {
             let a = verts[i];
-            let b = verts[(i + 1) % verts.length];
-            let cast = this.Vector.line(origin, dir, a, b);
-            if (cast.intersected) {
+            let b = verts[(i + 1) % (vertices.length / 2)];
+            let cast = this.line(originX, originY, dirX, dirY, a.x, a.y, b.x, b.y);
+            //console.log(cast);
+            if (cast.hit) {
                 let len = Vector.dist(origin, cast.point);
-                let len2 = Vector.dist(Vector.add(origin, dir), cast.point);
+                //let len2 = Vector.dist(Vector.add(origin, dir), cast.point);
                 if (len < length /* && len2 < len*/) {
                     length = len;
                     finalCast = cast;
@@ -2342,20 +1459,43 @@ const RayCast = {
         }
         return finalCast;
     },
-    circle: function (ox, oy, rx, ry, cx, cy, r) {
-        let c = new Vector2(cx, cy);
-        let perimeter = 2 * PI * r;
-        let vertices = [];
-        for (var i = 0; i <= perimeter; i += 0.25) {
-            let angle = map(i, 0, perimeter, 0, 360);
-            let vert = Vector.add(c, Vector.AngleToVector(angle, r));
-            vertices.push(...vert.array());
+    circle: function (ox, oy, rx, ry, cx, cy, cr) {
+        let o = new Vector2(ox, oy);
+        ox -= cx;
+        oy -= cy
+        let a = rx ** 2 + ry ** 2;
+        let b = 2 * ox * rx + 2 * oy * ry;
+        let c = ox ** 2 + oy ** 2 - cr ** 2;
+        let eq = QuadraticFormula(a, b, c);
+        let hit;
+        let length = Infinity;
+        for (var i = 0; i < eq.length; i++) {
+            if (eq[i] > 0) {
+                let x = cx + ox + rx * eq[i];
+                let y = cy + oy + ry * eq[i];
+                let p = createVector(x, y);
+                let len = Vector.dist(p, o);
+                if (len > EPSILON && len < length) {
+                    hit = new RayCastHit(true, p);
+                    length = len;
+                }
+            }
         }
-        let cast = RayCast.shape(ox, oy, rx, ry, ...vertices);
-        return cast;
+        if (hit) {
+            let c = new Vector2(cx, cy);
+            hit.normal = Vector.sub(hit.point, c).normalize();
+            if (Between.circle(c, cr, o)) {
+                //console.log("ok");
+                hit.normal.x *= -1;
+                hit.normal.y *= -1;
+            }
+                //console.log(hit.normal);
+            return hit;
+        }
+        return new RayCastHit(false);
     },
 };
-Object.freeze(RayCast);
+Object.freeze(Raycast);
 function factorize(no) {
     //return [1, no];
     let factors = [1];
@@ -2373,98 +1513,35 @@ function factorize(no) {
     factors.push(no);
     return factors;
 }
-function circleLineIntersection(ox, oy, rx, ry, cx, cy, cr) {
-    ox -= cx;
-    oy -= cy;
-    let a = rx ** 2 + ry ** 2;
-    let b = 2 * ox * rx + 2 * oy * ry;
-    let c = ox ** 2 + oy ** 2 - cr ** 2;
-    let eq = QuadraticFormula(a, b, c);
-    let arr = [];
-    for (var i = 0; i < eq.length; i++) {
-        if (eq[i] >= 0) {
-            let x = cx + ox + rx * eq[i];
-            let y = cy + oy + ry * eq[i];
-            let p = createVector(x, y);
-            arr.push(p);
-        }
+{
+    let saved = {};
+    function factorial(no) {
+        no = no - (no % 1);
+        return (no < 2) ? 1 : saved[no] ?? false ? saved[no] : factorial(no - 1) * no;
     }
-    return arr;
-}
-function factorial(no) {
-    let fac = 1;
-    for (var i = 1; i <= no; i++) {
-        fac *= i;
-    }
-    return fac;
-}
-function primeFactors(no) {
-    let factors = factorize(no);
-    factors.shift();
-    return factors;
 }
 function floor(no, floore = 1) {
     return no - (no % floore);
 }
-function lineIntersection2(ax, ay, bx, by, cx, cy, dx, dy) {
-    let eq1 = getLineEq(ax, ay, bx, by);
-    let eq2 = getLineEq(cx, cy, dx, dy);
-    let a1 = eq1[0];
-    let b1 = eq1[1];
-    let c1 = eq1[2];
-    let a2 = eq2[0];
-    let b2 = eq2[1];
-    let c2 = eq2[2];
-
-    let den = a1 * b2 - a2 * b1;
-    let x = (b2 * c1 - b1 * c2) / den;
-    let y = (a1 * c2 - a2 * c1) / den;
-    circle(x, y, 5);
-    //console.log(x, y, den);
-}
 function getLineEq(ax, ay, bx, by) {
     let a = by - ay;
     let b = ax - bx;
-    let lcm = HCF(a, b);
-    //console.log(lcm);
-    a /= lcm;
-    b /= lcm;
-    //bx /= lcm;
-    //by /= lcm;
+    let hcf = HCF(a, b);
+    a /= hcf;
+    b /= hcd;
     let c = a * bx + b * by;
-    //console.log(a * bx + b * by, a * bx );
     return [a, b, c];
 }
-function HCF(no1, no2) {
-    let factors1 = primeFactors(no1);
-    if (no1 < 0) {
-        factors1 = [-1];
-        no1 = no1 * -1;
-        factors1.push(...primeFactors(no1));
+function HCF(a, b) {
+    while (a % b != 0) {
+        [a, b] = [max(a, b), min(a, b)];
+        console.log(a, b);
+        b = a % b;
     }
-    //console.log(factors1);
-    let factors2 = primeFactors(no2);
-    if (no2 < 0) {
-        factors2 = [-1];
-        no2 = no2 * -1;
-        factors2.push(...primeFactors(no2));
-    }
-    //console.log(no2);
-    //console.log(factors2);
-    let lcmss = [1];
-    for (var i = 0; i < factors1.length; i++) {
-        for (var j = 0; j < factors2.length; j++) {
-            if (factors1[i] == factors2[j]) {
-                lcmss.push(factors1[i]);
-                factors2.splice(j, 1);
-                break;
-            }
-        }
-    }
-    return mult(...lcmss);
+    return b;
 }
-function LCM(no1, no2) {
-    return (no1 * no2) / HCF(no1, no2);
+function LCM(a, b) {
+    return (a * b) / HCF(a, b);
 }
 function mult(...args) {
     let prod = 1;
@@ -2520,13 +1597,11 @@ let geometry = {
         return Math.sqrt(h * h - p * p);
     },
     hypotenuse: function (b, p) {
-        return Math.sqrt(b * b + p * p);
+        return Math.hypot(b, p);
     },
 };
 function sign(no) {
-    if (no < 0) return -1;
-    else if (no > 0) return 1;
-    else return 0;
+    return (no < 0) ? -1 : (no > 0) ? 1 : 0;
 }
 function min(...args) {
     return Math.min(...args);
@@ -2534,65 +1609,44 @@ function min(...args) {
 function max(...args) {
     return Math.max(...args);
 }
-function constraint(num, min, max) {
-    if (min > max) {
-        let tem = max;
-        max = min;
-        min = tem;
+function constraint(num, mn, mx) {
+    if (mn > mx) {
+        [mx, mn] = [mn, mx];
     }
-    if (num < min) return min;
-    else if (num > max) return max;
-    else return num;
+    return min(max(num, mn), mx);
 }
-function dist(x1, y1, x2, y2) {
-    return mag(x2 - x1, y2 - y1);
-}
-function mag(x, y) {
-    return Math.sqrt(x ** 2 + y ** 2);
+function dist(a, b) {
+    return abs(a - b);
 }
 function constraintedAxis(num, min, max) {
-    if (num < min) return -1;
-    else if (num > max) return -1;
-    else return 0;
+    return (num < min) ? -1 : (num > max) ? 1 : 0;
 }
-function constrainted(num, min, max) {
-    if (num < min || num > max) return true;
-    else return false;
+function map(x, mna, mxa, mnb, mxb) {
+    return interpolate(mnb, mxb, normalize(mna, mxa, x));
 }
-function map(no, min, max, minr, maxr) {
-    return minr + (maxr - minr) * normalize(no, min, max);
-}
-function normalize(no, min, max) {
-    return (no - min) / (max - min);
-}
-function radians(deg) {
-    return (deg * PI) / 180;
-}
-function degrees(rad) {
-    return (180 * rad) / PI;
-}
-let numberSign = {
-    check: function (val) {
-        if (val < 0) return -1;
-        return 1;
-    },
-    positive: function (val) {
-        return val * this.check(val);
-    },
-    negative: function (val) {
-        return -val * this.check(val);
-    },
-};
 function interpolateArray(arr, index) {
     let i = floor(index);
     let ir = index - i;
     let ans = arr[i];
-    if (i < arr.length - 1) {
+    if (i < arr.length - 2 && ir > 0) {
         ans += (arr[i + 1] - ans) * ir;
     }
     return ans;
 }
 const Shapes = {
+    bounds: function (...pts) {
+        let minx = pts[0].x;
+        let miny = pts[0].y;
+        let maxx = pts[0].x;
+        let maxy = pts[0].y;
+        for (var i = 0; i < pts.length; i++) {
+            minx = min(minx, pts[i].x);
+            miny = min(miny, pts[i].y);
+            maxx = max(maxx, pts[i].x);
+            maxy = max(maxy, pts[i].y);
+        }
+        return [minx, miny, maxx, maxy];
+    },
     line: {
         vertices: {
             get: function (ax, ay, bx, by) {
@@ -3344,66 +2398,7 @@ function indicesOf(arr, val) {
 /*
  * x^2 + y^2 = r ^ 2
  */
-const Equation = {
-    line: function (x1, y1, x2, y2) {
-        if (x2 < x1) {
-            //console.log(x2, y2);
-            let temp = [x1, y1];
-            [x1, y1] = [x2, y2];
-            [x2, y2] = temp;
-        }
-        let m = (x2 - x1) / (y2 - y1);
-        let c = y1 - m * x1;
-        return new LineEquation(m, c);
-    },
-    circle: function (x, y, r) {
-        return new CircleEquation(x, y, r);
-    },
-};
-class CircleEquation {
-    constructor(x, y, r) {
-        this.cx = x;
-        this.cy = y;
-        this.r = r;
-    }
-    x(y) {
-        y -= this.cy;
-        let x = (this.r ** 2 - y ** 2) ** 0.5;
-        return [x + this.cx, -x + this.cx];
-    }
-    y(x) {
-        x -= this.cx;
-        let y = (this.r ** 2 - x ** 2) ** 0.5;
-        return [y + this.cy, -y + this.cy];
-    }
-}
-class LineEquation {
-    constructor(m, c) {
-        this.m = m;
-        this.c = c;
-    }
-    x(y) {
-        return (y - this.c) / this.m;
-    }
-    y(x) {
-        return this.c + this.m * x;
-    }
-    intersects(eq2) {
-        let a1 = eq2.m;
-        let b1 = -1;
-        let c1 = eq2.c;
-        let a2 = this.m;
-        let b2 = -1;
-        let c2 = this.c;
-        if (a1 == a2) {
-            return;
-        }
-        let den = a1 * b2 - a2 * b1;
-        let x = (b1 * c2 - b2 * c1) / den;
-        let y = (c1 * a2 - c2 * a1) / den;
-        return createVector(x, y);
-    }
-}
+
 // #endregion
 
 // #region Canvas
@@ -3498,6 +2493,7 @@ const OPEN = 0;
 const CLOSE = 1;
 {
     let vertices = [];
+    let begun = true;
     function vertex(x, y) {
         vertices.push(new Vector2(Canvas.x(x), Canvas.y(y)));
     }
@@ -3608,48 +2604,28 @@ const Canvas = {
     strokeStyle: undefined,
     fillStyle: undefined,
     colorMode: RGB,
-    xo: 0,
-    yo: 0,
-    ym: 1,
-    xm: 1,
-    xo1: 0,
-    yo1: 0,
-    x: function (x) {
-        //console.log(x - this.xo1);
-        return this.xo + x * this.xm;
-    },
-    y: function (y) {
-        return this.yo + y * this.ym;
-    },
-    xi: function (x) {
-        return (x - this.xo) * this.xm;
-    },
-    yi: function (y) {
-        return (y - this.yo) * this.ym;
-    },
-    w: function (w) {
-        return w * this.xm;
-    },
-    h: function (h) {
-        return h * this.ym;
+    enabled: false,
+    flipX: function () {
+        WindowHandler.flipX(CanvasWidth);
     },
     flipY: function () {
-        this.ym *= -1;
-        this.yo = CanvasHeight - this.yo;
+        WindowHandler.flipY(CanvasHeight);
     },
-    flipX: function () {
-        this.xm *= -1;
-        this.xo = CanvasWidth - this.xo;
+    x: function (x) {
+        return WindowHandler.x(x);
     },
-    Vector2: function (vec) {
-        return new Vector2(this.x(vec.x), this.y(vec.y));
+    y: function (y) {
+        return WindowHandler.y(y);
+    },
+    w: function (w) {
+        return WindowHandler.w(w);
+    },
+    h: function (h) {
+        return WindowHandler.h(h);
     },
     setOrigin: function (x = CanvasWidth / 2, y = CanvasHeight / 2) {
-        this.xo = x;
-        this.yo = y;
-    },
-    enabled: false,
-    AngleMode: AngleModes.degrees,
+        WindowHandler.setOrigin(x, y);
+    }
 };
 var ctx,
     CanvasWidth,
@@ -4346,7 +3322,7 @@ class UIElement {
         this.offset = createVector();
         this.position = createVector(x, y);
         this.id = UI.Elements.length;
-        this.click = new Event1();
+        this.click = new EventHanler();
         UI.Elements.push(this);
         UI.Relayer();
         this.setShape(...shapeArgs);
@@ -4476,7 +3452,7 @@ class UIElement {
     }
     bind(type, func, ...args) {
         if (type == "click") {
-            this.click.bind(func, ...args);
+            this.click.bind(func, args);
         }
     }
 }
@@ -4517,16 +3493,18 @@ class Gizmo extends UIElement {
     children = [];
     snapped = false;
 
-    setColor(col2) {
-        this.baseColor = col2;
-        this.hoveredColor = col2.map((a, i) => (i == 3) ? a : a * 0.85);
-        this.clickedColor = col2.map((a, i) => (i == 3) ? a : a * 0.7);
+    setColor(col) {
+        this.baseColor = col;
+        this.hoveredColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
+        this.clickedColor = col.map((a, i) => (i == 3) ? a : a * 0.7);
     }
-    setParent(par) {
+    setParent(par, keepOffset = true) {
         par.children.push(this);
         this.parent = par;
-        console.log(this.localPosition);
-        this.localPosition.sub(this.parent.position);
+        //console.log(this.localPosition);
+        if (keepOffset) {
+            this.localPosition.sub(this.parent.position);
+        }
     }
     setChild(child) {
         child.setParent(this);
@@ -4541,7 +3519,7 @@ class Gizmo extends UIElement {
         //console.log(x, y);
         this.setColor(col);
         this.mouseOffset = new Vector2(0, 0);
-        this.move = new Event1();
+        this.move = new EventHanler();
     }
     get position() {
         return Vector.add(this.localPosition, this.parentPosition);
@@ -4564,7 +3542,7 @@ class Gizmo extends UIElement {
         super.bind(type, func, ...args);
         if (type == "move") {
             //console.log("ok");
-            this.move.bind(func, ...args);
+            this.move.bind(func, args);
         }
     }
     update() {
@@ -4667,7 +3645,7 @@ class Slider extends UIElement {
         this.b = new Vector2(bx, by);
         this.lineWidth = 5;
         this.setColor(col);
-        this.change = new Event1();
+        this.change = new EventHanler();
     }
     setColor(col2) {
         this.baseColor = col2;
@@ -4694,11 +3672,9 @@ class Slider extends UIElement {
             this.color = this.hoveredColor;
         }
     }
-    get value() {
+    value() {
         let den = Vector.dist(this.a, this.b);
         let num = Vector.dist(this.localPosition, this.a);
-        //console.log(num, den);
-        //console.log(num / den);
         return this.min + (this.max - this.min) * (num / den);
     }
     bind(type, func) {
@@ -4985,5 +3961,4 @@ const Rotation = {
     ZYX: 5,
 };
 var m22;
-Camera.projectionMatrix = Matrices.identity(4);
 // #endregion
