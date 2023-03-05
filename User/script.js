@@ -28,6 +28,7 @@ class Account {
         Account.set(user);
     }
     static set(user) {
+        console.log(signin.screen.style.display);
         signin.screen.style.display = "none";
 
     }
@@ -38,7 +39,7 @@ const signin = {
     username: document.getElementById("signinusername"),
     password: document.getElementById("signinpassword"),
     button: document.getElementById("onsigninbutton"),
-    onsignin: function () {
+    on: function () {
         let username = signin.username.value;
         let password = signin.password.value;
         let user = Account.accounts[username];
@@ -84,6 +85,7 @@ const signup = {
 
     },
     init: function () {
+        signup.screen.style.display = "none";
         signup.button.onclick = signin.on;
         signup.username.onkeydown = function (event) {
             if (event.key == "Enter") {
