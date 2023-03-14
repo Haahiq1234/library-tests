@@ -39,35 +39,43 @@ const signin = {
     username: document.getElementById("signinusername"),
     password: document.getElementById("signinpassword"),
     button: document.getElementById("onsigninbutton"),
-    on: function () {
-        let username = signin.username.value;
-        let password = signin.password.value;
+    on: function (ths) {
+        ths = signin;
+
+        let username = ths.username.value;
+        let password = ths.password.value;
         let user = Account.accounts[username];
         if (user && user.check(password)) {
             Account.signin(user);
         } else {
-            signin.error();
+            ths.error();
         }
-        signin.password.value = "";
-        signin.password.blur();
-        signin.username.value = "";
-        signin.username.blur();
+        ths.password.value = "";
+        ths.password.blur();
+        ths.username.value = "";
+        ths.username.blur();
     },
     error: function () {
         console.log("Username or Password does not exist");
     },
     init: function () {
-        signin.button.onclick = signin.on;
-        signin.username.onkeydown = function (event) {
+        let ths = this;
+        this.button.onclick = function () {
+            signin.on(ths);
+        }
+        this.username.onkeydown = function (event) {
             if (event.key == "Enter") {
-                signin.on();
+                signin.on(ths);
             }
         };
-        signin.password.onkeydown = function (event) {
+        this.password.onkeydown = function (event) {
             if (event.key == "Enter") {
-                signin.on();
+                signin.on(ths);
             }
         };
+    },
+    enable: function () {
+
     }
 };
 
@@ -77,7 +85,11 @@ const signup = {
     username: document.getElementById("signupusername"),
     password: document.getElementById("signuppassword"),
     button: document.getElementById("signupbutton"),
-    on: function () {
+    on: function (ths) {
+        //this = ths;
+        ths = signup;
+        let username = ths.username.value;
+        let password = ths.password.value;
         
         
     },
@@ -85,17 +97,21 @@ const signup = {
 
     },
     init: function () {
-        signup.screen.style.display = "none";
-        signup.button.onclick = signin.on;
+        let ths = this;
+        this.button.onclick = function () {
+            signin.on(ths);
+        }
         signup.username.onkeydown = function (event) {
             if (event.key == "Enter") {
-                signin.on();
+                signin.on(ths);
             }
         };
         signup.password.onkeydown = function (event) {
             if (event.key == "Enter") {
-                signin.on();
+                signin.on(ths);
             }
         };
+
+
     }
 };

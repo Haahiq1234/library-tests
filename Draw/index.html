@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="../Canvas.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const WIDTH = 400;
+        const HEIGHT = 400;
+        let bet = false;
+        function setUp() {
+            createCanvas(WIDTH + 400, HEIGHT + 0);
+            frameRate(60);
+        }
+        function draw() {
+            clear(WIDTH, 0, CanvasWidth - WIDTH, HEIGHT);
+            line(WIDTH, 0, WIDTH, HEIGHT);
+        }
+        on.draw.bind(function () {
+            let nbet = Between.rect(Mouse.x, Mouse.y, 0, 0, WIDTH, HEIGHT);
+            if (mousePressed) {
+                if (bet && !nbet) {
+                    drawLine(Mouse.px, Mouse.py, constraint(Mouse.x, 0, WIDTH), constraint(Mouse.y, 0, HEIGHT));
+                } else if (nbet && !bet) {
+                    drawLine(constraint(Mouse.px, 0, WIDTH), constraint(Mouse.py, 0, HEIGHT), Mouse.x, Mouse.y);
+                } else if (nbet) {
+                    drawLine(Mouse.px, Mouse.py, Mouse.x, Mouse.y);
+                }
+            }
+            bet = nbet;
+        });
+        function drawLine(ax, ay, bx, by) {
+            line(ax, ay, bx, by);
+        }
+        function key_Press() {
+
+        }
+    </script>
+</body>
+</html>

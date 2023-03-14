@@ -61,18 +61,17 @@
                     this.gizmo.size[0] = 7;
                     var ths = this;
                     if (this.parent) {
-                        this.gizmo.bind("move", function (dt, gzmo) {
+                        this.gizmo.bind("move", function (gzmo, dt) {
                             let p = gzmo.position;
                             let a = ths.parent.gizmo.position;
                             let ang = Vector.Direction(a, p);
                             ths.angle = ang;
-                            //this.position = ths.position;
                         });
                     } else {
                         this.gizmo.setColor(color(255, 127, 0));
-                        this.gizmo.bind("move", function (dt, a) {
+                        this.gizmo.bind("move", function (a, dt) {
                             //a.position = a.position.add(dt);
-                            console.log("ok");
+                            //console.log(...args);
                             ths.position.add(dt);
                         });
                     }

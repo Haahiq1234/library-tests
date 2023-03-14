@@ -28,20 +28,6 @@
                 line(a.x, a.y, b.x, b.y);
             }
         }
-        function IK(arm, target) {
-            for (var i = arm.length - 1 - 1; i >= 0; i--) {
-                let p = arm[i];
-                let dir = Vector.sub(p, target);
-                let dist = Vector.dist(arm[i], arm[i + 1]);
-                arm[i + 1] = target.copy();
-                target.add(Vector.AngleToVector(dir.heading(), dist));
-            }
-            let dt = Vector.sub(target, arm[0]);
-            for (var i = 1; i < arm.length; i++) {
-                arm[i].sub(dt);
-            }
-            return arm;
-        }
     </script>
 
 </body>

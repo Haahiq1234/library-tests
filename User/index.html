@@ -13,7 +13,7 @@
             <div class="signininnercontainer">
                 <input type="text" id="signinusername" name="signinusername" placeholder="Enter Username" /><br>
                 <input type="password" id="signinpassword" name="signinpassword" placeholder="Enter Password" /><br>
-                <button id="onsigninbutton">Sign In</button><button id="entersignupbutton">Sign In</button>
+                <button id="onsigninbutton">Sign In</button><button id="signinsignupbutton">Register an account</button>
             </div>
         </div>
     </div>
@@ -21,10 +21,14 @@
         <div class="signupcontainer">
             <div class="signupinnercontainer">
                 <input type="text" id="signupusername" placeholder="Create Username" /><br>
-                <input type="password" id="signuppassword"placeholder="Create Password" /><br>
-                <button id="signupbutton">Register</button>
+                <input type="password" id="signuppassword" placeholder="Create Password" /><br>
+                <button id="signupbutton">Register</button><button id="signupbackbutton">Back</button>
             </div>
         </div>
+    </div>
+
+    <div id="texterscreen">
+
     </div>
 
     <script src="../Canvas.js"></script>
@@ -33,6 +37,9 @@
         function setUp() {
             signin.init();
             signup.init();
+
+            signin.screen.style.display = "none";
+            //signup.screen.style.display = "none";
 
             Account.register("Haahiq1234", 1234);
             Account.register("Haahiq2020", 1234);

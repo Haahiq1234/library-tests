@@ -154,7 +154,8 @@ class EventHanler {
     Fire(...args) {
         let toReturn = {};
         for (var i = 0; i < this.bound.length; i++) {
-            toReturn[this.names[i]] = this.bound[i](...args, ...this.args[i]);
+            //console.log(...this.args[i]);
+            toReturn[this.names[i]] = this.bound[i](...this.args[i], ...args);
         }
         return toReturn;
     }
@@ -580,13 +581,33 @@ function Vector2(x = 0, y = x) {
 // #endregion
 
 // #region Input
+const Mouse = {
+    position: new Vector2(0, 0),
+    previousPosition: new Vector2(0, 0),
+    get x() {
+        return this.position.x;
+    },
+    get y() {
+        return this.position.y;
+    },
+    get px() {
+        return this.previousPosition.x;
+    },
+    get py() {
+        return this.previousPosition.y;
+    },
+};
+Object.freeze(Mouse);
 var mouse = new Vector2(0, 0);
 var mouse2 = new Vector2(0, 0);
 {
     on.mousemove.bind(function (event) {
+
         let x = WindowHandler.xi(event.clientX);
         let y = WindowHandler.yi(event.clientY);
+
         mouse.set(x, y);
+
         mouse2.set(event.clientX, event.clientY);
     });
     var key = {};
@@ -806,6 +827,9 @@ function redraw(timeStamp) {
     if (UnSetFps && !loopGoing) {
         Time.time = timeStamp;
     }
+    //console.log(Mouse.position, Mouse.previousPosition);
+    Mouse.previousPosition.set(Mouse.x, Mouse.y);
+    Mouse.position.set(mouse.x, mouse.y);
     if (Canvas.enabled) {
         //ctx.scale(pixelDensity(), pixelDensity());
         UI.Update();
@@ -867,6 +891,21 @@ function normalize(x0, x1, x) {
 }
 function ceil(no, res = 1) {
     return floor(no, res) + res;
+}
+function IK(arm, target) {
+    target = target.copy();
+    for (var i = arm.length - 1 - 1; i >= 0; i--) {
+        let p = arm[i];
+        let dir = Vector.sub(p, target);
+        let dist = Vector.dist(arm[i], arm[i + 1]);
+        arm[i + 1] = target.copy();
+        target.add(Vector.AngleToVector(dir.heading(), dist));
+    }
+    let dt = Vector.sub(target, arm[0]);
+    for (var i = 1; i < arm.length; i++) {
+        arm[i].sub(dt);
+    }
+    return arm;
 }
 const Intersection = {
     LTL: function (ax, ay, bx, by, cx, cy, dx, dy) {
@@ -1328,17 +1367,8 @@ const collision = {
     },
 };
 const Between = {
-    square: function (a, sz, p) {
-        let b = Vector.add(a, createVector(sz, sz));
-        if (a.x <= p.x && b.x >= p.x && a.y <= p.y && b.y >= p.y) {
-            return true;
-        }
-    },
-    rect: function (a, sx, sy, p) {
-        let b = Vector.add(a, createVector(sx, sy));
-        if (a.x <= p.x && b.x >= p.x && a.y <= p.y && b.y >= p.y) {
-            return true;
-        }
+    rect: function (px, py, x, y, w, h) {
+        return (x <= px && y <= py && px <= (x + w) && py <= (y + h));
     },
     circle: function (c, r, p) {
         return Vector.dist(c, p) < r + EPSILON;
@@ -2441,6 +2471,18 @@ function indicesOf(arr, val) {
 
         }
     }
+    class TextMeasure {
+        constructor(measure) {
+            this.width = measure.width;
+            this.height = measure.actualBoundingBoxDescent + measure.actualBoundingBoxAscent;
+            this.offset = new Vector2(measure.actualBoundingBoxLeft, measure.actualBoundingBoxAscent);
+        }
+    }
+    function measureText(text_str) {
+        let measure = ctx.measureText(text_str);
+        //console.log(measure)
+        return new TextMeasure(measure);
+    }
 }
 let shape = {
     vertices: [],
@@ -2709,14 +2751,14 @@ function calculateCanvasOffset() {
     var _y = el.offsetTop - el.scrollTop;
     CanvasOffset = new Vector2(_x, _y);
 }
-function clear() {
+function clear(x = 0, y = 0, w = CanvasWidth, h = CanvasHeight) {
     let t = ctx.getTransform();
     ctx.resetTransform();
     ctx.clearRect(
-        -CanvasWidth * 5,
-        -CanvasHeight * 5,
-        CanvasWidth * 10,
-        CanvasHeight * 10
+        x,
+        y,
+        w,
+        h
     );
     ctx.setTransform(t);
 }
@@ -3325,6 +3367,7 @@ class UIElement {
         this.click = new EventHanler();
         UI.Elements.push(this);
         UI.Relayer();
+        //console.log(shapeArgs);
         this.setShape(...shapeArgs);
     }   
     get position() {
@@ -3392,6 +3435,7 @@ class UIElement {
         return mouse.copy();
     }
     setShape(shape, ...sizes) {
+        //console.log(sizes);
         if (shape == UI.SQUARE) {
             this.offset = createVector(-sizes[0] / 2, -sizes[0] / 2);
             shape = UI.RECT;
@@ -3446,13 +3490,13 @@ class UIElement {
             );
         } else if (this.shape == UI.RECT) {
             let vec = Vector.add(position, this.offset);
-            return Between.rect(vec, this.size[0], this.size[1], mouse1);
+            return Between.rect(mouse1.x, mouse1.y, vec.x, vec.y, this.size[0], this.size[1]);
         }
         return false;
     }
     bind(type, func, ...args) {
         if (type == "click") {
-            this.click.bind(func, args);
+            this.click.bind(func, [this, ...args]);
         }
     }
 }
@@ -3510,7 +3554,6 @@ class Gizmo extends UIElement {
         child.setParent(this);
     }
     pair(pair, type, func) {
-        //console.log(func);
         this.bind(type, func, pair);
         pair.bind(type, func, this);
     }
@@ -3541,16 +3584,16 @@ class Gizmo extends UIElement {
     bind(type, func, ...args) {
         super.bind(type, func, ...args);
         if (type == "move") {
-            //console.log("ok");
-            this.move.bind(func, args);
+            this.move.bind(func, [this, ...args]);
         }
     }
     update() {
-        //console.log(this.position);
         super.update();
         let lastPosition = this.localPosition;
         if (this.clicked) {
-            this.localPosition = Vector.sub(this.getMouse(), this.mouseOffset);
+            let npos = Vector.sub(this.getMouse(), this.mouseOffset);
+            //console.log(npos);
+            this.localPosition = npos;
             if (!!this.parent) {
                 this.position = Vector.constraint(this.position, this.a, this.b);
             }
@@ -3566,7 +3609,10 @@ class Gizmo extends UIElement {
             this.localPosition = Vector.constraint(this.localPosition, this.a, this.b);
         }
         if (!Vector.Equal(lastPosition, this.localPosition)) {
-            this.move.Fire(Vector.sub(this.localPosition, lastPosition), this);
+            let dt = Vector.sub(this.localPosition, lastPosition);
+
+            //console.log(this.localPosition, lastPosition);
+            this.move.Fire(dt);
         }
         return this;
     }
@@ -3578,14 +3624,7 @@ class Gizmo extends UIElement {
     }
     OnClick() {
         this.mouseOffset = Vector.sub(this.getMouse(), this.localPosition);
-        //console.log(this.mouseOffset);
     }
-    //get x() {
-    //    return this.position.x;
-    //}
-    //get y() {
-    //    return this.position.y;
-    //}
     get px() {
         return this.localPosition.x;
     }

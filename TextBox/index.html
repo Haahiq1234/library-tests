@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="../Canvas.js"></script>
+    <script src="script.js"></script>
+    <script>
+        //const testBox = new TextBox(50, 50, 50, 25);
+        const gizmo = new Gizmo(200 + 50, 200 + 50);
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            //textAlign("left", "top");
+        }
+        function draw() {
+            clear();
+            draw_Text("Hello", 200, 200, -200 + gizmo.localPosition.x, -200 + gizmo.localPosition.y);
+            //noLoop();
+        }
+        function key_Press() {
+
+        }
+        function draw_Text(text_str, x, y, w, h) {
+            if (w < 0) {
+                x += w;
+                w *= -1;
+            }
+            if (h < 0) {
+                y += h;
+                h *= -1;
+            }
+
+            let prevFont = ctx.font.split("px");
+            let prevFontSize = parseInt(prevFont[0]);
+            //console.log(prevFont);
+            let measure = measureText(text_str);
+            //console.log(measure);
+            
+
+            let ratio = min(w / measure.width, h / measure.height);
+            let newFontSize = prevFontSize * ratio;
+            ctx.font = newFontSize + "px" + prevFont[1];
+
+            let newMeasure = measureText(text_str);
+
+            text(text_str, x + newMeasure.offset.x + (w - newMeasure.width) / 2, y + newMeasure.offset.y + (h - newMeasure.height) / 2);
+            nofill();
+            rect(x, y, w, h);
+            ctx.font = prevFontSize + "px" + prevFont;
+        }
+    </script>
+</body>
+</html>
