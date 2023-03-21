@@ -246,6 +246,14 @@ Vector.InFov = function (p, o, d, fov) {
     }
     return false;
 }
+Vector.flip = function (p, a, b) {
+    let ab = Vector.sub(b, a);
+    let ap = Vector.sub(p, a);
+    return Vector.sub(
+        Vector.add(a, ab.setMag(Vector.dot(ap, ab) / ab.mag())).mult(2),
+        p
+    );
+}
 Vector.zero = new Vector2(0, 0);
 Vector.Equal = function (a, b) {
     return Boolean(a) && Boolean(b) && a.x == b.x && a.y == b.y;
@@ -1078,42 +1086,96 @@ const mod = {
         return ((n % modu) - modu) % modu;
     },
 };
+const TWO_PI = 2 * Math.PI;
 let Angle = {
-    AngleMode: DEGREES,
+    angleMode: DEGREES,
     degrees: function (rad) {
-        return (180 * rad) / PI;
+        return parseInt((((180 * rad) / PI) % 360 + 360) % 360);
     },
     radians: function (deg) {
-        return (deg * PI) / 180;
+        return (((deg % 360 + 360) % 360) * PI) / 180;
     },
-    convert: function (ang) {
-        if (this.AngleMode == DEGREES) {
-            return this.radians(ang % 360);
+    angleModeToRadians: function (ang) { 
+        if (this.angleMode == DEGREES) {
+            return this.radians(ang);
         } else {
-            return ang % (2 * PI);
+            return (ang % TWO_PI + TWO_PI) % TWO_PI;
         }
     },
-    convertI: function (ang) {
-
-        if (this.AngleMode == DEGREES) {
+    angleModeToDegrees: function (ang) { 
+        if (this.angleMode == DEGREES) {
+            return ((ang % 360) + 360) % 360;
+        } else {
+            return this.degrees(ang);
+        }
+    },
+    radiansToAngleMode: function (ang) { 
+        if (this.angleMode == DEGREES) {
             return this.degrees(ang);
         } else {
-            return ang;
+            return (ang % TWO_PI + TWO_PI) % TWO_PI;
         }
+    },
+    degreesToAngleMode: function (ang) { 
+        if (this.angleMode == DEGREES) {
+            return ((ang % 360) + 360) % 360;
+        } else {
+            return this.radians(ang);
+        }
+    },
+    smallestDifference: function (a, b) {
+        a = this.angleModeToDegrees(a);
+        b = this.angleModeToDegrees(b);
+        let n = abs(b - a);
+        if (abs(180 - n) < 1) {
+            if (this.angleMode == RADIANS) {
+                return PI;
+            }
+            return 180;
+        }
+        let ab = min(abs(b - a), abs((b) - (a + 360)), abs(a - (b + 360)));
+        let sn = 0;
+        if (a < b && n < 180) {
+            //return ab;
+            sn = 1;
+        }
+        if (a < b && n >= 180) {
+            //return -ab;
+            sn = -1;
+        }
+        if (a > b && n < 180) {
+            //return -ab;
+            sn = -1;
+        }
+        if (a > b && n >= 180 && a > 180) {
+            //return ab;
+            sn = 1;
+        }
+        if (Angle.angleMode == RADIANS) {
+            return ab * sn * PI / 180;
+        }
+        return sn * ab;
+    },
+    lerp: function (a, b, dt) {
+        if (abs(b - a) < dt) {
+            return b - a;
+        }
+        let ang = this.smallestDifference(a, b);
+        return sign(ang) * dt;
     }
 }
 function sin(ang) {
-    let c = Math.sin(Angle.convert(ang)) * 1;
+    let c = Math.sin(Angle.angleModeToRadians(ang)) * 1;
     return c;
 }
 function atan2(y, x) {
-    return Angle.convertI(Math.atan2(y, x));
+    return Angle.radiansToAngleMode(Math.atan2(y, x));
 }
 function cos(ang) {
-    return Math.cos(Angle.convert(ang));
+    return Math.cos(Angle.angleModeToRadians(ang));
 }
 function AngleMode(mode) {
-    Angle.AngleMode = mode;
+    Angle.angleMode = mode;
 }
 function parity(no) {
     return no % 2 == 1 ? 1 : 2;

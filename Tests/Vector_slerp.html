@@ -1,0 +1,58 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+    <script src="../Canvas.js"></script>
+    <script>
+        let angle = 70;
+
+        const ox = 200;
+        const oy = 200;
+        const length = 100;
+
+        const angleOffSet = -190;
+        const anglespeed = 2 / 180;
+
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            lineWidth(4);
+            // noLoop();
+            redraw();
+        }
+        function draw() {
+            clear();
+
+            let angle2 = angle;
+
+            let x = ox + cos(angle) * length;
+            let y = oy + sin(angle) * length;
+
+            let x1 = ox + cos(angle2 + angleOffSet) * length;
+            let y1 = oy + sin(angle2 + angleOffSet) * length;
+
+            circle(x, y, 5);
+            circle(x1, y1, 5);
+
+            line(ox, oy, x, y);
+            let off = Angle.lerp(angle, angle2 + angleOffSet, 2);
+            //console.log(off);
+            angle += off;
+        }
+        function key_Press() {
+            //redraw();
+        }
+        Vector.slerp = function (a, b) {
+            let length = a.mag();
+            let ba = b.heading();
+
+        }
+    </script>    
+</body>
+</html>

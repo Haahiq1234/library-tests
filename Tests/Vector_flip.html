@@ -1,0 +1,30 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+    <script src="../Canvas.js"></script>
+    <script>
+        const ag = new Gizmo(100, 300);
+        const bg = new Gizmo(300, 100);
+        const pg = new Gizmo(100, 100);
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+        }
+        function draw() {
+            clear();
+            let p = Vector.flip(pg.localPosition, ag.localPosition, bg.localPosition);
+            circle(p.x, p.y, Gizmo.DEFAULTRADIUS);
+        }
+        function key_Press() {
+
+        }
+    </script>    
+</body>
+</html>
