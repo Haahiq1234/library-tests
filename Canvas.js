@@ -1090,21 +1090,21 @@ const TWO_PI = 2 * Math.PI;
 let Angle = {
     angleMode: DEGREES,
     degrees: function (rad) {
-        return parseInt((((180 * rad) / PI) % 360 + 360) % 360);
+        return ((180 * rad) / PI);
     },
     radians: function (deg) {
-        return (((deg % 360 + 360) % 360) * PI) / 180;
+        return deg * (PI / 180);
     },
     angleModeToRadians: function (ang) { 
         if (this.angleMode == DEGREES) {
             return this.radians(ang);
         } else {
-            return (ang % TWO_PI + TWO_PI) % TWO_PI;
+            return ang;
         }
     },
     angleModeToDegrees: function (ang) { 
         if (this.angleMode == DEGREES) {
-            return ((ang % 360) + 360) % 360;
+            return ang;
         } else {
             return this.degrees(ang);
         }
@@ -1113,19 +1113,19 @@ let Angle = {
         if (this.angleMode == DEGREES) {
             return this.degrees(ang);
         } else {
-            return (ang % TWO_PI + TWO_PI) % TWO_PI;
+            return ang;
         }
     },
     degreesToAngleMode: function (ang) { 
         if (this.angleMode == DEGREES) {
-            return ((ang % 360) + 360) % 360;
+            return ang;
         } else {
             return this.radians(ang);
         }
     },
     smallestDifference: function (a, b) {
-        a = this.angleModeToDegrees(a);
-        b = this.angleModeToDegrees(b);
+        a = mod.pos(this.angleModeToDegrees(a), 360);
+        b = mod.pos(this.angleModeToDegrees(b), 360);
         let n = abs(b - a);
         if (abs(180 - n) < 1) {
             if (this.angleMode == RADIANS) {
