@@ -1087,8 +1087,10 @@ const mod = {
     },
 };
 const TWO_PI = 2 * Math.PI;
-let Angle = {
+const Angle = {
     angleMode: DEGREES,
+    half: 180,
+    full: 360,
     degrees: function (rad) {
         return ((180 * rad) / PI);
     },
@@ -1123,50 +1125,23 @@ let Angle = {
             return this.radians(ang);
         }
     },
-    smallestDifference: function (a, b) {
-        a = mod.pos(this.angleModeToDegrees(a), 360);
-        b = mod.pos(this.angleModeToDegrees(b), 360);
-        let n = abs(b - a);
-        if (abs(180 - n) < 1) {
-            if (this.angleMode == RADIANS) {
-                return PI;
-            }
-            return 180;
-        }
-        let ab = min(abs(b - a), abs((b) - (a + 360)), abs(a - (b + 360)));
-        let sn = 0;
-        if (a < b && n < 180) {
-            //return ab;
-            sn = 1;
-        }
-        if (a < b && n >= 180) {
-            //return -ab;
-            sn = -1;
-        }
-        if (a > b && n < 180) {
-            //return -ab;
-            sn = -1;
-        }
-        if (a > b && n >= 180 && a > 180) {
-            //return ab;
-            sn = 1;
-        }
-        if (Angle.angleMode == RADIANS) {
-            return ab * sn * PI / 180;
-        }
-        return sn * ab;
+    sDistance: function (a, b) {
+        a = mod.pos(a, Angle.full);
+        b = mod.pos(b, Angle.full);
+        let ad = b - a;
+        let absad = abs(ad);
+        if (absad <= Angle.half) 
+            return ad;
+        return -(Angle.full - absad) * sign(ad);
     },
-    lerp: function (a, b, dt) {
-        if (abs(b - a) < dt) {
+    velocity: function (a, b, maxSpeed) {
+        if (abs(b - a) < maxSpeed) 
             return b - a;
-        }
-        let ang = this.smallestDifference(a, b);
-        return sign(ang) * dt;
+        return sign(this.sDistance(a, b)) * maxSpeed;
     }
 }
 function sin(ang) {
-    let c = Math.sin(Angle.angleModeToRadians(ang)) * 1;
-    return c;
+    return Math.sin(Angle.angleModeToRadians(ang));
 }
 function atan2(y, x) {
     return Angle.radiansToAngleMode(Math.atan2(y, x));
@@ -1176,6 +1151,14 @@ function cos(ang) {
 }
 function AngleMode(mode) {
     Angle.angleMode = mode;
+    if (mode == DEGREES) {
+        Angle.half = 180;
+        Angle.full = 360;
+    }
+    if (mode == RADIANS) {
+        Angle.half = Math.PI;
+        Angle.full = Math.PI * 2;
+    }
 }
 function parity(no) {
     return no % 2 == 1 ? 1 : 2;

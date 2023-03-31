@@ -41,7 +41,7 @@
             circle(x1, y1, 5);
 
             line(ox, oy, x, y);
-            let off = Angle.lerp(angle, angle2 + angleOffSet, 2);
+            let off = Angle.velocity(angle, angle2 + angleOffSet, 2);
             //console.log(off);
             angle += off;
         }
