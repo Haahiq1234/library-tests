@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script src="noise.js"></script>
+        <script>
+            let cols = 50;
+            let rows = 50;
+            let grid = new Array2D(cols, rows);
+            let smoothness = 8;
+            let width;
+            let height;
+            let ground = 00;
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                frameRate(60);
+                generateGrid();
+            }
+            function generateGrid() {
+                width = CanvasWidth / cols;
+                height = CanvasHeight / rows;
+                grid = new Array2D(cols + 1, rows + 1);
+                for (var i = 0; i <= cols; i++) {
+                    for (var j = 0; j <= rows; j++) {
+                        let n = noise(i / smoothness, j / smoothness) * 2 - 1;
+                        grid.set(i, j, n);
+                    }
+                }
+                for (var i = 0; i < cols; i++) {
+                    for (var j = 0; j < rows; j++) {
+                        let a = grid.get(i,     j    ).toString();
+                        let b = grid.get(i + 1, j    ).toString();
+                        let c = grid.get(i + 1, j + 1).toString();
+                        let d = grid.get(i,     j + 1).toString();
+                        if (a > ground) {
+
+                        }
+                        marchingSquares(i, j, grid.get(i, j), grid.get(i + 1, j), grid.get(i + 1, j + 1), grid.get(i, j + 1));
+                    }
+                }
+            }
+            function isGround(val) {
+                return val > ground ? "0" : "1";
+            }
+            function marchingSquares(i, j, ab, bb, cb, db) {
+                let bin = isGround(ab) + isGround(bb) + isGround(cb) + isGround(db);
+
+
+
+
+                let cas = base10(bin);
+                let arr = [];
+                let av = fv(i, j);
+                let bv = fv(i + 1, j);
+                let cv = fv(i + 1, j + 1);
+                let dv = fv(i, j + 1);
+
+                let at = constraint(normalize(ground, ab, bb), 0, 1);
+                let bt = constraint(normalize(ground, bb, cb), 0, 1);
+                let ct = constraint(normalize(ground, cb, db), 0, 1);
+                let dt = constraint(normalize(ground, db, ab), 0, 1);
+
+                let a = createVector((i + at) * width, j * height);
+                let b = createVector((i + 1) * width, (j + bt) * height);
+                let c = createVector((i + ct) * width, (j + 1) * height);
+                let d = createVector(i * width, (j + dt) * height);
+                if (ab == 1) {
+                    arr.push(d, av, a);
+                }
+                if (bb == 1) {
+                    arr.push(a, bv, b);
+                }
+                if (cb == 1) {
+                    arr.push(b, cv, c);
+                }
+                if (db == 1) {
+                    arr.push(c, dv, d);
+                }
+                noStroke();
+                fill(0, 255, 0);
+                shape.draw(...Vector.array(...arr));
+                switch (cas) {
+                    case 1:
+                        ln(d, c);
+                        break;
+                    case 2:
+                        ln(b, c);
+                        break;
+                    case 3:
+                        ln(b, d);
+                        break;
+                    case 4:
+                        ln(a, b);
+                        break;
+                    case 5:
+                        ln(a, d);
+                        ln(b, c);
+                        break;
+                    case 6:
+                        ln(a, c);
+                        break;
+                    case 7:
+                        ln(a, d);
+                        break;
+                    case 8:
+                        ln(a, d);
+                        break;
+                    case 9:
+                        ln(a, c);
+                        break;
+                    case 10:
+                        ln(a, b);
+                        ln(c, d);
+                        break;
+                    case 11:
+                        ln(a, b)
+                        break;
+                    case 12:
+                        ln(b, d);
+                        break;
+                    case 13:
+                        ln(b, c);
+                        break;
+                    case 14:
+                        ln(c, d);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            let fx = (i) => i * width;
+            let fy = (i) => i * height;
+            let fv = (i, j) => createVector(i * width, j * height);
+            let lines = [];
+            function draw() {
+                clear();
+                drawLines(lines);
+            }
+            function ln(A, B) {
+                //line(A.x, A.y, B.x, B.y);
+                lines.push(A.x, A.y, B.x, B.y);
+            }
+            function pt(P) {
+                circle(P.x, P.y, 2);
+            }
+            function drawLines(lines) {
+                for (var i = 0; i < lines.length; i+=4) {
+                    line(lines[i], lines[i + 1], lines[i + 2], lines[i + 3]);
+                }
+                ctx.fill();
+            }
+            let baseTables = {
+                2: ["0", "1"],
+            };
+            function base10(num, base = 2) {
+                let ans = 0;
+                let len = num.length;
+                for (var i = 0; i < len; i++) {
+                    let i2 = len - 1 - i;
+                    let i3 = parseInt(num[i]);
+                    //console.log(i3);
+                    ans += i3 * (base ** i2);
+                }
+                return ans;
+            }
+            // first exponential
+        </script>
+    </body>
+</html>
