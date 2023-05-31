@@ -56,23 +56,23 @@
                 pt(d);
                 let arr = [];
                 if (cas != 15) {
-                    if (ga.selected) {
+                    if (ga.checked) {
                         ln(ga.position, a);
                         ln(ga.position, d);
                         arr.push(d, ga.position, a);
                     }
-                    if (gb.selected) {
+                    if (gb.checked) {
                         ln(gb.position, a);
                         ln(gb.position, b);
                         arr.push(a, gb.position, b);
 
                     }
-                    if (gc.selected) {
+                    if (gc.checked) {
                         ln(gc.position, b);
                         arr.push(b, gc.position, c);
                         ln(gc.position, c);
                     }
-                    if (gd.selected) {
+                    if (gd.checked) {
                         ln(gd.position, c);
                         ln(gd.position, d);
                         arr.push(c, gd.position, d);
@@ -81,6 +81,7 @@
                 noStroke();
                 fill(0, 255, 0);
                 //lineWidth(2);
+                //console.log(arr);
                 shape.draw(...Vector.array(...arr));
 
                 switch (cas) {

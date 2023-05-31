@@ -26,6 +26,8 @@ def server():
 def push():
     os.system("push.bat");
 
+    
+
 def quitProg():
     print("Quitting");
     #time.sleep(2);

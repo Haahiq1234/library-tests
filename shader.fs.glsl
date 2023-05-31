@@ -19,12 +19,7 @@ void main()
     } else {
         texel = texture2D(sampler, fragTextcoord);
     }
-    float d = dot(normalize(fragNormal), normalize(light.direction));
-    vec3 lightIntensity = light.color * max(d, 0.0) + ambientLight;
-
-
-    vec4 col = vec4((normalize(fragNormal) + 1.0) / 2.0, 1.0);
-    gl_FragColor = vec4(fragColor, 1.0) * texel * vec4(lightIntensity, 1.0);
+    gl_FragColor = vec4(fragColor, 1.0) * texel;
     
     //}
 }

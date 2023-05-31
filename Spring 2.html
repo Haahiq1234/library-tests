@@ -1,55 +1,57 @@
 ﻿<html>
 <head>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <script src="Canvas.js"></script>
     <script>
-        var FramesPerSecond = 100;
-        let restLength = 200;
-        let k = 0.005;
-        var gravity;
-        var points = [];
-        var springs = [];
-        var width = 8;
-        var height = 8;
-        var distanceBetweenPoints = 50;
+        const k = 0.5;
+        const dampening = 0.95;
+        const gravity = new Vector2(0, 0.2);
+
+        const points = [];
+        const springs = [];
+
+        const width = 11;
+        const height = 6;
+
+        const distanceBetweenPoints = 50;
+        const diagonalDistanceBeteenPoints = distanceBetweenPoints * Math.sqrt(2);
+
         function setUp() {
-            createCanvas(600, 400, "purple");
-            frameRate(FramesPerSecond);
-            gravity = new Vector2(0, 0.1);
-            for (var i = 0; i < width; i++) {
-                for (var j = 0; j < height; j++) {
-                    points.push(new Point(50 + distanceBetweenPoints * i, 50 + distanceBetweenPoints * j));
+            createCanvas(600, 400);
+            //frameRate(10);
+            for (var j = 0; j < height; j++) {
+                for (var i = 0; i < width; i++) {
+                    points.push(new Point(50 + distanceBetweenPoints * i, 50 + distanceBetweenPoints * j, j * width + i));
                 }
             }
             for (var i = 0; i < points.length; i++) {
-                if (i > 0 && i % width != 0) {
-                    springs.push(new Spring(i - 1, i, distanceBetweenPoints));
-                }
-                if (i + width < points.length) {
-                    springs.push(new Spring(i + width, i, distanceBetweenPoints - 10));
-                }
-                if ((i + width + 1) % width != 0 && points[i + width + 1] != undefined) {
-                    springs.push(new Spring(i + width + 1, i, Vector.mag(distanceBetweenPoints, distanceBetweenPoints)));
-                }
-
-                if (i - width + 1 % width != 0 && points[i - width + 1] != undefined) {
-                    springs.push(new Spring(i - width + 1, i, Vector.mag(distanceBetweenPoints, distanceBetweenPoints)));
-                }
+                let x = i % width;
+                let y = (i - x) / width;
+                addSpring(i, x + 1, y, distanceBetweenPoints);
+                addSpring(i, x,     y + 1, distanceBetweenPoints);
+                addSpring(i, x + 1, y + 1, diagonalDistanceBeteenPoints);
+                addSpring(i, x - 1, y + 1, diagonalDistanceBeteenPoints);
             }
+            checkSpringsAmount();
+            textSize(20);
+            lineWidth(1);
         }
         function draw() {
             clear();
 
-            fill("red");
-            stroke("white");
-            lineWidth(3);
             for (var i = 0; i < springs.length; i++) {
                 springs[i].update();
             }
 
             for (var i = 0; i < points.length; i++) {
-                //points[i].addForce(gravity);
-                points[i].Update();
+                points[i].update();
+            }
+            for (var i = 0; i < springs.length; i++) {
+                springs[i].show();
+            }
+            for (var i = 0; i < points.length; i++) {
                 points[i].show();
             }
         }
@@ -58,44 +60,93 @@
                 this.a = a;
                 this.b = b;
                 this.rest = restLength;
+                this.i = springs.length;
             }
             update() {
                 let dist = Vector.sub(points[this.a].pos, points[this.b].pos);
                 if (dist.mag() > 0) {
-                    let x = dist.mag() - this.rest;
+                    let x = ((dist.mag() - this.rest) * k) / 2;
                     dist.normalize();
-                    dist.mult(-k * x);
-                    points[this.a].addForce(dist);
+                    dist.mult(-x);
+                    points[this.a].vel.add(dist);
                     dist.mult(-1);
-                    points[this.b].addForce(dist);
+                    points[this.b].vel.add(dist);
                 }
+            }
+            show() {
                 line(points[this.a].pos.x, points[this.a].pos.y, points[this.b].pos.x, points[this.b].pos.y);
+                ////text(this.i, (points[this.a].pos.x + points[this.b].pos.x) / 2, (points[this.a].pos.y + points[this.b].pos.y) / 2);
             }
         }
         class Point {
-            constructor(x, y) {
+            constructor(x, y, i) {
                 this.pos = new Vector2(x, y);
                 this.vel = new Vector2(0, 0);
                 this.acc = new Vector2(0, 0);
-                this.r = 10;
+                this.r = 0;
+                this.i = i;
+                this.bounce = 0;
             }
             addForce(force) {
                 this.acc.add(force);
             }
-            Update() {
+            update() {
+                if (mousePressed) {
+                    this.pos.x += Mouse.dx;
+                    this.pos.y += Mouse.dy;
+                    return;
+                }
+                this.addForce(gravity);
                 this.vel.add(this.acc);
+                this.vel.mult(dampening);
                 this.pos.add(this.vel);
                 this.acc.reset();
 
+                let px = this.pos.x;
+                let py = this.pos.y;
+
                 this.pos.x = constraint(this.pos.x, this.r, CanvasWidth - this.r);
                 this.pos.y = constraint(this.pos.y, this.r, CanvasHeight - this.r);
+
+                if (px != this.pos.x) {this.vel.x *= -this.bounce;};
+                if (py != this.pos.y) {this.vel.y *= -this.bounce;};
             }
             show() {
+                fill(255, 0, 0);
                 circle(this.pos.x, this.pos.y, this.r);
+                fill(0);
+                //text(this.i, this.pos.x, this.pos.y);
             }
         }
+        function mag(x, y) {
+            return (x * x + y * y) ** 0.5;
+        }
+        function index(x, y) {
+            return x + y * width;
+        }
+        function inBounds(x, y) {
+            return (x >= 0 && y >= 0 && x < width && y < height);
+        }
+        function addSpring(i, x, y, restLength) {
+            if (inBounds(x, y)) {
+                springs.push(new Spring(i, index(x, y), restLength));
+            }
+        }
+        function checkSpringsAmount() {
+            let am1 = getSpringsAmount(width, height);
+            let am2 = springs.length;
+            console.log(am1, am2);
+            if (am1 != am2) {
+                console.log("Error: Springs amount is not correct");
+            }
+        }
+        function getSpringsAmount(w, h) {
+            return 4 * w * h - 3 * w - 3 * h + 2;
+        }
     </script>
-    <script>
+
+
+    <!-- <script>
         var colliders = [];
         var ctx, CanvasWidth, CanvasHeight, CanvasColor, mouseOverCanvas, drawEnabled, floor, CanvasOffset, mouseClicked;
         var fl = true;
@@ -615,7 +666,7 @@
             r += Math.random() * args[a];
             return r;
         }
-    </script>
+    </script> -->
 
 </body>
 </html>

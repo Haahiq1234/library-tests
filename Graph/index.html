@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta Graph="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="../Canvas.js"></script>
+    <script src="CameraSystem.js"></script>
+    <script src="GraphSystem.js"></script>
+    <script>
+        const graph = new GraphSystem();
+        function setUp() {
+            createCanvas();
+            frameRate(60);
+        }
+        function f(x) {
+            return x / 5;
+        }
+        function d(x) {
+            return 1 / 5;
+        }
+        function draw() {
+            clear();
+            graph.update();            
+            graph.graph(f, d);
+        }
+    </script>    
+</body>
+</html>

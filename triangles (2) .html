@@ -50,10 +50,10 @@
             let ws = CartesianToBarycentric(pt, a, b, c);
             //let col = Colors.weighted(ac, ws[0], bc, ws[1], cc, ws[2]);
             let v = Vector.add(
-                Vector.mult(auv, (ws[0] < 0 || ws[0] > 1) ? 0 : ws[0]),
-                Vector.mult(buv, (ws[1] < 0 || ws[1] > 1) ? 0 : ws[1]),
-                Vector.mult(cuv, (ws[2] < 0 || ws[2] > 1) ? 0 : ws[2]))
-
+                Vector.mult(auv, constraint(ws[0], 0, 1)),
+                Vector.mult(buv, constraint(ws[1], 0, 1)),
+                Vector.mult(cuv, constraint(ws[2], 0, 1))
+            );
             v.x = mod.pos(v.x);
             v.y = mod.pos(v.y);
 

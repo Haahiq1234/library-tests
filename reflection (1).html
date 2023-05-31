@@ -14,7 +14,7 @@
         let shaped = [];
         function setUp() {
             createCanvas(600, 600, color(255));
-            frameRate(60);
+            frameRate(10);
             pos = new Vector2(200, CanvasHeight / 2);
             lineWidth(2);
             shaped.push(0, 0);
@@ -26,7 +26,7 @@
             let shapeCast = Raycast.shape(ro.x, ro.y, rd.x, rd.y, ...shaped);
             let circleCast = Raycast.circle(ro.x, ro.y, rd.x, rd.y, 300, 300, 50);
             //console.log(circleCast.normal)
-            return RayCastHit.nearest(ro, shapeCast, circleCast);
+            return RaycastHit.nearest(ro, shapeCast, circleCast);
         }
         function draw() {
             //backGround(241);
@@ -39,6 +39,7 @@
             rcast(ap, b.localPosition);
         }
         function rcast(o, r, t = 20) {
+            //console.log(r);
             let hit = cast(o, r);
             if (hit.hit) {
                 line(o.x, o.y, hit.point.x, hit.point.y);

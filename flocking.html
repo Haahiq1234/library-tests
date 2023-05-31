@@ -8,7 +8,7 @@
         let flock = [];
         function setUp() {
             createCanvas(1000, 600, "black");
-            for (var i = 0; i < 100; i++) {
+            for (var i = 0; i < 200; i++) {
                 flock.push(new Boid(Random.range(CanvasWidth), Random.range(CanvasHeight)));
             }
         }
@@ -24,8 +24,8 @@
         class Boid extends Vector2 {
             constructor(x, y) {
                 super(x, y);
-                this.vel = Vector.random2D();
-                this.vel.setMag(Random.range(1, 2));
+                this.vel = Vector.randomVelocity(1, 2);
+                //this.vel.setMag(Random.range(1, 2));
                 this.perceptionRadius = 25;
                 this.acc = new Vector2(0, 0);
                 this.len = 6.6;

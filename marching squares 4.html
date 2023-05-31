@@ -10,76 +10,71 @@
         <script src="Canvas.js"></script>
         <script src="noise.js"></script>
         <script>
-            let cols = 50;
-            let rows = 50;
+            let cols = 80;
+            let rows = 80;
             let grid = new Array2D(cols, rows);
             let smoothness = 8;
             let width;
             let height;
-            let ground = 00;
-            function setUp() {
-                createCanvas(400, 400, color(255));
-                frameRate(60);
-                generateGrid();
+            let ground = 0.25;
+            function myFunc() {
+                console.log("Fart");
             }
-            function generateGrid() {
+            function setUp() {
+                createCanvas(400, 400);
+                frameRate(60);
                 width = CanvasWidth / cols;
                 height = CanvasHeight / rows;
                 grid = new Array2D(cols + 1, rows + 1);
                 for (var i = 0; i <= cols; i++) {
                     for (var j = 0; j <= rows; j++) {
-                        let n = noise(i / smoothness, j / smoothness) * 2 - 1;
+                        let n = noise(i / smoothness, j / smoothness) * 1.5 - 0.5;
                         grid.set(i, j, n);
                     }
                 }
+                generateGrid();
+            }
+            function generateGrid() {
+                backGround(0, 122, 255);
                 for (var i = 0; i < cols; i++) {
                     for (var j = 0; j < rows; j++) {
-                        let a = grid.get(i,     j    ).toString();
-                        let b = grid.get(i + 1, j    ).toString();
-                        let c = grid.get(i + 1, j + 1).toString();
-                        let d = grid.get(i,     j + 1).toString();
-                        if (a > ground) {
-
-                        }
                         marchingSquares(i, j, grid.get(i, j), grid.get(i + 1, j), grid.get(i + 1, j + 1), grid.get(i, j + 1));
                     }
                 }
             }
             function isGround(val) {
-                return val > ground ? "0" : "1";
+                //console.log(val > );
+                return val > ground ? "1" : "0";
             }
             function marchingSquares(i, j, ab, bb, cb, db) {
                 let bin = isGround(ab) + isGround(bb) + isGround(cb) + isGround(db);
-
-
-
-
                 let cas = base10(bin);
+                //console.log(bin, cas);
                 let arr = [];
                 let av = fv(i, j);
                 let bv = fv(i + 1, j);
                 let cv = fv(i + 1, j + 1);
                 let dv = fv(i, j + 1);
 
-                let at = constraint(normalize(ground, ab, bb), 0, 1);
-                let bt = constraint(normalize(ground, bb, cb), 0, 1);
-                let ct = constraint(normalize(ground, cb, db), 0, 1);
-                let dt = constraint(normalize(ground, db, ab), 0, 1);
+                let at = constraint(normalize(ab, bb, ground), 0, 1);
+                let bt = constraint(normalize(bb, cb, ground), 0, 1);
+                let ct = constraint(normalize(cb, db, ground), 0, 1);
+                let dt = constraint(normalize(db, ab, ground), 0, 1);
 
                 let a = createVector((i + at) * width, j * height);
                 let b = createVector((i + 1) * width, (j + bt) * height);
-                let c = createVector((i + ct) * width, (j + 1) * height);
-                let d = createVector(i * width, (j + dt) * height);
-                if (ab == 1) {
+                let c = createVector((i + 1 - ct) * width, (j + 1) * height);
+                let d = createVector(i * width, (j + 1 - dt) * height);
+                if (ab > ground) {
                     arr.push(d, av, a);
                 }
-                if (bb == 1) {
+                if (bb > ground) {
                     arr.push(a, bv, b);
                 }
-                if (cb == 1) {
+                if (cb > ground) {
                     arr.push(b, cv, c);
                 }
-                if (db == 1) {
+                if (db > ground) {
                     arr.push(c, dv, d);
                 }
                 noStroke();
@@ -139,12 +134,12 @@
             let fv = (i, j) => createVector(i * width, j * height);
             let lines = [];
             function draw() {
-                clear();
-                drawLines(lines);
+                //clear();
+                //drawLines(lines);
             }
             function ln(A, B) {
-                //line(A.x, A.y, B.x, B.y);
-                lines.push(A.x, A.y, B.x, B.y);
+                line(A.x, A.y, B.x, B.y);
+                //lines.push(A.x, A.y, B.x, B.y);
             }
             function pt(P) {
                 circle(P.x, P.y, 2);
@@ -169,6 +164,9 @@
                 }
                 return ans;
             }
+            
+
+
             // first exponential
         </script>
     </body>

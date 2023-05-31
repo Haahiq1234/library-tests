@@ -5,15 +5,16 @@
 
 <body>
     <script src="Canvas.js"></script>
+    <script src="vec3.js"></script>
     <script src="Webgl.js"></script>
     <script src="gl-matrix.js"></script>
     <script>
         var angle = 0;
         let vertices = [
-            1.0, 1.0, 1.0,
             -1.0, 1.0, 1.0,
-            -1.0, -1.0, 1.0,
+            1.0, 1.0, 1.0,
             1.0, -1.0, 1.0,
+            -1.0, -1.0, 1.0,
 
             -1.0, 1.0, -1.0,
             1.0, 1.0, -1.0,
@@ -75,20 +76,6 @@
             0, 1, 2, //  f * 3 + 0 ,1 , 2
             0, 2, 3,  // f * 3 + 0, 2, 3
 
-            4, 5, 6,
-            4, 6, 7,
-
-            8, 9, 10,
-            8, 10, 11,
-
-            12, 13, 14,
-            12, 14, 15,
-
-            16, 17, 18, 
-            16, 18, 19,
-
-            20, 21, 22, 
-            20, 22, 23
         ];
         let uvs = [
             0.1, 0.9,
@@ -135,7 +122,7 @@
 
 
             scaleSlider = createVector3SLider(0, 4, 0, 4, 0, 4, 0.05, 1, 1, 1, "scale");
-            rotationSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "rotation");
+            rotationSlider = createVector3SLider(0, 360, 0, 360, 0, 360, 1, 0, 0, 0, "rotation");
             posSlider = createVector3SLider(0, 8, 0, 8, 0, 8, 0.05, 0, 0, 0, "position");
 
 
@@ -149,7 +136,7 @@
             //box.colors = colors;
             program.use();
             //uvmap = new UVMap(uvs, indices, texture);
-            box.build();
+            box.buildFrameWork();
             //loop();
         }
         function draw() {
@@ -162,7 +149,7 @@
             //box.uvs = uvmap.uvs;
 
             box.transform.scale = scaleSlider.v;
-            box.transform.rotation = rotationSlider.vt.mult(360);
+            box.transform.rotation = rotationSlider.v;
             box.transform.position = posSlider.v;
             box.bind();
             box.draw();

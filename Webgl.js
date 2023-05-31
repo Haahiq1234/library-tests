@@ -72,7 +72,7 @@ class GLCamera {
         let projMatrix = new Float32Array(16);
         let viewMatrix = new Float32Array(16);
         matr4.lookAt(viewMatrix, this.eye, this.center, this.up);
-        matr4.perspective(projMatrix, radians(45), canvas.width / canvas.height, .1, 1000.0);
+        matr4.perspective(projMatrix, Angle.radians(45), canvas.width / canvas.height, .1, 1000.0);
         gl.uniformMatrix4fv(this.worldUniformLoc, gl.FALSE, this.worldMatrix);
         gl.uniformMatrix4fv(this.viewUniformLoc, gl.FALSE, viewMatrix);
         gl.uniformMatrix4fv(this.projUniformLoc, gl.FALSE, projMatrix);
@@ -157,21 +157,13 @@ class Program {
         gl.useProgram(this.program);
     }
 }
-loadFile("/shader.vs.glsl", function (e, vtext) {
-    if (e) {
-        console.log(e);
-    } else {
-        vertexShaderText = vtext;
-        //console.log(vertexShaderText);
+loadFiles(["/shader.vs.glsl", "/shader.fs.glsl"], function (texts, errors) {
+    if (errors.length > 0) {
+        console.log(errors);
+        return;
     }
-});
-loadFile("/shader.fs.glsl", function (e, ftext) {
-    if (e) {
-        console.log(e);
-    } else {
-        fragmentShaderText = ftext;
-        //console.log(fragMentShaderText, ftext);
-    }
+    vertexShaderText = texts[0];
+    fragmentShaderText = texts[1];
 });
 class Light {
     ambientCol;

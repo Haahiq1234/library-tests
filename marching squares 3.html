@@ -10,8 +10,8 @@
         <script src="Canvas.js"></script>
         <script src="noise.js"></script>
         <script>
-            let cols = 40;
-            let rows = 40;
+            let cols = 80;
+            let rows = 80;
             let grid = new Array2D(cols, rows);
             let smoothness = 8;
             let width;
@@ -22,6 +22,7 @@
                 generateGrid();
             }
             function generateGrid() {
+                backGround(0, 122, 255);
                 width = CanvasWidth / cols;
                 height = CanvasHeight / rows;
                 grid = new Array2D(cols + 1, rows + 1);
@@ -131,8 +132,6 @@
             }
             let baseTables = {
                 2: ["0", "1"],
-                16: "0123456789abcdef".split(""),
-                10: "123456789".split("")
             };
             function base10(num, base = 2) {
                 let ans = 0;

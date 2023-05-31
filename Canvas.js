@@ -1,6 +1,6 @@
 // #region Misc
-let windowWidth = screen.availWidth;
-let windowHeight = window.innerHeight;
+const windowWidth = screen.availWidth;
+const windowHeight = window.innerHeight;
 const WindowHandler = {
     width: window.innerWidth,
     height: window.innerHeight,
@@ -44,6 +44,43 @@ const WindowHandler = {
         this.xm *= -1;
         this.xo = width - this.xo;
     },
+};
+const RECTMODE = {
+    CORNER: 0,
+    CENTER: 1
+}
+const Camera2D = {
+    x: 0,
+    y: 0,
+    scaleX: 1,
+    scaleY: 1,
+    rectMode: RECTMODE.CORNER,
+    convertPos: function (_x, _y) {
+        //return [_x, _y];
+        return [this.x + _x * this.scaleX, this.y + _y * this.scaleY];
+    },
+    getRect: function (_x, _y, _w, _h) {
+        [_x, _y] = this.convertPos(_x, _y);
+        // if (_w < 0) {
+        //     _x += _w;
+        //     _w *= -1;
+        // }
+        // if (_h < 0) {
+        //     _y += _h;
+        //     _h *= -1;
+        // }
+        if (this.rectMode == RECTMODE.CENTER) {
+            _x -= _w / 2;
+            _y -= _h / 2;
+        }
+        return [_x, _y,_w, _h];
+    },
+    translate: function(dx, dy) {
+
+    }
+};
+function rectMode(rctMode) {
+    Camera2D.rectMode = rctMode;
 }
 function download(filename, text) {
     var element = document.createElement("a");
@@ -52,19 +89,16 @@ function download(filename, text) {
         "data:text/plain;charset=utf-8," + encodeURIComponent(text)
     );
     element.setAttribute("download", filename);
-    element.style.display = "none";
-    document.body.appendChild(element);
     element.click();
-    document.body.removeChild(element);
 }
-function downloadCanvasImage() {
+function downloadCanvasImage(name = "Canvas_Image.png") {
     var link = document.createElement("a");
-    link.download = "Canvas_Image.png";
+    link.download = name;
     link.href = ctx.canvas.toDataURL();
     link.click();
 }
-function print(...message) {
-    console.log(...message);
+function print(...messages) {
+    console.log(...messages);
 }
 {
     let storageTypes = [];
@@ -72,13 +106,15 @@ function print(...message) {
     function storeItem(key, item) {
         let type = typeof item;
         if (type == "object") {
-            for (var i = 0; i < storageTypes.length; i++) {
-                if (item instanceof storageTypes[i].type) {
-                    type = storageTypes[i].name;
-                    localStorage.setItem(key + suffix, type);
+            for (var name of storageTypes) {
+                if (item instanceof storageTypes[name].type) {
+                    localStorage.setItem(key + suffix, name);
                     break;
                 }
             }
+        }
+        if (type == "string") {
+            localStorage.setItem(key + suffix, "string");
         }
         localStorage.setItem(key, JSON.stringify(item));
     }
@@ -86,12 +122,8 @@ function print(...message) {
         let type = localStorage.getItem(key + suffix);
         let item = JSON.parse(localStorage.getItem(key));
         if (item != null) {
-            for (var i = 0; i < storageTypes.length; i++) {
-                if (type == storageTypes[i].name) {
-                    console.log(item);
-                    item = storageTypes[i].parse(...Object.values(item));
-                }
-            }
+            console.log(item);
+            item = storageTypes[type].parse(...Object.values(item));
         }
         return item;
     }
@@ -104,36 +136,57 @@ function print(...message) {
         type,
         parse = (...args) => new type(...args)
     ) {
-        storageTypes.push({
-            name: name,
-            type: type,
-            parse: parse,
-        });
+        storageTypes[name] = {
+            type,
+            parse,
+        };
     }
     setStorageItemType("Vector2", Vector2);
 }
 var loadingResources = 0;
-function loadFile(url, callback) {
+function loadFile(url, callback, id = 0) {
     loadingResources++;
     let request = new XMLHttpRequest();
     //console.log(request);
     request.open("GET", url, true);
     request.onload = function () {
         if (request.status < 200 || request.status > 299) {
-            callback("Error: HTTP Status " + request.status + " on resource " + url);
+            callback(null, true, id);
         } else {
-            callback(null, request.responseText);
+            callback(request.responseText, false, id);
         }
         loadingResources--;
         checkForStart();
     };
     request.send();
-    return request;
+}
+function loadFiles(urls, callback) {
+    var loadingItems = urls.length;
+    let resources = [];
+    let errors = [];
+    for (var i = 0; i < urls.length; i++) {
+        var url = urls[i];
+        loadFile(
+            url,
+            function (text, error, id) {
+                loadingItems--;
+                if (!error) {
+                    resources[id] = text;
+                } else {
+                    errors.push(id);
+                }
+                if (loadingItems == 0) {
+                    callback(resources, errors);
+                }
+            },
+            i
+        );
+    }
 }
 // #endregion
 
 // #region Events
-class EventHanler {
+class EventHandler {
     bound;
     constructor() {
         this.bound = [];
@@ -167,28 +220,34 @@ class EventHanler {
     }
 }
 const on = {
-    click: new EventHanler(),
-    mousemove: new EventHanler(),
-    setUp: new EventHanler(),
-    draw: new EventHanler(),
-    mousedown: new EventHanler(),
-    mouseup: new EventHanler(),
-    keydown: new EventHanler(),
-    keyup: new EventHanler(),
-    keypressed: new EventHanler(),
-}
+    click: new EventHandler(),
+    mousemove: new EventHandler(),
+    setUp: new EventHandler(),
+    draw: new EventHandler(),
+    mousedown: new EventHandler(),
+    mouseup: new EventHandler(),
+    keydown: new EventHandler(),
+    keyup: new EventHandler(),
+    keypressed: new EventHandler(),
+    wheel: new EventHandler()
+};
 document.onclick = on.click.on();
-document.onmousemove = on.mousemove.on();
+document.onmousemove = function(event) {
+    on.mousemove.Fire(event);
+}
 document.onmouseup = on.mouseup.on();
 document.onmousedown = function (event) {
     //console.log(event);
     on.mousedown.Fire(event.buttons, event);
-}
+};
 document.onkeyup = function (event) {
     on.keyup.Fire(event.key, event);
-}
+};
 document.onkeydown = function (event) {
     on.keypressed.Fire(event.key, event);
+};
+document.onwheel= function(event) {
+    on.wheel.Fire(event.deltaY / -100, event)
 }
 // #endregion
 
@@ -216,7 +275,7 @@ const polar = {
             ans.push(Vector.add(this.toVector(arm[i]), ans[ans.length - 1]));
         }
         return ans;
-    }
+    },
 };
 const vec2 = {
     add: function ([ax, ay], [bx, by]) {
@@ -233,7 +292,7 @@ const vec2 = {
     },
     mag: function ([x, y]) {
         return Math.sqrt(x * x + y * y);
-    }
+    },
 };
 function createVector(x = 0, y = 0) {
     return new Vector2(x, y);
@@ -245,7 +304,7 @@ Vector.InFov = function (p, o, d, fov) {
         return true;
     }
     return false;
-}
+};
 Vector.flip = function (p, a, b) {
     let ab = Vector.sub(b, a);
     let ap = Vector.sub(p, a);
@@ -253,30 +312,28 @@ Vector.flip = function (p, a, b) {
         Vector.add(a, ab.setMag(Vector.dot(ap, ab) / ab.mag())).mult(2),
         p
     );
-}
+};
 Vector.zero = new Vector2(0, 0);
 Vector.Equal = function (a, b) {
     return Boolean(a) && Boolean(b) && a.x == b.x && a.y == b.y;
-}
+};
 Vector.fromIndex = function (str) {
     let arr = str.split(":");
     let x = arr[0];
     let y = arr[1];
-    let z = arr[2];
-    return new Vector3(x, y, z);
+    return new Vector2(x, y);
 };
 Vector.array = function (...vecs) {
     let ans = [];
     for (var vec of vecs) {
-        ans.push(...vec.array());
+        ans.push(vec.x, vec.y);
     }
     return ans;
 };
-var MouseOffset = new Vector2();
-Vector.crossProduct = function (a, b) {
+Vector.cross = function (a, b) {
     return a.x * b.y - b.x * a.y;
 };
-Vector.setRotation = function (a, b, rot) {
+Vector.setRotation = function (v, rot) {
     let c = Vector.sub(b, a);
     c.setRotation(rot);
     return Vector.add(a, c);
@@ -292,8 +349,7 @@ Vector.interpolateArray = function (arr, index) {
     return new Vector2(ans.x, ans.y);
 };
 Vector.setMag = function (vec, mag) {
-    let vec1 = Vector.copy(vec).setMag(mag);
-    return vec1;
+    return new Vector2(vec.x, vec.y).setMag(mag);
 };
 Vector.fromArray = function (...verts) {
     let arr = [];
@@ -308,7 +364,7 @@ Vector.InSquare = function (a, b, p) {
     }
     return false;
 };
-Vector.from = {
+Vector.fromOrigin = {
     farthest: function (o, arr) {
         let len = 0;
         let pt;
@@ -339,27 +395,8 @@ Vector.from = {
         return [pt, li];
     },
 };
-Vector.AngleToEllipse = function (ang, px, py, rot = 0, nx = px, ny = py) {
-    let x = Math.cos(radians(ang));
-    let y = Math.sin(radians(ang));
-    if (x < 0) {
-        x *= nx;
-    } else if (x > 0) {
-        x *= px;
-    }
-    if (y < 0) {
-        y *= ny;
-    } else if (y > 0) {
-        y *= py;
-    }
-    let vec = new Vector2(x, y);
-    vec.rotate(rot);
-    return vec;
-};
 Vector.mid = function (a, b) {
-    let c = Vector.sub(b, a).mult(0.5);
-    let p = Vector.add(a, c);
-    return p;
+    return new Vector2((a.x + b.x) / 2, (a.y + b.y) / 2);
 };
 Vector.normal2 = function (a, b, c) {
     let ao = Vector.sub(a, b);
@@ -371,13 +408,9 @@ Vector.normal2 = function (a, b, c) {
     return Vector.AngleToVector(mid, 1);
 };
 Vector.reflect = function (v, n) {
-    let vn = v.neg();
-    let d = Vector.dot(vn, n) / n.mag();
-    //console.log(v, n, d);
-    let p = n.copy().setMag(d);
-    let dp = Vector.sub(p, vn);
-    let vr = Vector.add(p, dp);
-    return vr;
+    let d = -Vector.dot(v, n) / n.mag();
+    let p = Vector.setMag(n, d);
+    return new Vector2(2 * p.x + v.x, 2 * p.y + v.y);
 };
 Vector.copy = function (vec) {
     //if (Vector3 && vec instanceof Vector3) {
@@ -385,44 +418,23 @@ Vector.copy = function (vec) {
     //}
     return new Vector2(vec.x, vec.y);
 };
-Vector.side = function (a, b, p) {
-    let mid = Vector.mid(a, b);
-    let b2 = Vector.sub(b, mid);
-    b2.rotate(90);
-    let po = Vector.sub(p, mid);
-
-    let prod = Vector.dot(po, b2) / b2.mag();
-    if (prod >= 0) {
-        return 90;
-    } else {
-        return -90;
-    }
-};
 Vector.normal = function (a, b, p) {
-    let rot = Vector.side(a, b, p);
-    let c = Vector.DirectionVector(a, b);
-    c.rotate(rot);
-    return c;
+    let v = new Vector2(-(b.y - a.y), b.x - a.x);
+    return v.mult((p.x - a.x) * v.x + (p.y - a.y) * v.y).normalize();
 };
 Vector.constraint = function (p, a, b) {
     let x = constraint(p.x, a.x, b.x);
     let y = constraint(p.y, a.y, b.y);
     return createVector(x, y);
 };
-Vector.interpolate = function (a, b, t) {
-    let c = Vector.sub(b, a);
-    c.mult(t);
-    return Vector.add(a, c);
+Vector.interpolate = function (a, b, t, f = (x) => x) {
+    return Vector.lerp(a, b, f(t));
 };
-Vector.lerp = function (A, B, t) {
-    let C = Vector.sub(B, A);
-    C.mult(t);
-    C.add(A);
-    return C;
+Vector.lerp = function (a, b, t) {
+    return new Vector2(a.x * (t - 1) + b.x * t, a.y * (t - 1) + b.y * t);
 };
-Vector.mult = function (vec, m) {
-    vec = vec.copy().mult(m);
-    return vec;
+Vector.mult = function (v, m) {
+    return new Vector2(v.x * m, v.y * m);
 };
 Vector.min = function (...args) {
     args = splitArray(args);
@@ -432,62 +444,68 @@ Vector.neg = function (vec) {
     return new Vector2(-vec.x, -vec.y);
 };
 Vector.avg = function (...vecs) {
-    let vector = new Vector2(0, 0);
+    let x = 0;
+    let y = 0;
     for (var i = 0; i < vecs.length; i++) {
-        vector.add(vecs[i]);
+        x += vecs[i].x;
+        y += vecs[i].y;
     }
-    vector.div(vecs.length);
-    return vector;
+    return new Vector2(x / vecs.length, y / vecs.length);
 };
 Vector.max = function (...args) {
     args = splitArray(args);
     return createVector(Math.max(...args.x), Math.max(...args.y));
 };
-Vector.add = function () {
-    var vec = arguments[0].copy();
-    for (var i = 1; i < arguments.length; i++) vec.add(arguments[i].copy());
-    return Vector.copy(vec);
+Vector.add = function (...vs) {
+    let x = 0;
+    let y = 0;
+    for (var i = 0; i < vs.length; i++) {
+        x += vs[i].x;
+        y += vs[i].y;
+    }
+    return new Vector2(x, y);
 };
 Vector.sub = function (a, b) {
-    return Vector.copy(a.copy().sub(b));
+    return new Vector2(a.x - b.x, a.y - b.y);
 };
 Vector.heading = function (vec) {
     if (vec.x == 0 && vec.y == 0) {
         return 0;
     }
     var ang = atan2(vec.y, vec.x);
-    return (ang);
+    return ang;
 };
-Vector.dot = function (v, v2) {
-    //if (v instanceof Vector3) {
-    //    //console.log(v.x * v2.x + v.y * v2.y + v.z * v2.z);
-    //    return v.x * v2.x + v.y * v2.y + v.z * v2.z;
-    //}
-    return v.x * v2.x + v.y * v2.y;
+Vector.dot = function (a, b) {
+    return a.x * b.x + a.y * b.y;
 };
 Vector.AngleToVector = function (ang, rad = 1) {
     let x = rad * cos(ang);
     let y = rad * sin(ang);
     return new Vector2(x, y);
 };
-Vector.div = function (vec, no) {
-    vec = vec.copy();
-    vec.div(no);
-    return vec;
+Vector.div = function (v, no) {
+    if (no == 0) {
+        console.log("Dividing by 0");
+        return new Vector2(0, 0);
+    }
+    return new Vector2(v.x / no, v.y / no);
 };
-Vector.random2D = function () {
-    return this.AngleToVector(Random.range(0, 360), 1);
+Vector.randomVelocity = function (minSpeed, maxSpeed) {
+    return this.AngleToVector(
+        Random.range(0, 360),
+        Random.range(minSpeed, maxSpeed)
+    );
 };
-Vector.DirectionVector = function (vec, vec1) {
-    let d = new Vector2(vec1.x - vec.x, vec1.y - vec.y).normalize();
+Vector.directionVector = function (a, b) {
+    let d = new Vector2(b.x - a.x, b.y - a.y).normalize();
     return d;
 };
-Vector.Direction = function (a, b) {
-    return this.DirectionVector(a, b).heading();
+Vector.angle = function (a, b) {
+    return this.directionVector(a, b).heading();
 };
 Vector.dist = function (a, b) {
-    //console.log(a, b);
     return b.copy().sub(a).mag();
+    //return mag(a.x - b.x, a.y - b.y);
 };
 Vector.limitDistance = function (a, b, lim) {
     let c = Vector.sub(b, a);
@@ -542,7 +560,7 @@ function Vector2(x = 0, y = x) {
     };
     this.matrix = function () {
         return new Matrix(1, 2, [this.x, this.y]);
-    }
+    };
     this.setMag = function (len) {
         return this.normalize().mult(len);
     };
@@ -604,16 +622,20 @@ const Mouse = {
     get py() {
         return this.previousPosition.y;
     },
+    get dx() {
+        return -this.previousPosition.x + this.position.x;
+    },
+    get dy() {
+        return -this.previousPosition.y + this.position.y;
+    }
 };
 Object.freeze(Mouse);
 var mouse = new Vector2(0, 0);
 var mouse2 = new Vector2(0, 0);
 {
     on.mousemove.bind(function (event) {
-
         let x = WindowHandler.xi(event.clientX);
         let y = WindowHandler.yi(event.clientY);
-
         mouse.set(x, y);
 
         mouse2.set(event.clientX, event.clientY);
@@ -643,7 +665,14 @@ var mouse2 = new Vector2(0, 0);
     ) {
         Axii[name] = new Axis(pos, neg, altP, altN, Nm, altNm);
     }
-    function Axis(pos, neg, altP = pos, altN = neg, Nm = "both", altNm = "both") {
+    function Axis(
+        pos,
+        neg,
+        altP = pos,
+        altN = neg,
+        Nm = "both",
+        altNm = "both"
+    ) {
         this.pos = pos;
         this.neg = neg;
         this.altP = altP;
@@ -666,9 +695,7 @@ var mouse2 = new Vector2(0, 0);
         return 0;
     }
     {
-        var keyActions = {
-
-        };
+        var keyActions = {};
         function setKeyAction(ac, ...keys) {
             keyActions[ac] = keys;
         }
@@ -733,9 +760,7 @@ var mouse2 = new Vector2(0, 0);
 //#endregion
 
 // #region constants
-const CONSTANTS = {
-
-};
+const CONSTANTS = {};
 const SPACE = " ";
 Object.freeze(CONSTANTS);
 const PI = Math.PI;
@@ -788,12 +813,10 @@ document.body.onload = function () {
     checkForStart();
 };
 on.setUp.bind(function () {
-    if (autoStartLoop) {
-        requestAnimationFrame(redraw);
-    }
+    frameRate(60);
     for (var i = 0; i < UI.Elements.length; i++) {
         let element = UI.Elements[i];
-        if ((element.constructor == Gizmo)) {
+        if (element.constructor == Gizmo) {
             element.a = new Vector2(0, 0);
             element.b = new Vector2(CanvasWidth, CanvasHeight);
         }
@@ -822,51 +845,60 @@ function noLoop() {
     }
 }
 function loop() {
-    autoStartLoop = true;
-    if (UnSetFps) {
-        animationFrameLoopId = requestAnimationFrame(redraw);
-    }
-    if (!UnSetFps) {
-        clearInterval(drawIntervalId | 0);
-        drawIntervalId = setInterval(redraw, 1000 / FPS);
-    }
+  autoStartLoop = true;
+  if (UnSetFps) {
+    animationFrameLoopId = requestAnimationFrame(loopFunction);
+  }
+  if (!UnSetFps) {
+    clearInterval(drawIntervalId | 0);
+    drawIntervalId = setInterval(loopFunction, 1000 / FPS);
+  }
 }
+{
+  let drawn = false;
+  function loopFunction(...args) {
+    if (!drawn) 
+        redraw(...args);
+    drawn = false;
+  }
 function redraw(timeStamp) {
-    if (UnSetFps && !loopGoing) {
-        Time.time = timeStamp;
-    }
-    //console.log(Mouse.position, Mouse.previousPosition);
-    Mouse.previousPosition.set(Mouse.x, Mouse.y);
-    Mouse.position.set(mouse.x, mouse.y);
-    if (Canvas.enabled) {
-        //ctx.scale(pixelDensity(), pixelDensity());
-        UI.Update();
-        ctx.save();
-    }
-    on.draw.Fire();
-    if (window.draw) {
-        draw();
-    }
-    if (Canvas.enabled) {
-        UI.Draw();
-    }
-    frameNo += 1;
-    if (UnSetFps) {
-        Time.deltaTime = timeStamp - Time.time;
-        Time.frameRate = 1000 / Time.deltaTime;
-        Time.time = timeStamp;
-        animationFrameLoopId = requestAnimationFrame(redraw);
-    } else {
-        Time.time += Time.deltaTime;
-    }
-    if (window.lateDraw) {
-        lateDraw();
-    }
-    if (Canvas.enabled) {
-        saveColor();
-        ctx.restore();
-        loadColor();
-    }
+  if (UnSetFps && !loopGoing) {
+    Time.time = timeStamp;
+  }
+  //console.log(Mouse.position, Mouse.previousPosition);
+  Mouse.previousPosition.set(Mouse.x, Mouse.y);
+  Mouse.position.set(mouse.x, mouse.y);
+  if (Canvas.enabled) {
+    //ctx.scale(pixelDensity(), pixelDensity());
+    UI.Update();
+    ctx.save();
+  }
+  on.draw.Fire();
+  if (window.draw) {
+    draw();
+  }
+  if (Canvas.enabled) {
+    UI.Draw();
+  }
+  frameNo += 1;
+  if (UnSetFps) {
+    Time.deltaTime = timeStamp - Time.time;
+    Time.frameRate = 1000 / Time.deltaTime;
+    Time.time = timeStamp;
+    animationFrameLoopId = requestAnimationFrame(redraw);
+  } else {
+    Time.time += Time.deltaTime;
+  }
+  if (window.lateDraw) {
+    lateDraw();
+  }
+  if (Canvas.enabled) {
+    saveColor();
+    ctx.restore();
+    loadColor();
+  }
+  drawn = true;
+}
 }
 // interval stuff
 // #endregion
@@ -888,6 +920,12 @@ function reverse(str) {
 // #endregion
 
 // #region Math
+function mag(x, y) {
+    return (x * x + y * y) ** 0.5;
+}
+function dist(ax, ay, bx, by) {
+    return mag(bx - ax, by - ay);
+}
 function ciel(no, mod = 1) {
     return Math.ceil(no / mod) * mod;
 }
@@ -925,6 +963,7 @@ const Intersection = {
     },
     ILTL: function (ax, ay, bx, by, cx, cy, dx, dy) {
         let inti = lineIntersection(ax, ay, bx, by, cx, cy, dx, dy);
+        if (inti.parallel) return;
         if (inti.intersected) {
             return inti.point;
         } else if (inti.u <= 1 && inti.u >= 0) {
@@ -933,7 +972,7 @@ const Intersection = {
                 new Vector2(bx, by),
                 inti.t
             );
-            return pt;
+            return new Vector2((1 - t) * ax + t * bx, (1 - t) * ay + t * by);
         }
     },
     ILTS: function (ax, ay, bx, by, verts) {
@@ -996,7 +1035,7 @@ const Intersection = {
     },
     CTL: function (ax, ay, bx, by, cx, cy, cr) {
         let ox = ax - cx;
-        let oy = ay - cy
+        let oy = ay - cy;
         let rx = bx - ax;
         let ry = by - ay;
         let a = rx ** 2 + ry ** 2;
@@ -1022,10 +1061,14 @@ const Intersection = {
         const d = Math.sqrt(dx * dx + dy * dy);
 
         // Circles too far apart
-        if (d > c1.r + c2.r) { return []; }
+        if (d > c1.r + c2.r) {
+            return [];
+        }
 
         // One circle completely inside the other
-        if (d < Math.abs(c1.r - c2.r)) { return []; }
+        if (d < Math.abs(c1.r - c2.r)) {
+            return [];
+        }
 
         dx /= d;
         dy /= d;
@@ -1036,7 +1079,10 @@ const Intersection = {
 
         const h = Math.sqrt(c1.r * c1.r - a * a);
 
-        return [new Vector2(px + h * dy, py - h * dx), new Vector2(px - h * dy, py + h * dx)];
+        return [
+            new Vector2(px + h * dy, py - h * dx),
+            new Vector2(px - h * dy, py + h * dx),
+        ];
     },
 };
 Object.freeze(Intersection);
@@ -1092,33 +1138,33 @@ const Angle = {
     half: 180,
     full: 360,
     degrees: function (rad) {
-        return ((180 * rad) / PI);
+        return (180 * rad) / PI;
     },
     radians: function (deg) {
         return deg * (PI / 180);
     },
-    angleModeToRadians: function (ang) { 
+    angleModeToRadians: function (ang) {
         if (this.angleMode == DEGREES) {
             return this.radians(ang);
         } else {
             return ang;
         }
     },
-    angleModeToDegrees: function (ang) { 
+    angleModeToDegrees: function (ang) {
         if (this.angleMode == DEGREES) {
             return ang;
         } else {
             return this.degrees(ang);
         }
     },
-    radiansToAngleMode: function (ang) { 
+    radiansToAngleMode: function (ang) {
         if (this.angleMode == DEGREES) {
             return this.degrees(ang);
         } else {
             return ang;
         }
     },
-    degreesToAngleMode: function (ang) { 
+    degreesToAngleMode: function (ang) {
         if (this.angleMode == DEGREES) {
             return ang;
         } else {
@@ -1130,16 +1176,14 @@ const Angle = {
         b = mod.pos(b, Angle.full);
         let ad = b - a;
         let absad = abs(ad);
-        if (absad <= Angle.half) 
-            return ad;
+        if (absad <= Angle.half) return ad;
         return -(Angle.full - absad) * sign(ad);
     },
     velocity: function (a, b, maxSpeed) {
-        if (abs(b - a) < maxSpeed) 
-            return b - a;
+        if (abs(b - a) < maxSpeed) return b - a;
         return sign(this.sDistance(a, b)) * maxSpeed;
-    }
-}
+    },
+};
 function sin(ang) {
     return Math.sin(Angle.angleModeToRadians(ang));
 }
@@ -1170,13 +1214,39 @@ is.odd = function (no) {
 is.even = function (no) {
     return parity(no) == 2;
 };
-function lineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+function lineIntersection(ax, ay, bx, by, cx, cy, dx, dy) {
+    //console.log(...arguments);
+    let d = (ax - bx) * (cy - dy) - (ay - by) * (cx - dx);
+
+    if (abs(d) < EPSILON / 100) {
+        return { intersected: false, parallel: true };
+    }
+    let u = ((ax - cx) * (ay - by) - (ay - cy) * (ax - bx)) / d; // belongs to x3, x4, y3, y4
+    let t = ((ax - cx) * (cy - dy) - (ay - cy) * (cx - dx)) / d; // belongs to x1, x2, y1, y2
+    let x = ax + t * (bx - ax);
+    let y = ay + t * (by - ay);
+    //console.trace(x, y, ...arguments);
+    return {
+        t: t,
+        u: u,
+        point: createVector(x, y),
+        intersected: t >= 0 && t <= 1 && u >= 0 && u <= 1,
+        parallel: false,
+    };
+}
+function lineCast(ox, oy, dx, dy, x3, y3, x4, y4) {
+    x1 = ox;
+    y1 = oy;
+    x2 = ox + dx;
+    y2 = oy + dy;
+    //console.log(...arguments);
     let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
     let u = ((x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)) / d; // belongs to x3, x4, y3, y4
     let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d; // belongs to x1, x2, y1, y2
-    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+    if (t >= 0 && u >= 0 && u <= 1) {
         let x = x1 + t * (x2 - x1);
         let y = y1 + t * (y2 - y1);
+        //console.trace(x, y, ...arguments);
         return {
             t: t,
             u: u,
@@ -1237,21 +1307,16 @@ const distance = {
         );
     },
     rect: function (x, y, rx, ry, rw, rh) {
-        if (w < 0) {
-            w *= -1;
-            x1 -= w;
+        if (rw < 0) {
+            rw *= -1;
+            rx -= rw;
         }
-        if (h < 0) {
-            h *= -1;
-            y1 -= h;
+        if (rh < 0) {
+            rh *= -1;
+            ry -= rh;
         }
-        let A = createVector(x1, y1);
-        let B = createVector(x1 + w, y1);
-        let C = createVector(x1 + w, y1 + h);
-        let D = createVector(x1, y1 + h);
-        let d = distance.shape(x, y, A.x, A.y, B.x, B.y, C.x, C.y, D.x, D.y);
-        //console.log(d);
-        return d;
+
+        return mag(constraint(x, rx, rx + rw), constraint(y, ry, ry + rh));
     },
     triangle: function () {
         // x, y, x1, y1, x2, y2, x3, y3 arguments needed
@@ -1296,7 +1361,20 @@ const distance = {
 };
 Object.freeze(distance);
 const collision = {
-    RectToRect: function (ax, ay, aw, ah, avx, avy, bx, by, bw, bh, bvx = 0, bvy = 0) {
+    RectToRect: function (
+        ax,
+        ay,
+        aw,
+        ah,
+        avx,
+        avy,
+        bx,
+        by,
+        bw,
+        bh,
+        bvx = 0,
+        bvy = 0
+    ) {
         let aob = ay + ah;
         let aot = ay;
         let aor = aw + ax;
@@ -1317,7 +1395,8 @@ const collision = {
         let br = bor + bvx;
         let bl = bol + bvx;
 
-        if (ab < bt || at > bb || al > br || ar < bl) return [ax + avx, ay + avy, avx, avy];
+        if (ab < bt || at > bb || al > br || ar < bl)
+            return [ax + avx, ay + avy, avx, avy];
 
         let afx = ax + avx;
         let afy = ay + avy;
@@ -1327,21 +1406,16 @@ const collision = {
         //console.log(afx, afy);
         /* You can only collide with one side at a time, so "else if" is just fine. You don't need to separate the checks for x and y. Only one check can be true, so only one needs to be done. Once it's found, the other's don't need to be done. */
         if (ab >= bt && aob < bot) {
-            afy = (bt - 0.1 - ah);
+            afy = bt - 0.1 - ah;
             afvy = 0;
-
         } else if (at <= bb && aot > bob) {
-
-            afy = (bb + 0.1);
+            afy = bb + 0.1;
             afvy = 0; // ... regardless of what side the player collides with
-
         } else if (ar >= bl && aor < bol) {
-
-            afx = (bl - 0.1) - aw;
+            afx = bl - 0.1 - aw;
             afvx = 0;
-
         } else if (al <= br && aol > bor) {
-            afx = (br + 0.1);
+            afx = br + 0.1;
             afvx = 0;
         }
         let fx = afx;
@@ -1373,7 +1447,9 @@ const collision = {
         let space = r1 + r2;
         let distance = mag(x2 - x1, y2 - y1);
         if (distance < space) {
-            let nPos = new Vector2(x1, y1).sub(new Vector2(x2, y2)).setMag(space);
+            let nPos = new Vector2(x1, y1)
+                .sub(new Vector2(x2, y2))
+                .setMag(space);
             return {
                 collided: true,
                 position1: new Vector2(x2, y2).add(nPos),
@@ -1413,15 +1489,15 @@ const collision = {
 };
 const Between = {
     rect: function (px, py, x, y, w, h) {
-        return (x <= px && y <= py && px <= (x + w) && py <= (y + h));
+        return x <= px && y <= py && px <= x + w && py <= y + h;
     },
     circle: function (c, r, p) {
         return Vector.dist(c, p) < r + EPSILON;
-    }
+    },
 };
 Object.freeze(Between);
 const EPSILON = 0.5;
-class RayCastHit {
+class RaycastHit {
     constructor(intersected, point, normal) {
         this.hit = intersected;
         this.normal = normal;
@@ -1464,33 +1540,38 @@ const Raycast = {
             );
         },
         rect: function (origin, dir, a, bx, by) {
-            return Raycast.rect(origin.x, origin.y, dir.x, dir.y, a.x, a.y, bx, by);
-        },
-        square: function (origin, dir, a, b) {
-            return this.rect(origin, dir, a, b, b);
-        },
-        square1: function (origin, dir, ax, ay, b) {
-            return this.rect(origin, dir, createVector(ax, ay), b, b);
+            return Raycast.rect(
+                origin.x,
+                origin.y,
+                dir.x,
+                dir.y,
+                a.x,
+                a.y,
+                bx,
+                by
+            );
         },
         circle: function (o, r, c, rad) {
             return Raycast.circle(o.x, o.y, r.x, r.y, c.x, c.y, rad);
         },
     },
     line: function (rsx, rsy, rx, ry, ax, ay, bx, by) {
+        line(rsx, rsy, rsx + rx, rsy + ry);
         let rs = createVector(rsx, rsy);
         let a = createVector(ax, ay);
         let b = createVector(bx, by);
-        let ln = lineIntersection(ax, ay, bx, by, rsx, rsy, rsx + rx, rsy + ry);
+        let ln = lineCast(rsx, rsy, rx, ry, ax, ay, bx, by);
+        //console.log(l);
         if (ln.intersected && Vector.dist(rs, ln.point) > EPSILON) {
-            return new RayCastHit(true, ln.point, Vector.normal(a, b, rs));
+            return new RaycastHit(true, ln.point, Vector.normal(a, b, rs));
         }
-        if (ln.t >= 0 && ln.t <= 1 && ln.u > 0) {
-            let pt = Vector.interpolate(a, b, ln.t);
-            if (Vector.dist(rs, pt) > EPSILON) {
-                return new RayCastHit(true, pt, Vector.normal(a, b, rs));
-            }
-        }
-        return new RayCastHit(false);
+        // if (ln.t >= 0 && ln.t <= 1 && ln.u > 0) {
+        //   let pt = Vector.interpolate(a, b, ln.t);
+        //   if (Vector.dist(rs, pt) > EPSILON) {
+        //     return new RaycastHit(true, pt, Vector.normal(a, b, rs));
+        //   }
+        // }
+        return new RaycastHit(false);
     },
     rect: function (rox, roy, dirX, dirY, ax, ay, aw, ah) {
         return this.shape(
@@ -1509,7 +1590,7 @@ const Raycast = {
         );
     },
     shape: function (originX, originY, dirX, dirY, ...vertices) {
-        //console.log(vertices);
+        //console.log(originX, originY, dirX, dirY);
         let origin = createVector(originX, originY);
         let verts = [];
         for (var i = 0; i < vertices.length; i += 2) {
@@ -1517,14 +1598,25 @@ const Raycast = {
         }
 
         let length = Infinity;
-        let finalCast = new RayCastHit(false);
+        let finalCast = new RaycastHit(false);
         for (var i = 0; i < vertices.length / 2; i++) {
             let a = verts[i];
             let b = verts[(i + 1) % (vertices.length / 2)];
-            let cast = this.line(originX, originY, dirX, dirY, a.x, a.y, b.x, b.y);
-            //console.log(cast);
+            let cast = this.line(
+                originX,
+                originY,
+                dirX,
+                dirY,
+                a.x,
+                a.y,
+                b.x,
+                b.y
+            );
+            //console.log(cast.point);
+            //console.log(dirX, dirY);
             if (cast.hit) {
                 let len = Vector.dist(origin, cast.point);
+                //console.log(cast.point);
                 //let len2 = Vector.dist(Vector.add(origin, dir), cast.point);
                 if (len < length /* && len2 < len*/) {
                     length = len;
@@ -1537,7 +1629,7 @@ const Raycast = {
     circle: function (ox, oy, rx, ry, cx, cy, cr) {
         let o = new Vector2(ox, oy);
         ox -= cx;
-        oy -= cy
+        oy -= cy;
         let a = rx ** 2 + ry ** 2;
         let b = 2 * ox * rx + 2 * oy * ry;
         let c = ox ** 2 + oy ** 2 - cr ** 2;
@@ -1551,7 +1643,7 @@ const Raycast = {
                 let p = createVector(x, y);
                 let len = Vector.dist(p, o);
                 if (len > EPSILON && len < length) {
-                    hit = new RayCastHit(true, p);
+                    hit = new RaycastHit(true, p);
                     length = len;
                 }
             }
@@ -1564,10 +1656,10 @@ const Raycast = {
                 hit.normal.x *= -1;
                 hit.normal.y *= -1;
             }
-                //console.log(hit.normal);
+            //console.log(hit.normal);
             return hit;
         }
-        return new RayCastHit(false);
+        return new RaycastHit(false);
     },
 };
 Object.freeze(Raycast);
@@ -1592,7 +1684,11 @@ function factorize(no) {
     let saved = {};
     function factorial(no) {
         no = no - (no % 1);
-        return (no < 2) ? 1 : saved[no] ?? false ? saved[no] : factorial(no - 1) * no;
+        return no < 2
+            ? 1
+            : saved[no] ?? false
+            ? saved[no]
+            : factorial(no - 1) * no;
     }
 }
 function floor(no, floore = 1) {
@@ -1676,7 +1772,7 @@ let geometry = {
     },
 };
 function sign(no) {
-    return (no < 0) ? -1 : (no > 0) ? 1 : 0;
+    return no < 0 ? -1 : no > 0 ? 1 : 0;
 }
 function min(...args) {
     return Math.min(...args);
@@ -1690,11 +1786,8 @@ function constraint(num, mn, mx) {
     }
     return min(max(num, mn), mx);
 }
-function dist(a, b) {
-    return abs(a - b);
-}
 function constraintedAxis(num, min, max) {
-    return (num < min) ? -1 : (num > max) ? 1 : 0;
+    return num < min ? -1 : num > max ? 1 : 0;
 }
 function map(x, mna, mxa, mnb, mxb) {
     return interpolate(mnb, mxb, normalize(mna, mxa, x));
@@ -1745,7 +1838,7 @@ const Shapes = {
                 }
                 vs.push(b.copy());
                 return vs;
-            }
+            },
         },
     },
     circle: {
@@ -1755,7 +1848,10 @@ const Shapes = {
                 let o = createVector(x, y);
                 let vs = [];
                 for (var i = 0; i < times; i += res) {
-                    let v = Vector.add(o, Vector.AngleToVector(map(i, 0, times, 0, 360)));
+                    let v = Vector.add(
+                        o,
+                        Vector.AngleToVector(map(i, 0, times, 0, 360))
+                    );
                     vs.push(v);
                 }
                 return vs;
@@ -1853,17 +1949,33 @@ const Shapes = {
     },
     shape: {
         forPixel: function (func, res = 1, ...vs) {
+            //console.log(vs);
             let o = splitArray(vs);
             let mny = floor(min(...o.y), res) - res;
             let mxy = floor(max(...o.y), res) + res;
+
+            let smnx = floor(min(...o.x), res) - res;
+            let smxx = floor(max(...o.x), res) + res;
+
+            //  console.log(smnx, smxx);
             for (var y = mny; y < mxy; y += res) {
-                let or = createVector(-500, y);
-                let r = createVector(100, 0);
-                let cast = RayCast.v2.Vector.shape(or, r, ...vs);
-                if (cast.points.length > 0) {
-                    let o2 = splitArray(cast.points);
-                    let mnx = floor(min(...o2.x), res);
-                    let mxx = floor(max(...o2.x), res);
+                ///func(smnx, y);
+                //func(smxx, y);
+                let or = createVector(smnx - 10, y);
+                let r = createVector(10, 0);
+                let cast = Raycast.Vector.shape(or, r, ...vs);
+                //console.log(cast);
+
+                let or1 = createVector(smxx + 10, y);
+                let r1 = createVector(-10, 0);
+                let cast1 = Raycast.Vector.shape(or1, r1, ...vs);
+
+                if (cast.hit && cast1.hit) {
+                    //circle(cast.point.x, cast.point.y, 5);
+                    let mnx = floor(cast.point.x, res);
+                    let mxx = floor(cast1.point.x, res);
+                    // func(mnx, y);
+                    // func(mxx, y);
                     //console.log(mnx, mxx, ...o2.x);
                     for (var x = mnx; x <= mxx; x += res) {
                         func(x, y);
@@ -2141,7 +2253,11 @@ function color() {
             return "hsla(" + (args[0] / 255) * 360 + ", 100%, 50%, 1)";
         } else if (args.length == 2) {
             return (
-                "hsla(" + (args[0] / 255) * 360 + ", 100%, 50%, " + args[1] / 255 + ")"
+                "hsla(" +
+                (args[0] / 255) * 360 +
+                ", 100%, 50%, " +
+                args[1] / 255 +
+                ")"
             );
         } else if (args.length == 3) {
             return (
@@ -2217,9 +2333,7 @@ const Colors = {
         };
         return color(sum.r, sum.g, sum.b, sum.a);
     },
-    sub: function () {
-
-    },
+    sub: function () {},
     weighted: function (...args) {
         let cols = [];
         for (var i = 0; i < args.length; i += 2) {
@@ -2238,7 +2352,7 @@ const Colors = {
     },
 };
 const Color = {
-    mult: (col, t) => col.map((a, i) => (i == 3)? a: a * t),
+    mult: (col, t) => col.map((a, i) => (i == 3 ? a : a * t)),
     setAlpha: function (col, alpha) {
         let c = splitRGB(col);
         c.a = alpha;
@@ -2309,10 +2423,10 @@ function create2DArray(cols, rows, fillVal) {
     return arr;
 }
 function includes(arr, item) {
-    return arr.some(a => a == item);
+    return arr.some((a) => a == item);
 }
 function includesVector(arr, item) {
-    return arr.some(a => Vector.Equal(a, item));
+    return arr.some((a) => Vector.Equal(a, item));
 }
 function fillArray(len, ...fls) {
     let arr = new Array(len).map((n, i) => fls[i % fls.length]);
@@ -2375,7 +2489,10 @@ function Array2D(width, height, defaultVal = 0) {
     this.swap = function (x, y, x1, y1) {
         let ind1 = this.index(x, y);
         let ind2 = this.index(x1, y1);
-        [this.array[ind1], this.array[ind2]] = [this.array[ind2], this.array[ind1]];
+        [this.array[ind1], this.array[ind2]] = [
+            this.array[ind2],
+            this.array[ind1],
+        ];
     };
     this.grid = function () {
         let arr = [];
@@ -2431,17 +2548,17 @@ function shuffle(arr) {
 }
 const ArrayMath = {
     number: function (arr1) {
-        return arr1.reduce((prev, next) => prev + next , 0);
+        return arr1.reduce((prev, next) => prev + next, 0);
     },
     mult: (arr1, arr2) => arr1.map((a, i) => a * arr2[i]),
     add: (arr1, arr2) => arr1.map((a, i) => a + arr2[i]),
     sub: (arr1, arr2) => arr1.map((a, i) => a - arr2[i]),
     scalar: {
-        mult: (arr, scal) => arr.map(a => a * scal)
+        mult: (arr, scal) => arr.map((a) => a * scal),
     },
 };
 function filterArray(arr, val) {
-    return [...arr].filter(n => n != val);
+    return [...arr].filter((n) => n != val);
 }
 function splitArray(arr) {
     let obj = {};
@@ -2457,23 +2574,10 @@ function splitArray(arr) {
 }
 function indicesOf(arr, val) {
     let arr1 = [];
-    let arr2 = (arr.map((a, i) => (a == val) ? arr1.push(i) : arr1.length));
+    let arr2 = arr.map((a, i) => (a == val ? arr1.push(i) : arr1.length));
     console.log(arr2);
     return arr1;
 }
-// #endregion
-
-// #region Equations
-
-/*
- * y = mx + c
- * c = y - mx
- * x = (y - c) / m
- */
-/*
- * x^2 + y^2 = r ^ 2
- */
-
 // #endregion
 
 // #region Canvas
@@ -2513,14 +2617,18 @@ function indicesOf(arr, val) {
             ctx.lineCap = savedLineCap;
             ctx.strokeStyle = savedLineColor;
             st = savedStroke;
-
         }
     }
     class TextMeasure {
         constructor(measure) {
             this.width = measure.width;
-            this.height = measure.actualBoundingBoxDescent + measure.actualBoundingBoxAscent;
-            this.offset = new Vector2(measure.actualBoundingBoxLeft, measure.actualBoundingBoxAscent);
+            this.height =
+                measure.actualBoundingBoxDescent +
+                measure.actualBoundingBoxAscent;
+            this.offset = new Vector2(
+                measure.actualBoundingBoxLeft,
+                measure.actualBoundingBoxAscent
+            );
         }
     }
     function measureText(text_str) {
@@ -2537,17 +2645,18 @@ let shape = {
         this.vertices = [];
     },
     addVertex: function (x, y) {
-        x = Canvas.x(x);
-        y = Canvas.y(y);
-        this.vertices.push(createVector(x, y));
+        [x, y] = Camera2D.convertPos(x, y);
+        this.vertices.push(x, y);
     },
-    close: function () {
+    close: function (CLOSE = true) {
         ctx.beginPath();
-        ctx.moveTo(this.vertices[0].x, this.vertices[0].y);
-        for (i = 1; i < this.vertices.length; i++) {
-            ctx.lineTo(this.vertices[i].x, this.vertices[i].y);
+        ctx.moveTo(this.vertices[0], this.vertices[1]);
+        for (i = 2; i < this.vertices.length; i += 2) {
+            ctx.lineTo(this.vertices[i], this.vertices[i + 1]);
         }
-        ctx.lineTo(this.vertices[0].x, this.vertices[0].y);
+        if (CLOSE) {
+            ctx.lineTo(this.vertices[0], this.vertices[1]);
+        }
         ctx.closePath();
         if (fl) {
             ctx.fill();
@@ -2558,8 +2667,9 @@ let shape = {
     },
     draw: function () {
         for (var i = 0; i < arguments.length; i += 2) {
-            arguments[i] = Canvas.x(arguments[i]);
-            arguments[i + 1] = Canvas.y(arguments[i + 1]);
+            const [x, y] = Camera2D.convertPos(arguments[i], arguments[i + 1]);
+            arguments[i] = x;
+            arguments[i + 1] = y;
         }
         ctx.beginPath();
         ctx.lineTo(arguments[0], arguments[1]);
@@ -2582,20 +2692,21 @@ const CLOSE = 1;
     let vertices = [];
     let begun = true;
     function vertex(x, y) {
-        vertices.push(new Vector2(Canvas.x(x), Canvas.y(y)));
+        [x, y] = Camera2D.convertPos(x, y);
+        vertices.push(x, y);
     }
     function beginShape() {
         vertices = [];
     }
     function endShape(close = CLOSE) {
         ctx.beginPath();
-        ctx.lineTo(vertices[0].x, vertices[0].y);
-        for (var i = 1; i < vertices.length; i++) {
-            ctx.lineTo(vertices[i].x, vertices[i].y);
+        ctx.lineTo(vertices[0], vertices[1]);
+        for (var i = 2; i < vertices.length; i += 2) {
+            ctx.lineTo(vertices[i], vertices[i + 1]);
         }
         if (close == CLOSE) {
             console.log(close);
-            ctx.lineTo(vertices[0].x, vertices[0].y);
+            ctx.lineTo(vertices[0], vertices[1]);
             ctx.closePath();
         }
         if (fl && close == CLOSE) {
@@ -2607,20 +2718,16 @@ const CLOSE = 1;
     }
 }
 function setPixel(x, y, col) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
+    [x, y] = Camera2D.convertPos(x, y);
     let c = ctx.fillStyle;
     ctx.fillStyle = col;
     ctx.fillRect(x, y, 1, 1);
     ctx.fillStyle = c;
 }
 function triangle(x, y, x1, y1, x2, y2) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
-    x1 = Canvas.x(x1);
-    y1 = Canvas.y(y1);
-    x2 = Canvas.x(x2);
-    y2 = Canvas.y(y2);
+    [x, y] = Camera2D.convertPos(x, y);
+    [x1, y1] = Camera2D.convertPos(x1, y1);
+    [x2, y2] = Camera2D.convertPos(x2, y2);
 
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -2636,11 +2743,10 @@ function triangle(x, y, x1, y1, x2, y2) {
     }
 }
 function circle(x, y, r) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
+    [x, y] = Camera2D.convertPos(x, y);
     ctx.beginPath();
     r = max(r, 0);
-    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.arc(x, y, r, 0, TWO_PI);
     ctx.closePath();
     if (st) {
         ctx.stroke();
@@ -2650,8 +2756,7 @@ function circle(x, y, r) {
     }
 }
 function ellipse(x, y, d, d1) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
+    [x, y] = Camera2D.convertPos(x, y);
     var c = ctx.strokeStyle;
     //ctx.strokeStyle = ctx.fillStyle;
     ctx.beginPath();
@@ -2669,11 +2774,8 @@ function point(x, y) {
     y = Canvas.y(y);
     circle(x, y, ctx.lineWidth / 2);
 }
-function rect(x, y, w, h) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
-    w = Canvas.w(w);
-    h = Canvas.h(h);
+function rect(x, y, w, h, rotat) {
+    [x, y, w, h] = Camera2D.getRect(x, y, w, h);
     if (st) {
         ctx.beginPath();
         ctx.strokeRect(x, y, w, h);
@@ -2712,7 +2814,7 @@ const Canvas = {
     },
     setOrigin: function (x = CanvasWidth / 2, y = CanvasHeight / 2) {
         WindowHandler.setOrigin(x, y);
-    }
+    },
 };
 var ctx,
     CanvasWidth,
@@ -2740,8 +2842,7 @@ function textSize(size) {
     ctx.font = size + "px " + Canvas.textFontFamily;
 }
 function text(txt, x, y) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
+    [x, y] = Camera2D.convertPos(x, y);
     if (!fl) {
         ctx.strokeText(txt, x, y);
     } else {
@@ -2787,24 +2888,12 @@ function createCanvas(
     ctx.textBaseline = "middle";
     ctx.font = Canvas.textFontSize + "px " + Canvas.textFontFamily;
     Canvas.canvas = canvas;
-    calculateCanvasOffset();
     return canvas;
-}
-function calculateCanvasOffset() {
-    let el = Canvas.canvas;
-    var _x = el.offsetLeft - el.scrollLeft;
-    var _y = el.offsetTop - el.scrollTop;
-    CanvasOffset = new Vector2(_x, _y);
 }
 function clear(x = 0, y = 0, w = CanvasWidth, h = CanvasHeight) {
     let t = ctx.getTransform();
     ctx.resetTransform();
-    ctx.clearRect(
-        x,
-        y,
-        w,
-        h
-    );
+    ctx.clearRect(x, y, w, h);
     ctx.setTransform(t);
 }
 function backGround() {
@@ -2814,20 +2903,13 @@ function backGround() {
     var cl = ctx.fillStyle;
     //console.log(col);
     ctx.fillStyle = rgb(...col);
-    ctx.fillRect(
-        0,
-        0,
-        CanvasWidth,
-        CanvasHeight
-    );
+    ctx.fillRect(0, 0, CanvasWidth, CanvasHeight);
     ctx.fillStyle = cl;
     ctx.setTransform(t);
 }
 function line(x, y, x1, y1) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
-    x1 = Canvas.x(x1);
-    y1 = Canvas.y(y1);
+    [x, y] = Camera2D.convertPos(x, y);
+    [x1, y1] = Camera2D.convertPos(x1, y1);
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x1, y1);
@@ -2835,15 +2917,13 @@ function line(x, y, x1, y1) {
     ctx.closePath();
 }
 function rotate(deg) {
-    ctx.rotate(radians(deg));
+    ctx.rotate(Angle.angleModeToRadians(deg));
 }
 function translate(x, y) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
     ctx.translate(x, y);
 }
 {
-    let savedTransforms = [];
+    const savedTransforms = [];
     function push() {
         let t = ctx.getTransform();
         savedTransforms.push(t);
@@ -2872,33 +2952,6 @@ function pixelDensity(val) {
         backGround(255);
     } else {
         return densityVal;
-    }
-}
-class Turtle {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.angle = 0;
-        //this.fillColor = color(255);
-        this.strokeColor = color(255);
-        //this.doFill = true;
-        this.doStroke = true;
-    }
-    moveTo(x, y) {
-        saveColor();
-        if (this.doStroke) {
-            stroke(this.strokeColor);
-        } else {
-            noStroke();
-        }
-        line(this.x, this.y, x, y);
-        this.x = x;
-        this.y = y;
-        loadColor();
-    }
-    jumpTo(x, y) {
-        this.x = x;
-        this.y = y;
     }
 }
 // #endregion
@@ -3130,11 +3183,11 @@ class Turtle {
         div.appendChild(slider);
         div.appendChild(input);
         //console.log(slider.value);
-        let cls = new SliderHTML(slider, input, div);
+        let cls = new HTMLSlider(slider, input, div);
         //console.log(slider.value);
         return cls;
     }
-    class SliderHTML {
+    class HTMLSlider {
         slider;
         input;
         div;
@@ -3166,41 +3219,10 @@ class Turtle {
 // #endregion
 
 // #region Image
-class camera {
-    static video;
-    static set res(re) {
-        camera.video.style.width = re + "px";
-        camera.video.style.height = re + "px";
-    }
-    static Init() {
-        const video = document.createElement("video");
-        video.setAttribute("playsinline", "");
-        video.setAttribute("autoplay", "");
-        video.setAttribute("muted", "");
-        video.style.width = 200 + "px";
-        video.style.height = 200 + "px";
-
-        const facingMode = "user";
-        const constraints = {
-            audio: false,
-            video: {
-                facingMode,
-            },
-        };
-
-        navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-            video.srcObject = stream;
-        });
-        document.body.appendChild(video);
-        camera.video = video;
-        camera.image = new Image2(camera.video);
-    }
-    static image;
-}
 var pixels = [];
 class Image2 {
-    static canvas;
-    static ctx;
+    static canvas = document.createElement("canvas");
+    static ctx = Image2.canvas.getContext("2d");
     constructor(im) {
         this.width = im.width;
         this.height = im.height;
@@ -3208,10 +3230,10 @@ class Image2 {
     }
     loadPixels() {
         this.pixels = [];
-        canvas2.width = this.width;
-        canvas2.height = this.height;
-        ctx2.drawImage(this.image, 0, 0);
-        this.data = ctx2.getImageData(0, 0, this.width, this.height);
+        Image2.canvas.width = this.width;
+        Image2.canvas.height = this.height;
+        Image2.ctx.drawImage(this.image, 0, 0);
+        this.data = Image2.ctx.getImageData(0, 0, this.width, this.height);
         for (var i = 0; i < this.data.data.length; i += 4) {
             let col = [...this.data.data.slice(i, i + 4)];
             if (Canvas.colorMode == HSL) {
@@ -3220,11 +3242,19 @@ class Image2 {
             this.pixels.push(col);
         }
     }
-    filter(f) {
+    forPixel(f) {
         this.loadPixels();
         for (var i = 0; i < this.pixels.length; i++) {
             let p = this.pos(i);
             this.pixels[i] = f(p.x, p.y, i);
+        }
+        this.updatePixels();
+    }
+    filter(f) {
+        this.loadPixels();
+        for (var i = 0; i < this.pixels.length; i++) {
+            let p = this.pos(i);
+            this.pixels[i] = f(this.pixels[i], p.x, p.y);
         }
         this.updatePixels();
     }
@@ -3255,28 +3285,32 @@ class Image2 {
             pixs.push(...col);
         }
         setArray(this.data.data, pixs);
-        canvas2.width = this.width;
-        canvas2.height = this.height;
-        ctx2.putImageData(this.data, 0, 0);
-        this.image.src = ctx2.canvas.toDataURL();
+        Image2.canvas.width = this.width;
+        Image2.canvas.height = this.height;
+        Image2.ctx.putImageData(this.data, 0, 0);
+        this.image.src = Image2.ctx.canvas.toDataURL();
         //console.log(this.image);
+    }
+    download(name) {
+        this.updatePixels();
+        var link = document.createElement("a");
+        link.download = name;
+        link.href = this.image.src;
+        link.click();
     }
     onload(func) {
         var ths = this;
         this.image.onload = function () {
-            //console.log(ths.image);
-            ths.image.onload = function () { };
+            ths.image.onload = function () {};
             func(ths);
         };
     }
 }
 {
-    function setSize(width, height) {
+    function resize(width, height) {
         ctx.canvas.width = width;
         ctx.canvas.height = height;
     }
-    var canvas2 = document.createElement("canvas");
-    var ctx2 = canvas2.getContext("2d");
     function loadPixels() {
         let data = ctx.getImageData(0, 0, CanvasWidth, CanvasHeight);
         pixels = [];
@@ -3318,15 +3352,15 @@ class Image2 {
         return img;
     }
     function createImage(w, h, cb) {
-        canvas2.width = w;
-        canvas2.height = h;
+        Image2.canvas.width = w;
+        Image2.canvas.height = h;
         let img = new Image(w, h);
-        ctx2.fillStyle = color(0, 0, 0, 0);
-        ctx2.fillRect(0, 0, w, h);
-        img.src = ctx2.canvas.toDataURL();
+        Image2.ctx.fillStyle = color(0, 0, 0, 0);
+        Image2.ctx.fillRect(0, 0, w, h);
+        img.src = Image2.ctx.canvas.toDataURL();
         let im = new Image2(img);
         img.onload = function () {
-            img.onload = () => { };
+            img.onload = () => {};
             if (cb) {
                 cb(im);
             }
@@ -3344,7 +3378,7 @@ class Image2 {
         myImage.src = name;
         let im = new Image2(myImage);
         myImage.onload = function () {
-            myImage.onload = () => { };
+            myImage.onload = () => {};
             im.width = myImage.width;
             im.height = myImage.height;
             //console.log(myImage.width);
@@ -3362,8 +3396,8 @@ class Image2 {
         }
         return im;
     }
-    Image2.canvas = canvas2;
-    Image2.ctx = ctx2;
+    Image2.canvas = Image2.canvas;
+    Image2.ctx = Image2.ctx;
 }
 function joinArrays(arrs) {
     let arr = [];
@@ -3409,12 +3443,12 @@ class UIElement {
         this.offset = createVector();
         this.position = createVector(x, y);
         this.id = UI.Elements.length;
-        this.click = new EventHanler();
+        this.click = new EventHandler();
         UI.Elements.push(this);
         UI.Relayer();
         //console.log(shapeArgs);
         this.setShape(...shapeArgs);
-    }   
+    }
     get position() {
         return this.localPosition;
     }
@@ -3445,7 +3479,8 @@ class UIElement {
     update() {
         if (mousePressed) {
             let clicked = this.clicked;
-            this.clicked = (this.clicked || (this.hovered && !UIElement.Selected));
+            this.clicked =
+                this.clicked || (this.hovered && !UIElement.Selected);
             //console.log(this.clicked);
             if (!clicked && this.clicked) {
                 UIElement.Selected = this;
@@ -3511,20 +3546,25 @@ class UIElement {
                 this.size[1]
             );
         }
-        if (this.name.length > 0) {
-            ctx.save();
-            //ctx.clip();
-            //console.log(position.x, position.y);
-            fill(0);
-            textSize((this.size[0] + this.size[1]) / 1.5);
-            text(this.name, position.x, position.y);
-            ctx.restore();
+        let name = this._name;
+        if (typeof(name) == 'function') {
+            name = name(this);
         }
+        if (name) {
+            ctx.save();
+            fill(0);
+            textSize(this._nameSize);
+            text(name, position.x, position.y);
+            ctx.restore();
+        } 
     }
-    name = "";
-    OnClick() {
-
+    name(name, size) {
+        this._name = name;
+        this._nameSize = size;
     }
+    _name;
+    _nameSize;
+    OnClick() {}
     getHoveredInfo() {
         let mouse1 = mouse.copy();
         let position = this.position;
@@ -3535,7 +3575,14 @@ class UIElement {
             );
         } else if (this.shape == UI.RECT) {
             let vec = Vector.add(position, this.offset);
-            return Between.rect(mouse1.x, mouse1.y, vec.x, vec.y, this.size[0], this.size[1]);
+            return Between.rect(
+                mouse1.x,
+                mouse1.y,
+                vec.x,
+                vec.y,
+                this.size[0],
+                this.size[1]
+            );
         }
         return false;
     }
@@ -3546,12 +3593,9 @@ class UIElement {
     }
 }
 class Button extends UIElement {
-    name;
-
     hoveredColor;
     normalColor;
     clickedColor;
-
 
     constructor(x, y, w, h, col = color(0, 255, 0)) {
         super(x, y, UI.RECT, w, h);
@@ -3559,8 +3603,8 @@ class Button extends UIElement {
     }
     setColor(col2) {
         this.baseColor = col2;
-        this.hoveredColor = col2.map((a, i) => (i == 3) ? a : a * 0.85);
-        this.clickedColor = col2.map((a, i) => (i == 3)? a : a * 0.7);
+        this.hoveredColor = col2.map((a, i) => (i == 3 ? a : a * 0.85));
+        this.clickedColor = col2.map((a, i) => (i == 3 ? a : a * 0.7));
     }
     update() {
         super.update();
@@ -3568,7 +3612,7 @@ class Button extends UIElement {
             this.color = this.clickedColor;
         } else if (this.hovered) {
             this.color = this.hoveredColor;
-        } 
+        }
     }
 }
 class Gizmo extends UIElement {
@@ -3584,8 +3628,8 @@ class Gizmo extends UIElement {
 
     setColor(col) {
         this.baseColor = col;
-        this.hoveredColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
-        this.clickedColor = col.map((a, i) => (i == 3) ? a : a * 0.7);
+        this.hoveredColor = col.map((a, i) => (i == 3 ? a : a * 0.85));
+        this.clickedColor = col.map((a, i) => (i == 3 ? a : a * 0.7));
     }
     setParent(par, keepOffset = true) {
         par.children.push(this);
@@ -3607,7 +3651,7 @@ class Gizmo extends UIElement {
         //console.log(x, y);
         this.setColor(col);
         this.mouseOffset = new Vector2(0, 0);
-        this.move = new EventHanler();
+        this.move = new EventHandler();
     }
     get position() {
         return Vector.add(this.localPosition, this.parentPosition);
@@ -3640,18 +3684,32 @@ class Gizmo extends UIElement {
             //console.log(npos);
             this.localPosition = npos;
             if (!!this.parent) {
-                this.position = Vector.constraint(this.position, this.a, this.b);
+                this.position = Vector.constraint(
+                    this.position,
+                    this.a,
+                    this.b
+                );
             }
             this.color = this.clickedColor;
         } else if (this.hovered) {
             this.color = this.hoveredColor;
-        } 
+        }
         if (this.snapped) {
-            this.localPosition.x = floor(this.localPosition.x + this.mouseOffset.x, this.snapX);
-            this.localPosition.y = floor(this.localPosition.y + this.mouseOffset.y, this.snapY);
+            this.localPosition.x = floor(
+                this.localPosition.x + this.mouseOffset.x,
+                this.snapX
+            );
+            this.localPosition.y = floor(
+                this.localPosition.y + this.mouseOffset.y,
+                this.snapY
+            );
         }
         if (!this.parent) {
-            this.localPosition = Vector.constraint(this.localPosition, this.a, this.b);
+            this.localPosition = Vector.constraint(
+                this.localPosition,
+                this.a,
+                this.b
+            );
         }
         if (!Vector.Equal(lastPosition, this.localPosition)) {
             let dt = Vector.sub(this.localPosition, lastPosition);
@@ -3678,7 +3736,6 @@ class Gizmo extends UIElement {
     }
 }
 class CheckBox extends UIElement {
-
     checked = false;
 
     hoveredColor;
@@ -3692,17 +3749,21 @@ class CheckBox extends UIElement {
     }
     setColor(col) {
         this.baseColor = col;
-        this.hoveredColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
-        this.hoveredAndCheckedColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
-        this.checkedColor = col.map((a, i) => (i == 3) ? a : a * 0.7);
+        this.hoveredColor = col.map((a, i) => (i == 3 ? a : a * 0.85));
+        this.hoveredAndCheckedColor = col.map((a, i) =>
+            i == 3 ? a : a * 0.85
+        );
+        this.checkedColor = col.map((a, i) => (i == 3 ? a : a * 0.7));
     }
     setNormalColor(col) {
         this.baseColor = col;
-        this.hoveredColor = col.map((a, i) => (i == 3)? a : a * 0.85);
+        this.hoveredColor = col.map((a, i) => (i == 3 ? a : a * 0.85));
     }
     setCheckedColor(col) {
         this.checkedColor = col;
-        this.hoveredAndCheckedColor = col.map((a, i) => (i == 3) ? a : a * 0.85);
+        this.hoveredAndCheckedColor = col.map((a, i) =>
+            i == 3 ? a : a * 0.85
+        );
     }
     OnClick() {
         this.checked = !this.checked;
@@ -3721,32 +3782,50 @@ class CheckBox extends UIElement {
 class Slider extends UIElement {
     lineWidth;
     lineColor = color(200);
-    constructor(ax, ay, bx, by, min, max, value = (min + max) / 2, col = color(0, 255, 0)) {
-        super(normalize(value, min, max) * (bx - ax) + ax, normalize(value, min, max) * (by - ay) + ay, UI.CIRCLE, 10);
+    constructor(
+        ax,
+        ay,
+        bx,
+        by,
+        min,
+        max,
+        value = (min + max) / 2,
+        col = color(0, 255, 0)
+    ) {
+        super(
+            normalize(min, max, value) * (bx - ax) + ax,
+            normalize(min, max, value) * (by - ay) + ay,
+            UI.CIRCLE,
+            10
+        );
         this.max = max;
         this.min = min;
         this.a = new Vector2(ax, ay);
         this.b = new Vector2(bx, by);
         this.lineWidth = 5;
         this.setColor(col);
-        this.change = new EventHanler();
+        //console.log(normalize(value, ));
+        this.change = new EventHandler();
     }
     setColor(col2) {
         this.baseColor = col2;
-        this.hoveredColor = col2.map((a, i) => (i == 3) ? a : a * 0.85);
-        this.clickedColor = col2.map((a, i) => (i == 3) ? a : a * 0.7);
+        this.hoveredColor = col2.map((a, i) => (i == 3 ? a : a * 0.85));
+        this.clickedColor = col2.map((a, i) => (i == 3 ? a : a * 0.7));
     }
     update() {
         super.update();
         if (this.clicked) {
             let lastposition = this.localPosition;
             this.localPosition = distance.line(
-                this.a.x, this.a.y,
-                this.b.x, this.b.y,
-                mouse.x, mouse.y
+                this.a.x,
+                this.a.y,
+                this.b.x,
+                this.b.y,
+                mouse.x,
+                mouse.y
             ).point;
             if (!Vector.Equal(this.localPosition, lastposition)) {
-                this.change.Fire();                
+                this.change.Fire();
             }
         }
         if (this.clicked && this.hovered) {
@@ -3756,10 +3835,10 @@ class Slider extends UIElement {
             this.color = this.hoveredColor;
         }
     }
-    value() {
+    value(accuracy = 1000) {
         let den = Vector.dist(this.a, this.b);
         let num = Vector.dist(this.localPosition, this.a);
-        return this.min + (this.max - this.min) * (num / den);
+        return Math.floor((this.min + (this.max - this.min) * (num / den)) * accuracy) / accuracy;
     }
     bind(type, func) {
         super.bind(type, func);
@@ -3904,10 +3983,7 @@ const Matrices = {
     },
     rotation2: function (ang) {
         ang = (ang + 360) % 360;
-        let mat = new Matrix(2, 2, [
-            cos(ang), -sin(ang),
-            sin(ang), cos(ang)
-        ]);
+        let mat = new Matrix(2, 2, [cos(ang), -sin(ang), sin(ang), cos(ang)]);
         return mat;
     },
     rotationZ: function (ang) {
@@ -3935,7 +4011,10 @@ const Matrices = {
     },
     inverse2: function (mat) {
         console.log(this.det2(mat));
-        let mat2 = ArrayMath.scalar.mult(this.adjoint2(mat), 1 / this.det2(mat));
+        let mat2 = ArrayMath.scalar.mult(
+            this.adjoint2(mat),
+            1 / this.det2(mat)
+        );
         //console.log(mat2);
         return mat2;
     },
