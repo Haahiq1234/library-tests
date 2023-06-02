@@ -2,7 +2,9 @@ import sys;
 sys.path.append("F:/Python")
 import command_line
 import os
-import webbrowser
+#import webbrowser
+from datetime import date;
+import time
 
 #chrome = webbrowser.get("chrome");
 #webbrowser.open("www.youtube.com", new=2)
@@ -44,12 +46,51 @@ def exit_project(args, clr):
     pass 
 
 tag_types = ["script", "link"]
-def build():
+def build(args, clr):
     with open("index.html") as file:
         text = file.read()
-    built = ""
+    text = replace_all_tags(text, "<script src=\"", "\"></script>", "<script>", "</script>");
+    text = replace_all_tags(text, "<link rel=\"stylesheet\" href=\"", "\" />", "<style>", "</style>");
+    os.chdir(cwd)
+    os.chdir("../Built")
+    with open(clr.data[1] + ".html", "w") as file:
+        file.write(text)
+    os.chdir("../" + clr.data[1])
     
-    
+def replace_all_tags(text, tag_start, tag_end, actual_tag_start, actual_tag_end):
+    tag_start_len = len(tag_start)
+    tag_end_len = len(tag_end)
+    start_indices = find_all_instances(text, tag_start)
+    end_indices = find_all_instances(text, tag_end)
+    print(start_indices, end_indices)
+    new_tags = []
+    prev_tags = []
+    for i in range(len(start_indices)):
+        prev_tag = text[start_indices[i]: end_indices[i] + tag_end_len]
+        file_name = text[start_indices[i] + tag_start_len: end_indices[i]]
+        print(file_name)
+        with open(file_name) as file:
+            file_text = file.read().replace("\n", "\n        ")
+        new_tag = actual_tag_start + "\n        " + file_text + "\n    " + actual_tag_end
+        new_tags.append(new_tag)
+        prev_tags.append(prev_tag)
+    for i in range(len(prev_tags)):
+        text = text.replace(prev_tags[i], new_tags[i])
+    return text
+    pass
+
+def find_all_instances(string:str, sub_string:str):
+    sub_string_len = len(sub_string);
+    i = 0
+    indices = []
+    while True:        
+        index = string.find(sub_string, i);
+        if index == -1:
+            break;
+        else:
+            indices.append(index);
+            i = index + sub_string_len - 1
+    return indices;
     
 def open_project_in_vscode(args, clr):
     os.system("code .");
@@ -60,50 +101,70 @@ def open_project(args, clr):
         print(f"Project {args[0]} does not exist.")
         return
     os.chdir("../" + args[0])      
-    command_line.create_command_line({"add": add, "open": open_project_in_vscode}, 
+    command_line.create_command_line({"add": add, "open": open_project_in_vscode, "build": build}, 
                                      exit_function=exit_project, 
-                                     command_line_data=clr) 
+                                     command_line_data=[clr, args[0]]) 
  
 def create(args, clr):
     if len(args)==0:
-        print("No args given")
+        print("create [Project Name]")
         return
-    shouldcreatescript = "-y" in args
     name = args[0]
     
-    if shouldcreatescript:
-        with open("t_s.html", "r") as file:
-            text = file.read()
-    else:
-        with open("t.html", "r") as file:
-            text = file.read();
+    with open("index.html", "r") as file:
+        index_text = file.read().replace("name", name)
     
-    text = text.replace("name", name)
-    #print(text);
-    
+    with open("script.js", "r") as file:
+        script_text = file.read()
+        
     os.chdir("../")
     if os.path.exists(name):
-        print("Project already exists")
-        os.chdir(cwd)
-        return
-    
-    os.mkdir(name)
+        if os.path.exists(name + "/index.html"):
+            print("Project already exists")
+            os.chdir(cwd)
+            return
+    else:
+        os.mkdir(name)
     os.chdir(name)
     
     with open("index.html", "w") as file:
-        file.write(text)
-    if shouldcreatescript:
-        file = open("script.js", "w")
+        file.write(index_text)
+    
+    with open("script.js", "w") as file:
+        file.write(script_text)
     
     with open("style.css", "w") as file:
         file.write("")
-        file.close()
         
     open_project([name], clr)
 
+def build_project(args, clr):
+    if len(args) == 0:
+        print("build [Project Name]")
+        return
+    if not os.path.exists("../" + args[0]):
+        print(f"Project {args[0]} does not exist.")
+        return
+    os.chdir("../" + args[0])
+    clr.data = [0, args[0]];
+    build(args, clr)
+    clr.data = []
+    os.chdir(cwd)
+
+def git(args, clr):
+    if "push" in args:
+        td = date.today()
+        dt = str(td.day) + "/" + str(td.month) + "/" + str(td.year) + " " + time.strftime("%H:%M:%S")
+        os.system("git add --all")
+        os.system("git commit -m \"Update " + dt + "\"")
+        os.system("git push")
+    pass
+
 commands = {
     "create": create,
-    "open": open_project
+    "open": open_project,
+    "build": build_project,
+    "git": git
 }
 
 

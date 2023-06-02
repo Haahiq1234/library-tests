@@ -3546,24 +3546,27 @@ class UIElement {
                 this.size[1]
             );
         }
-        let name = this._name;
-        if (typeof(name) == 'function') {
-            name = name(this);
-        }
-        if (name) {
+        let textt = this._text(this);
+        if (textt.length > 0) {
             ctx.save();
             fill(0);
-            textSize(this._nameSize);
-            text(name, position.x, position.y);
+            textSize(this._textSize);
+            text(textt, position.x, position.y);
             ctx.restore();
         } 
     }
-    name(name, size) {
-        this._name = name;
-        this._nameSize = size;
+    text(text, size) {
+        if (typeof(text) == 'function') {
+            this._text = text;
+        } else {
+            this._text = () => text;
+        }
+        this._textSize = size;
     }
-    _name;
-    _nameSize;
+    _text() {
+        return "";
+    }
+    _textSize;
     OnClick() {}
     getHoveredInfo() {
         let mouse1 = mouse.copy();
@@ -3812,6 +3815,19 @@ class Slider extends UIElement {
         this.hoveredColor = col2.map((a, i) => (i == 3 ? a : a * 0.85));
         this.clickedColor = col2.map((a, i) => (i == 3 ? a : a * 0.7));
     }
+    name(name, size, offsetx, offsety) {
+        this.nameoffsetx = offsetx;
+        this.nameoffsety = offsety;
+        if (typeof(name) == 'function') {
+            this._name = name; 
+        } else {
+            this._name = () => name;
+        }
+        this.nameSize = size;
+    }
+    _name() {
+        return "";
+    }
     update() {
         super.update();
         if (this.clicked) {
@@ -3856,6 +3872,14 @@ class Slider extends UIElement {
 
         noStroke();
         super.draw();
+        let name = this._name();
+        if (name.length > 0) {
+            ctx.save();
+            fill(0);
+            textSize(this.nameSize);
+            text(name, this.a.x + this.nameoffsetx, this.a.y + this.nameoffsety);
+            ctx.restore();
+        }
     }
 }
 const UI = {
@@ -3884,6 +3908,12 @@ const UI = {
                 element.updateUI();
             }
         }
+    },
+    Clear() {
+        for (var i = 0; i < this.Elements.length; i++) {
+            delete this.Elements[i];
+        }
+        this.Elements.length = 0;
     },
     Selected: false,
     CIRCLE: 0,
