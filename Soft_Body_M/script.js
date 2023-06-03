@@ -23,6 +23,7 @@ function key_Press() {
     }
     
 }
-function key_Down() {
-    //console.log(keyCode);
-}
+on.mouseup.bind(function(x, y, dx, dy) {
+    noLoop();
+    line(x, y, x - dx, y - dy);
+});

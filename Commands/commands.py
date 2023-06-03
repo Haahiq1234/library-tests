@@ -1,13 +1,11 @@
 import sys;
-sys.path.append("F:/Python")
+sys.path.append("E:/Python")
 import command_line
 import os
 #import webbrowser
 from datetime import date;
 import time
-
-#chrome = webbrowser.get("chrome");
-#webbrowser.open("www.youtube.com", new=2)
+import shutil
     
 cwd = os.getcwd()
     
@@ -30,7 +28,7 @@ def add(args, clr):
         script_text = ""    
         if "-y" in args:
             with open(cwd + "/classscript.js") as file2:
-                script_text = file2.read().replace("name", args[0])
+                script_text = file2.read().replace("name", args[0].replace(".js", ""))
         file.write(script_text)
         pass
     
@@ -45,8 +43,13 @@ def exit_project(args, clr):
     clr.running = False
     pass 
 
-tag_types = ["script", "link"]
 def build(args, clr):
+    if len(args) > 0:
+        name = args[0]
+        if os.path.exists("../" + name):
+            os.chdir("../" + name)
+        else:
+            print(f"Project {name} does not exist")
     with open("index.html") as file:
         text = file.read()
     text = replace_all_tags(text, "<script src=\"", "\"></script>", "<script>", "</script>");
@@ -104,7 +107,30 @@ def open_project(args, clr):
     command_line.create_command_line({"add": add, "open": open_project_in_vscode, "build": build}, 
                                      exit_function=exit_project, 
                                      command_line_data=[clr, args[0]]) 
- 
+def copy_files_to_directory(src, dest):
+    for file_name in os.listdir(src):
+        source = src + "/" + file_name
+        destination = dest + "/" + file_name
+        print(source, destination)
+        if os.path.isfile(source):
+            shutil.copy(source, destination)
+            print('copied', file_name)
+
+
+def copy(args, clr):
+    os.chdir("../")
+    src = args[0]
+    dest = args[1]
+    os.mkdir(dest)
+    copy_files_to_directory(src, dest)
+    os.chdir(dest)
+    with open("index.html") as file:
+        text = file.read().replace(src, dest)
+    with open("index.html", "w") as file:
+        file.write(text)
+
+    os.chdir(cwd)
+
 def create(args, clr):
     if len(args)==0:
         print("create [Project Name]")
@@ -164,7 +190,8 @@ commands = {
     "create": create,
     "open": open_project,
     "build": build_project,
-    "git": git
+    "git": git,
+    "copy":copy
 }
 
 

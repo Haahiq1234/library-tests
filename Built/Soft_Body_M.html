@@ -249,6 +249,7 @@
             }
         }
         const on = {
+            click: new EventHandler(),
             mousemove: new EventHandler(),
             setUp: new EventHandler(),
             draw: new EventHandler(),
@@ -259,33 +260,48 @@
             keypressed: new EventHandler(),
             wheel: new EventHandler()
         };
-        document.onmousemove = function(event) {
-            on.mousemove.Fire(event.clientX, event.clientY, event);
-        }
-        document.ontouchmove = function(event) {
-            on.mousemove.Fire(event.touches[0].clientX, event.touches[0].clientY, event);
-        }
-        document.onmouseup = function(event) {
-            on.mouseup.Fire(event.clientX, event.clientY, event);
-        };
-        document.ontouchend = function(event) {
-            on.mouseup.Fire(event.touches[0].clientX, event.touches[0].clientY, event);
-        }
-        document.ontouchstart = function(event) {
-            on.mousedown.Fire(0, event.touches[0].clientX, event.touches[0].clientY, event);
-        }
-        document.onmousedown = function (event) {
-            //console.log(event);
-            on.mousedown.Fire(event.buttons, event.clientX, event.clientY, event);
-        };
-        document.onkeyup = function (event) {
-            on.keyup.Fire(event.key, event);
-        };
-        document.onkeydown = function (event) {
-            on.keypressed.Fire(event.key, event);
-        };
-        document.onwheel= function(event) {
-            on.wheel.Fire(event.deltaY / -100, event)
+        {
+            var mousestart;
+            document.onmousemove = function(event) {
+                on.mousemove.Fire(event.clientX, event.clientY, event);
+            }
+            document.ontouchmove = function(event) {
+                on.mousemove.Fire(event.touches[0].clientX, event.touches[0].clientY, event);
+            }
+            document.onmouseup = function(event) {
+                let x = event.clientX;
+                let y = event.clientY;
+                on.mouseup.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
+                on.click.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
+            };
+            document.ontouchend = function(event) {
+                let x = event.touches[0].clientX;
+                let y = event.touches[0].clientY;
+                mouse = new Vector2(Infinity, Infinity);
+                on.mouseup.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
+                on.click.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
+            }
+            document.ontouchstart = function(event) {
+                let x = event.touches[0].clientX;
+                let y = event.touches[0].clientY;
+                mousestart = new Vector2(x,y);
+                on.mousedown.Fire(0, x, y, event);
+            }
+            document.onmousedown = function (event) {
+                //console.log(event);
+                mousestart = new Vector2(event.clientX, event.clientY);
+                on.mousedown.Fire(event.buttons, event.clientX, event.clientY, event);
+            };
+            document.onkeyup = function (event) {
+                on.keyup.Fire(event.key, event);
+            };
+            document.onkeydown = function (event) {
+                on.keypressed.Fire(event.key, event);
+            };
+            document.onwheel= function(event) {
+                on.wheel.Fire(event.deltaY / -100, event)
+            }
+        
         }
         // #endregion
         
@@ -767,9 +783,7 @@
             });
             on.mouseup.bind(function () {
                 mousePressed = false;
-                if (window.mouse_Up) {
-                    mouse_Up();
-                }
+                //console.log("Hello");
             });
             function GetKey(keyCode) {
                 return Boolean(pressed[keyCode]);
@@ -4314,6 +4328,11 @@
                   );
                 }
             }
+            addForce(f) {
+                for (var point of this.physics.points) {
+                    point.addForce(f);
+                }
+            }
             inBounds(x, y) {
                 return x >= 0 && y >= 0 && x < this.width && y < this.height;
             }
@@ -4468,9 +4487,21 @@
             if (menu.enabled) {
                 menu.update();
             } else {
+                softBody.addForce(new Vector2(GetAxis("horizontal") * 2, 0));
                 softBody.update();
             }
         }
+        function key_Press() {
+            if (menu.enabled) return;
+            if (keyCode == key.space) {
+                softBody.addForce(new Vector2(0,-200));
+            }
+            
+        }
+        on.mouseup.bind(function(x, y, dx, dy) {
+            noLoop();
+            line(x, y, x - dx, y - dy);
+        });
     </script>
 </body>
 </html>

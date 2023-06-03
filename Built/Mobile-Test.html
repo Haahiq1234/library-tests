@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta Mobile-Test="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile-Test</title>
     <style>
         * {
             box-sizing: border-box;
@@ -4207,269 +4207,26 @@
         
     </script>
     <script>
-        class Menu {
-            constructor() {
-                this.enabled = true;
-                this.sliders = [];
-            }
-            init() {
-                this.closeButton = new Button(CanvasWidth / 2, CanvasHeight - 50, CanvasWidth / 4, 40);
-                this.closeButton.text("Start", 20);
-                var menu = this;
-                this.closeButton.bind("click", () => menu.close());
-                
-        
-                let xwidth = 75;
-                let x = (CanvasWidth - xwidth * 5) / 2;
-                this.distanceBetweenSliders = xwidth;
-                this.x = x;
-        
-                this.ks = new Slider(x, 300, x, 100, 0, 2, 0.99, color(255, 0, 0));
-                this.ks.text(slider => "" + slider.value(100), 10);
-                this.ks.name("ks", 15, 0, 20);
-        
-                this.kd = new Slider(x + xwidth, 300, x + xwidth, 100, 0, 2, 1, color(255, 0, 0));
-                this.kd.text(slider => "" + slider.value(100), 10);
-                this.kd.name("kd", 15, 0, 20);
-        
-                this.radius = new Slider(x + xwidth * 2, 300, x + xwidth * 2, 100, 0, 25, 10, color(255, 0, 0));
-                this.radius.text(slider => "" + slider.value(1), 10);
-                this.radius.name("Radius", 15, 0, 20);
-        
-                this.distanceBetweenPoints = new Slider(x + xwidth * 3, 300, x + xwidth * 3, 100, 0, 200, 50, color(255, 0, 0));
-                this.distanceBetweenPoints.text(slider => "" + slider.value(1), 10);
-                this.distanceBetweenPoints.name("Distance", 15, 0, 20);
-        
-                this.width = new Slider(x + xwidth * 4, 300, x + xwidth * 4, 100, 0, 1.01, 1, color(255, 0, 0));
-                this.width.text(slider => "" + floor(menu.currentMaximumWidth * slider.value() + 1), 10);
-                this.width.name("Width", 10, 0, 20);
-        
-                this.height = new Slider(x + xwidth * 5, 300, x + xwidth * 5, 100, 0, 1.01, 0.7, color(255, 0, 0));
-                this.height.text(slider => "" + floor(menu.currentMaximumHeight * slider.value() + 1), 10);
-                this.height.name("Height", 10, 0, 20);
-            }
-            getMaximumSize() {
-                let distanceBetweenPoints = this.distanceBetweenPoints.value(1);
-                let radius = this.radius.value();
-                let width = floorDiv(CanvasWidth - radius * 2 - softBody.x, distanceBetweenPoints);
-                let height = floorDiv(CanvasHeight - radius * 2 - softBody.y, distanceBetweenPoints);
-                this.currentMaximumWidth = width;
-                this.currentMaximumHeight = height;
-            }
-            update() {
-                this.getMaximumSize();
-            }
-            close() {
-                this.enabled = false;       
-                fill(255, 0, 0);
-                let width = floor(this.currentMaximumWidth * this.width.value() + 1)
-                let height = floor(this.currentMaximumHeight * this.height.value() + 1)
-        
-                softBody.generate(width, height, this.distanceBetweenPoints.value(1), this.ks.value(100), this.kd.value(100), new Vector2(0, 2), this.radius.value(1)); 
-                UI.Clear();
-            }
-        }
-    </script>
-    <script>
-        class SoftBody {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
-            }
-            generate(width, height, distanceBetweenPoints, ks, kd, gravity, radius) {
-                this.width = width;
-                this.height = height;
-                this.ks = ks;
-                this.kd = kd;
-                this.radius = radius;
-                this.physics = new Physics2DSystem();
-                this.physics.gravity = gravity;
-                this.bounds = new Rect(this.radius, this.radius, CanvasWidth - this.radius * 2, CanvasHeight - this.radius * 2);
-                this.physics.addBounds(this.bounds);
-                for (var j = 0; j < height; j++) {
-                    for (var i = 0; i < width; i++) {
-                       this.physics.addPoint(new Physics2DMassPoint(this.x + distanceBetweenPoints * i, this.y + distanceBetweenPoints * j));
-                    }
-                }
-                for (var i = 0; i < this.physics.points.length; i++) {
-                    let x = i % width;
-                    let y = (i - x) / width;
-                    this.addSpring(i, x + 1, y);
-                    this.addSpring(i, x,     y + 1);
-                    this.addSpring(i, x + 1, y + 1);
-                    this.addSpring(i, x - 1, y + 1);
-                }
-            }
-            addSpring(i, x, y) {
-                //console.log(x, y);
-                if (this.inBounds(x, y)) {
-                  let j = this.index(x, y);
-                  this.physics.addSpring(
-                    new Physics2DSpring(
-                      this.physics.points[i],
-                      this.physics.points[j],
-                      this.ks,
-                      this.kd
-                    )
-                  );
-                }
-            }
-            inBounds(x, y) {
-                return x >= 0 && y >= 0 && x < this.width && y < this.height;
-            }
-            index(x, y) {
-                return x + y * this.width;
-            }
-            update() {
-                this.physics.update();
-                for (var spring of this.physics.springs) {
-                    line(spring.a.pos.x, spring.a.pos.y, spring.b.pos.x, spring.b.pos.y);
-                }
-                for (var point of this.physics.points) {
-                    circle(point.pos.x, point.pos.y, this.radius);
-                }
-            }
-        }
-    </script>
-    <script>
-        class Physics2DMassPoint {
-            constructor(x, y, m=1) {
-                this.pos = new Vector2(x, y);
-                this.mass = m;
-                this.vel = new Vector2(0, 0);
-        
-                this.acc = new Vector2(0, 0);
-        
-                this.bounce = 0;
-                this.dampening = 0.99;
-            }
-            update() {
-                this.vel.add(Vector.mult(this.acc, Time.deltaTime / 100));
-                this.pos.add(Vector.mult(this.vel, Time.deltaTime / 100));
-                //console.log(this.pos);
-                this.acc.reset();
-            }
-            bindToBounds(bounds) {
-                //console.log(this.pos);
-                if (this.pos.x < bounds.x) {
-                    this.pos.x = bounds.x;
-                    this.vel.x *= this.bounce;
-                } 
-                if (this.pos.y < bounds.y) {
-                    this.pos.y = bounds.y;
-                    this.vel.y *= this.bounce;
-                }
-                if (this.pos.x > (bounds.x + bounds.w)) {
-                    this.pos.x = bounds.x + bounds.w;
-                    this.vel.x *= this.bounce;
-                }
-                if (this.pos.y > (bounds.y + bounds.h)) {
-                    this.pos.y = bounds.y + bounds.h;
-                    this.vel.y *= this.bounce;
-                }
-            }
-            addForce(f) {
-                this.acc.add(Vector.div(f, this.mass));
-            }
-        }
-        class Physics2DSpring {
-            constructor(a, b, k, kd) {
-                this.a = a;
-                this.b = b;
-                this.rest = Vector.dist(a.pos, b.pos);
-                this.ks = k;
-                this.kd = kd;
-            }
-            update() {
-                let dir = Vector.sub(this.b.pos, this.a.pos);
-                if (dir.mag() > 0) {
-                    let x = ((dir.mag() - this.rest) * this.ks);
-                    let f = dir.setMag(x + this.calculateDampening());
-                    this.apply(f);
-                }
-            }
-            apply(force) {
-                this.a.addForce(force);
-                this.b.addForce(force.mult(-1));
-            }
-            calculateDampening() {
-                let normalizedDirectionVector = Vector.directionVector(this.a.pos, this.b.pos);
-                let velocityDifference = Vector.sub(this.b.vel, this.a.vel);
-                let fd = Vector.dot(normalizedDirectionVector, velocityDifference) * this.kd;
-                return fd;
-            }
-        }
-        class Physics2DSystem {
-            constructor() {
-                this.points = [];
-                this.springs = [];
-                this._gravity = [0, 0];
-                this.bounds = [];
-            }
-            update() {
-                for (var point of this.points) {
-                    point.acc.add(this._gravity(point.pos.x, point.pos.y));
-                    point.update();
-                    for (var bounds of this.bounds) {
-                        point.bindToBounds(bounds);
-                    }
-                }
-                for (var spring of this.springs) {
-                    spring.update();
-                }
-            }
-            addBounds(bound) {
-                this.bounds.push(bound);
-            }
-            addPoint(p) {
-                this.points.push(p);
-            }
-            addSpring(s) {
-                this.springs.push(s);
-            }
-            set gravity(gr) {
-                if (typeof(gr) == "function") {
-                    this._gravity = gr;
-                } else {
-                    this._gravity = (x, y) => gr;
-                }
-            }
-        }
-    </script>
-    <script>
-        
-        class Rect {
-            constructor(x, y, w, h) {
-                this.x = x + ((w < 0)? w : 0);
-                this.y = y + ((h < 0)? h : 0);
-                this.w = Math.abs(w);
-                this.h = Math.abs(h);
-            }
-            contains(px, py) {
-                return (px > this.x && py > this.y && px < this.x + this.w && py < this.y + this.h);
-            }
-            intersectsRect(rect) {
-                return (this.x < rect.x + rect.w && this.x + this.w > rect.x && this.y < rect.y + rect.h && this.y + this.h > rect.h);
-            }
-        }
-    </script>
-    <script>
-        const softBody = new SoftBody(50, 50);
-        const menu = new Menu();
-        
+        // document.ontouchstart = function (event) {
+        //     fill(255, 0, 0);
+        //     circle(event.touches[0].clientX, event.touches[0].clientY, 10);
+        // }
+        // document.ontouchmove = function (event) {
+        //     fill(0, 255, 0);
+        //     circle(event.touches[0].clientX, event.touches[0].clientY, 10);
+        // }
+        // document.ontouchend = function (event) {
+        //     fill(0, 0, 255);
+        //     circle(event.touches[0].clientX, event.touches[0].clientY, 10);
+        // }
         function setUp() {
-            createCanvas(min(window.innerWidth, 400), 500);
-            menu.init();
-            fill(255, 0, 0);
-            lineWidth(2);
+            createCanvas(400, 400);
+            frameRate(60);
         }
         function draw() {
-            clear();
-            if (menu.enabled) {
-                menu.update();
-            } else {
-                softBody.update();
-            }
+            //clear();
+            fill(255, 0, 0);
+            circle(mouse.x, mouse.y, 5)
         }
     </script>
 </body>
