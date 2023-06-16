@@ -1,5 +1,4 @@
-﻿
-<html>
+﻿<html>
 <head>
 </head>
 <body>
@@ -7,24 +6,11 @@
     <script src="Canvas.js"></script>
     <script>
         function setUp() {
-            let table2 = [];
-            for (var i = 0; i < 200; i++) {
-                if (table2.length <= 1) {
-                    table2.push(sequence(1));
-                } else {
-                    table2.push(sequence(table2[i - 1][0] + table2[i - 2][0]));
-                    //console.table(table2);
-                }
+            let table2 = [1, 1];
+            for (var i = 2; i < 200; i++) {
+                    table2.push(table2[i - 1] + table2[i - 2]);
             }
             console.table(table2);
-        }
-        function sequence(no) {
-            let table1 = [no];
-            //console.table(table1);
-            for (var i = 2; i < 10; i++) {
-                table1.push(table1[0] % i);
-            }
-            return table1;
         }
     </script>
 </body>

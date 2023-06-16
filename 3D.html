@@ -1,9 +1,15 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
     <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
     <script src="Canvas.js"></script>
+    <script src="vec3.js"></script>
     <script>
         Camera.position.z = -2;
         var points = [
@@ -23,9 +29,7 @@
             createCanvas(400, 400);
             frameRate(60);
             Camera.setSpeed(speed, speed, speed)
-            Canvas.setOrigin();
-            setAxis("rot", "h", "g");
-            slider = createSlider(-360, 360, 0.1, 0, "Y Rotation");
+            Camera2D.translate(CanvasWidth / 2, CanvasHeight / 2);
         }
         function draw() {
             clear();

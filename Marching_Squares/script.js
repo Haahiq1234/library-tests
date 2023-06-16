@@ -76,6 +76,9 @@ class Grid {
         let c = createVector((i + 1 - ct) * this.cellwidth, (j + 1) * this.cellheight);
         let d = createVector(i * this.cellwidth, (j + 1 - dt) * this.cellheight);
 
+        noStroke();
+        fill(0, 255, 0);
+        beginShape();
         if (a_isGround) {
             arr.push(d, av, a);
         }
@@ -88,9 +91,10 @@ class Grid {
         if (d_isGround > GROUND) {
             arr.push(c, dv, d);
         }
-        noStroke();
-        fill(0, 255, 0);
-        shape.draw(...Vector.array(...arr));
+        for (var v of arr) {
+            vertex(v.x, v.y);
+        }
+        endShape();
         switch (cas) {
             case 1:
                 ln(d, c);

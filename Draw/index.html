@@ -23,8 +23,6 @@
         function draw() {
             clear(WIDTH, 0, CanvasWidth - WIDTH, HEIGHT);
             line(WIDTH, 0, WIDTH, HEIGHT);
-        }
-        on.draw.bind(function () {
             let nbet = Between.rect(Mouse.x, Mouse.y, 0, 0, WIDTH, HEIGHT);
             if (mousePressed) {
                 if (bet && !nbet) {
@@ -36,7 +34,7 @@
                 }
             }
             bet = nbet;
-        });
+        };
         function drawLine(ax, ay, bx, by) {
             line(ax, ay, bx, by);
         }

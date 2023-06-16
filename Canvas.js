@@ -1,86 +1,6 @@
 // #region Misc
-const windowWidth = screen.availWidth;
-const windowHeight = window.innerHeight;
-const WindowHandler = {
-    width: window.innerWidth,
-    height: window.innerHeight,
-    xo: 0,
-    yo: 0,
-    ym: 1,
-    xm: 1,
-    xo1: 0,
-    yo1: 0,
-    x: function (x) {
-        //console.log(x - this.xo1);
-        return this.xo + x * this.xm;
-    },
-    y: function (y) {
-        return this.yo + y * this.ym;
-    },
-    xi: function (x) {
-        return (x - this.xo) * this.xm;
-    },
-    yi: function (y) {
-        return (y - this.yo) * this.ym;
-    },
-    w: function (w) {
-        return w * this.xm;
-    },
-    h: function (h) {
-        return h * this.ym;
-    },
-    Vector2: function (vec) {
-        return new Vector2(this.x(vec.x), this.y(vec.y));
-    },
-    setOrigin: function (x = this.width / 2, y = this.height / 2) {
-        this.xo = x;
-        this.yo = y;
-    },
-    flipY: function (height) {
-        this.ym *= -1;
-        this.yo = height - this.yo;
-    },
-    flipX: function (width) {
-        this.xm *= -1;
-        this.xo = width - this.xo;
-    },
-};
-const RECTMODE = {
-    CORNER: 0,
-    CENTER: 1
-}
-const Camera2D = {
-    x: 0,
-    y: 0,
-    scaleX: 1,
-    scaleY: 1,
-    rectMode: RECTMODE.CORNER,
-    convertPos: function (_x, _y) {
-        //return [_x, _y];
-        return [this.x + _x * this.scaleX, this.y + _y * this.scaleY];
-    },
-    getRect: function (_x, _y, _w, _h) {
-        [_x, _y] = this.convertPos(_x, _y);
-        // if (_w < 0) {
-        //     _x += _w;
-        //     _w *= -1;
-        // }
-        // if (_h < 0) {
-        //     _y += _h;
-        //     _h *= -1;
-        // }
-        if (this.rectMode == RECTMODE.CENTER) {
-            _x -= _w / 2;
-            _y -= _h / 2;
-        }
-        return [_x, _y,_w, _h];
-    },
-    translate: function(dx, dy) {
-
-    }
-};
-function rectMode(rctMode) {
-    Camera2D.rectMode = rctMode;
+function IsMobile() {
+    return navigator.maxTouchPoints > 0;
 }
 function download(filename, text) {
     var element = document.createElement("a");
@@ -90,12 +10,6 @@ function download(filename, text) {
     );
     element.setAttribute("download", filename);
     element.click();
-}
-function downloadCanvasImage(name = "Canvas_Image.png") {
-    var link = document.createElement("a");
-    link.download = name;
-    link.href = ctx.canvas.toDataURL();
-    link.click();
 }
 function print(...messages) {
     console.log(...messages);
@@ -143,9 +57,8 @@ function print(...messages) {
     }
     setStorageItemType("Vector2", Vector2);
 }
-var loadingResources = 0;
 function loadFile(url, callback, id = 0) {
-    loadingResources++;
+    Control.LOADING++;
     let request = new XMLHttpRequest();
     //console.log(request);
     request.open("GET", url, true);
@@ -155,8 +68,8 @@ function loadFile(url, callback, id = 0) {
         } else {
             callback(request.responseText, false, id);
         }
-        loadingResources--;
-        checkForStart();
+        Control.LOADING--;
+        Control.startIfLoaded();
     };
     request.send();
 }
@@ -186,12 +99,14 @@ function loadFiles(urls, callback) {
 // #endregion
 
 // #region Events
+const EVENT_PREVENT_DEFAULT = "EVENT_PREVENT_DEFAULT";
 class EventHandler {
     bound;
     constructor() {
         this.bound = [];
         this.args = [];
         this.names = [];
+        this.continuing = false;
     }
     bind(func, args = [], name = this.names.length) {
         this.bound.push(func);
@@ -205,86 +120,95 @@ class EventHandler {
         this.bound.splice(ind, 1);
     }
     Fire(...args) {
-        let toReturn = {};
+        let toReturns = {};
         for (var i = 0; i < this.bound.length; i++) {
-            //console.log(...this.args[i]);
-            toReturn[this.names[i]] = this.bound[i](...this.args[i], ...args);
+            let toReturn = this.bound[i](...this.args[i], ...args);
+            if (toReturn == EVENT_PREVENT_DEFAULT) {
+                return toReturns;
+            }
+            toReturns[this.names[i]] = toReturn;
         }
-        return toReturn;
-    }
-    on() {
-        let ths = this;
-        return (...args) => {
-            return ths.Fire(...args);
-        };
+        return toReturns;
     }
 }
 const on = {
     click: new EventHandler(),
-    mousemove: new EventHandler(),
-    setUp: new EventHandler(),
+    pointermove: new EventHandler(),
+    start: new EventHandler(),
     draw: new EventHandler(),
-    mousedown: new EventHandler(),
-    mouseup: new EventHandler(),
+    pointerdown: new EventHandler(),
+    pointerup: new EventHandler(),
     keydown: new EventHandler(),
     keyup: new EventHandler(),
-    keypressed: new EventHandler(),
-    wheel: new EventHandler()
+    wheel: new EventHandler(),
 };
 {
-    var mousestart;
-    document.onmousemove = function(event) {
+    var startPosition;
+    var startTime;
+    document.onpointermove = function (event) {
         event.preventDefault();
-        on.mousemove.Fire(event.clientX, event.clientY, event);
-    }
-    document.ontouchmove = function(event) {
+        on.pointermove.Fire(event.clientX, event.clientY, event);
+    };
+    // document.oncontextmenu = function(event) {
+    //   event.preventDefault();
+    // }
+    document.onpointerup = function (event) {
         event.preventDefault();
-        on.mousemove.Fire(event.touches[0].clientX, event.touches[0].clientY, event);
-    }
-    document.onmouseup = function(event) {
         let x = event.clientX;
         let y = event.clientY;
-        on.mouseup.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
-        on.click.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
+        on.pointerup.Fire(
+            x,
+            y,
+            startPosition.x,
+            startPosition.y,
+            Time.time - startTime,
+            event
+        );
+        on.click.Fire(
+            x,
+            y,
+            startPosition.x,
+            startPosition.y,
+            Time.time - startTime,
+            event
+        );
     };
-    document.ontouchend = function(event) {
+    document.onpointercancel = function (event) {
         event.preventDefault();
-        let x = event.touches[0].clientX;
-        let y = event.touches[0].clientY;
-        mouse = new Vector2(Infinity, Infinity);
-        MobileDebug.Log("Touchend:", x, y, mousestart.x, mousestart.y);
-        on.mouseup.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
-        on.click.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
-    }
-    document.ontouchcancel = function(event) {
-        let x = event.touches[0].clientX;
-        let y = event.touches[0].clientY;
-        mouse = new Vector2(Infinity, Infinity);
-        MobileDebug.Log("Touchcancel:", x, y, mousestart.x, mousestart.y);
-        on.mouseup.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
-        on.click.Fire(x, y, x - mousestart.x, y - mousestart.y, event);
-    }
-    document.ontouchstart = function(event) {
-        let x = event.touches[0].clientX;
-        let y = event.touches[0].clientY;
-        mousestart = new Vector2(x,y);
-        on.mousedown.Fire(0, x, y, event);
-    }
-    document.onmousedown = function (event) {
-        //console.log(event);
-        mousestart = new Vector2(event.clientX, event.clientY);
-        on.mousedown.Fire(event.buttons, event.clientX, event.clientY, event);
+        let x = event.clientX;
+        let y = event.clientY;
+        on.pointerup.Fire(
+            x,
+            y,
+            startPosition.x,
+            startPosition.y,
+            Time.time - startTime,
+            event
+        );
+        on.click.Fire(
+            x,
+            y,
+            startPosition.x,
+            startPosition.y,
+            Time.time - startTime,
+            event
+        );
+    };
+    document.onpointerdown = function (event) {
+        event.preventDefault();
+        startTime = Time.time;
+        startPosition = new Vector2(event.clientX, event.clientY);
+        on.pointerdown.Fire(event.clientX, event.clientY, event);
     };
     document.onkeyup = function (event) {
         on.keyup.Fire(event.key, event);
     };
     document.onkeydown = function (event) {
-        on.keypressed.Fire(event.key, event);
+        on.keydown.Fire(event.key, event);
     };
-    document.onwheel= function(event) {
-        on.wheel.Fire(event.deltaY / -100, event)
-    }
-
+    document.onwheel = function (event) {
+        on.wheel.Fire(event.deltaY / -100, event);
+    };
 }
 // #endregion
 
@@ -465,10 +389,11 @@ Vector.constraint = function (p, a, b) {
     return createVector(x, y);
 };
 Vector.interpolate = function (a, b, t, f = (x) => x) {
+    console.log(f(t));
     return Vector.lerp(a, b, f(t));
 };
 Vector.lerp = function (a, b, t) {
-    return new Vector2(a.x * (t - 1) + b.x * t, a.y * (t - 1) + b.y * t);
+    return new Vector2(a.x * (1 - t) + b.x * t, a.y * (1 - t) + b.y * t);
 };
 Vector.mult = function (v, m) {
     return new Vector2(v.x * m, v.y * m);
@@ -566,9 +491,9 @@ function Vector2(x = 0, y = x) {
     this.array = function () {
         return [this.x, this.y];
     };
-    this.mult = function (pow) {
-        this.x *= pow;
-        this.y *= pow;
+    this.mult = function (mx, my = mx) {
+        this.x *= mx;
+        this.y *= my;
         return this;
     };
     this.reset = function () {
@@ -646,7 +571,8 @@ function Vector2(x = 0, y = x) {
 // #region Input
 const Mouse = {
     position: new Vector2(0, 0),
-    previousPosition: new Vector2(0, 0),
+    previous: new Vector2(0, 0),
+    timeSinceHeld: 0,
     get x() {
         return this.position.x;
     },
@@ -654,35 +580,27 @@ const Mouse = {
         return this.position.y;
     },
     get px() {
-        return this.previousPosition.x;
+        return this.previous.x;
     },
     get py() {
-        return this.previousPosition.y;
+        return this.previous.y;
     },
     get dx() {
-        return -this.previousPosition.x + this.position.x;
+        return -this.previous.x + this.position.x;
     },
     get dy() {
-        return -this.previousPosition.y + this.position.y;
-    }
+        return -this.previous.y + this.position.y;
+    },
 };
-Object.freeze(Mouse);
 var mouse = new Vector2(0, 0);
 var mouse2 = new Vector2(0, 0);
 {
-    on.mousemove.bind(function (x, y, event) {
-        x = WindowHandler.xi(x);
-        y = WindowHandler.yi(y);
-        mouse.set(x, y);
+    on.pointermove.bind(function (x, y, event) {
+        mouse.set(...Camera2D.invertPos(x, y));
         mouse2.set(x, y);
-    });
-    on.mousedown.bind(function(button, x, y, event) {
-        x = WindowHandler.xi(x);
-        y = WindowHandler.yi(y);
-        mouse.set(x, y);
-
-        mouse2.set(x, y);
-        
+        for (var element of UI.Elements) {
+            element.getHoveredInfo();
+        }
     });
     var key = {};
     key.up = "ArrowUp";
@@ -758,31 +676,30 @@ var mouse2 = new Vector2(0, 0);
             return false;
         }
     }
-    on.mousedown.bind(function () {
+    on.pointerdown.bind(function (x, y) {
         mousePressed = true;
+        mouse.set(...Camera2D.invertPos(x, y));
+        mouse2.set(x, y);
         if (window.mouse_Down) {
             mouse_Down();
         }
     });
-    on.mouseup.bind(function () {
+    on.pointerup.bind(function () {
         mousePressed = false;
+        Mouse.timeSinceHeld = 0;
         //console.log("Hello");
     });
     function GetKey(keyCode) {
         return Boolean(pressed[keyCode]);
     }
     const pressed = {};
-    on.keypressed.bind(function (event) {
+    on.keydown.bind(function (event) {
         keyCode = event;
         if (!pressed[keyCode]) {
-            on.keydown.Fire(keyCode);
-            if (window.key_Press) {
-                key_Press();
+            if (window.key_Down) {
+                key_Down();
             }
             pressed[keyCode] = true;
-        }
-        if (window.key_Down) {
-            key_Down();
         }
     });
     on.keyup.bind(function (event) {
@@ -824,32 +741,69 @@ const Time = {
     frameRate: 0,
     time: 0,
 };
-var frameNo = 0;
-autoStartLoop = true;
-var UnSetFps = true;
-let drawIntervalId;
-let animationFrameLoopId;
-var STARTED = false;
-let FIXEDFPS = false;
-
-{
-    var loaded = false;
-    function checkForStart() {
-        if (!(loadingResources > 0) && !STARTED && loaded) {
-            STARTED = true;
+const Control = {
+    LOADED: false,
+    LOADING: 0,
+    STARTED: false,
+    FIXED_FPS: false,
+    RUNNING: false,
+    LOOP_ID: -1,
+    FRAME_DRAWN: false,
+    FRAME_NO: 0,
+    loop: function () {
+        if (this.RUNNING) return;
+        this.RUNNING = true;
+        if (this.FIXED_FPS) {
+            this.LOOP_ID = setInterval(this.callRedraw, 1000 / Time.frameRate);
+        } else {
+            this.LOOP_ID = requestAnimationFrame(this.callRedraw);
+        }
+    },
+    noLoop: function () {
+        if (!this.RUNNING) return;
+        this.RUNNING = false;
+        if (this.FIXED_FPS) {
+            clearInterval(this.LOOP_ID);
+        } else {
+            cancelAnimationFrame(this.LOOP_ID);
+        }
+    },
+    callRedraw: function (timeStamp) {
+        if (!Control.FRAME_DRAWN) {
+            if (!Control.FIXED_FPS) {
+                Time.deltaTime = timeStamp - Time.time;
+                Time.frameRate = 1000 / Time.deltaTime;
+                Time.time = timeStamp;
+            } else {
+                Time.time += Time.deltaTime;
+            }
+            if (mousePressed && Mouse.timeSinceHeld > -1) {
+                Mouse.timeSinceHeld += Time.deltaTime;
+            }
+            redraw();
+            if (!Control.FIXED_FPS) {
+                Control.LOOP_ID = requestAnimationFrame(Control.callRedraw);
+            }
+            Control.FRAME_DRAWN = false;
+        }
+    },
+    startIfLoaded: function () {
+        //console.log(this.LOADED && this.LOADING == 0 && !this.STARTED);
+        if (this.LOADED && this.LOADING == 0 && !this.STARTED) {
+            this.STARTED = true;
             if (window.setUp) {
                 setUp();
             }
-            on.setUp.Fire();
+            on.start.Fire();
+            this.loop();
         }
-    }
-}
-document.body.onload = function () {
-    loaded = true;
-    checkForStart();
+    },
 };
-on.setUp.bind(function () {
-    frameRate(60);
+document.body.onload = function () {
+    Control.LOADED = true;
+    Control.startIfLoaded();
+};
+on.start.bind(function () {
     for (var i = 0; i < UI.Elements.length; i++) {
         let element = UI.Elements[i];
         if (element.constructor == Gizmo) {
@@ -859,82 +813,43 @@ on.setUp.bind(function () {
     }
 });
 function frameRate(rate) {
-    UnSetFps = false;
+    Control.noLoop();
+    Control.FIXED_FPS = true;
     Time.frameRate = rate;
     Time.deltaTime = 1000 / rate;
     Time.time = 0;
-    if (drawIntervalId) {
-        clearInterval(drawIntervalId);
-    }
-    FIXEDFPS = true;
-    drawIntervalId = setInterval(redraw, 1000 / rate);
+    Control.loop();
 }
 let loopGoing = true;
 function noLoop() {
-    autoStartLoop = false;
-    if (UnSetFps) {
-        loopGoing = false;
-        cancelAnimationFrame(animationFrameLoopId);
-    }
-    if (!UnSetFps) {
-        clearInterval(drawIntervalId);
-    }
+    Control.noLoop();
 }
 function loop() {
-  autoStartLoop = true;
-  if (UnSetFps) {
-    animationFrameLoopId = requestAnimationFrame(loopFunction);
-  }
-  if (!UnSetFps) {
-    clearInterval(drawIntervalId | 0);
-    drawIntervalId = setInterval(loopFunction, 1000 / FPS);
-  }
+    Control.loop();
 }
-{
-  let drawn = false;
-  function loopFunction(...args) {
-    if (!drawn) 
-        redraw(...args);
-    drawn = false;
-  }
 function redraw(timeStamp) {
-  if (UnSetFps && !loopGoing) {
-    Time.time = timeStamp;
-  }
-  //console.log(Mouse.position, Mouse.previousPosition);
-  Mouse.previousPosition.set(Mouse.x, Mouse.y);
-  Mouse.position.set(mouse.x, mouse.y);
-  if (Canvas.enabled) {
-    //ctx.scale(pixelDensity(), pixelDensity());
-    UI.Update();
-    ctx.save();
-  }
-  on.draw.Fire();
-  if (window.draw) {
-    draw();
-  }
-  if (Canvas.enabled) {
-    UI.Draw();
-  }
-  frameNo += 1;
-  if (UnSetFps) {
-    Time.deltaTime = timeStamp - Time.time;
-    Time.frameRate = 1000 / Time.deltaTime;
-    Time.time = timeStamp;
-    animationFrameLoopId = requestAnimationFrame(redraw);
-  } else {
-    Time.time += Time.deltaTime;
-  }
-  if (window.lateDraw) {
-    lateDraw();
-  }
-  if (Canvas.enabled) {
-    saveColor();
-    ctx.restore();
-    loadColor();
-  }
-  drawn = true;
-}
+    Mouse.previous.set(Mouse.x, Mouse.y);
+    Mouse.position.set(mouse2.x, mouse2.y);
+    Control.FRAME_NO++;
+    if (Canvas.enabled) {
+        UI.Update();
+        ctx.save();
+    }
+    on.draw.Fire();
+    if (window.draw) {
+        draw();
+    }
+    if (Canvas.enabled) {
+        UI.Draw();
+    }
+    if (window.lateDraw) {
+        lateDraw();
+    }
+    if (Canvas.enabled) {
+        saveColor();
+        ctx.restore();
+        loadColor();
+    }
 }
 // interval stuff
 // #endregion
@@ -959,6 +874,9 @@ function reverse(str) {
 function mag(x, y) {
     return (x * x + y * y) ** 0.5;
 }
+function pow(number, power) {
+    return Math.pow(number, power);
+}
 function dist(ax, ay, bx, by) {
     return mag(bx - ax, by - ay);
 }
@@ -968,8 +886,8 @@ function ciel(no, mod = 1) {
 function interpolate(a, b, t) {
     return a * (1 - t) + b * t;
 }
-function normalize(x0, x1, x) {
-    return (x - x0) / (x1 - x0);
+function normalize(x, a, b) {
+    return (x - a) / (b - a);
 }
 function ceil(no, res = 1) {
     return floor(no, res) + res;
@@ -1720,11 +1638,7 @@ function factorize(no) {
     let saved = {};
     function factorial(no) {
         no = no - (no % 1);
-        return no < 2
-            ? 1
-            : saved[no] ?? false
-            ? saved[no]
-            : factorial(no - 1) * no;
+        return no < 2 ? 1 : saved[no] ?? false ? saved[no] : factorial(no - 1) * no;
     }
 }
 function floor(no, floore = 1) {
@@ -1826,7 +1740,7 @@ function constraintedAxis(num, min, max) {
     return num < min ? -1 : num > max ? 1 : 0;
 }
 function map(x, mna, mxa, mnb, mxb) {
-    return interpolate(mnb, mxb, normalize(mna, mxa, x));
+    return interpolate(mnb, mxb, normalize(x, mna, mxa));
 }
 function interpolateArray(arr, index) {
     let i = floor(index);
@@ -2216,6 +2130,9 @@ for (var i = 0; i < 255; i++) {
     alphaValues.unshift(hex);
 }
 function rgb(...args) {
+    if (typeof args[0] == "string") {
+        return args[0];
+    }
     if (args.length == 1) {
         args[0] = constraint(args[0], 0, 255);
         return "rgba(" + args[0] + ", " + args[0] + ", " + args[0] + ", 1)";
@@ -2255,6 +2172,9 @@ function rgb(...args) {
             ")"
         );
     }
+}
+function invertColor(col) {
+    return color(255 - col[0], 255 - col[1], 255 - col[2]);
 }
 function color() {
     args = filterArray(arguments);
@@ -2369,7 +2289,7 @@ const Colors = {
         };
         return color(sum.r, sum.g, sum.b, sum.a);
     },
-    sub: function () {},
+    sub: function () { },
     weighted: function (...args) {
         let cols = [];
         for (var i = 0; i < args.length; i += 2) {
@@ -2468,115 +2388,122 @@ function fillArray(len, ...fls) {
     let arr = new Array(len).map((n, i) => fls[i % fls.length]);
     return arr;
 }
-function Array2D(width, height, defaultVal = 0) {
-    this.array = new Array(width * height);
-    for (var i = 0; i < this.array.length; i++) {
-        if (typeof defaultVal == "function") {
-            this.array[i] = defaultVal();
-        } else {
-            this.array[i] = defaultVal;
-        }
-    }
-    this.width = width;
-    this.height = height;
-    this.getCol = function (col) {
-        let cl = [];
-        for (var i = 0; i < this.height; i++) {
-            cl.push(this.array[this.index(col, i)]);
-        }
-        return cl;
-    };
-    this.getRow = function (row) {
-        let rw = this.array.slice(this.width * row, this.width * (row + 1));
-        return rw;
-    };
-    this.set = function (x, y, val) {
-        let ind = this.index(x, y);
-        this.array[ind] = val;
-    };
-    this.index = function (x, y) {
-        return y * this.width + x;
-    };
-    this.setRow = function (rw, row) {
-        this.array.splice(this.width * row, this.width * (row + 1), ...rw);
-    };
-    this.setCol = function (cl, col) {
-        for (var i = 0; i < this.height; i++) {
-            this.array[this.index(col, i)] = cl[i];
-        }
-    };
-    this.shuffleCol = function (cl) {
-        this.setCol(shuffle(this.getCol(cl)), cl);
-    };
-    this.shuffleRow = function (rw) {
-        this.setRow(shuffle(this.getRow(rw)), rw);
-    };
-    this.shuffle = function () {
-        shuffle(this.array);
-    };
-    this.pos = function (ind) {
-        let x = ind % this.width;
-        let y = ind - x;
-        return { col: x, row: y };
-    };
-    this.get = function (x, y) {
-        return this.array[this.index(x, y)];
-    };
-    this.swap = function (x, y, x1, y1) {
-        let ind1 = this.index(x, y);
-        let ind2 = this.index(x1, y1);
-        [this.array[ind1], this.array[ind2]] = [
-            this.array[ind2],
-            this.array[ind1],
-        ];
-    };
-    this.grid = function () {
-        let arr = [];
-        for (let x = 0; x < this.width; x++) {
-            arr.push([]);
-            for (let y = 0; y < this.height; y++) {
-                arr[x].push(this.array[this.index(x, y)]);
+class Array2D {
+    constructor(width, height, defaultVal = 0) {
+        this.array = new Array(width * height);
+        for (var i = 0; i < this.array.length; i++) {
+            if (typeof defaultVal == "function") {
+                this.array[i] = defaultVal();
+            } else {
+                this.array[i] = defaultVal;
             }
         }
-        return arr;
-    };
-    this.transpose = function () {
-        let grid = this.grid();
-        let arr = [];
-        for (let y = 0; y < this.height; y++) {
-            arr.push([]);
+        this.width = width;
+        this.height = height;
+        this.getCol = function (col) {
+            let cl = [];
+            for (var i = 0; i < this.height; i++) {
+                cl.push(this.array[this.index(col, i)]);
+            }
+            return cl;
+        };
+        this.getRow = function (row) {
+            let rw = this.array.slice(this.width * row, this.width * (row + 1));
+            return rw;
+        };
+        this.set = function (x, y, val) {
+            let ind = this.index(x, y);
+            if (x < 0 || y < 0 || x > 4 || y > 4) {
+                //console.trace(val, x, y);
+            }
+            this.array[ind] = val;
+        };
+        this.index = function (x, y) {
+            return y * this.width + x;
+        };
+        this.setRow = function (rw, row) {
+            for (var i = 0; i < this.width; i++) {
+                this.array[this.index(i, row)] = rw[i];
+            }
+        };
+        this.setCol = function (cl, col) {
+            for (var i = 0; i < this.height; i++) {
+                this.array[this.index(col, i)] = cl[i];
+            }
+        };
+        this.shuffleCol = function (cl) {
+            this.setCol(shuffle(this.getCol(cl)), cl);
+        };
+        this.shuffleRow = function (rw) {
+            this.setRow(shuffle(this.getRow(rw)), rw);
+        };
+        this.shuffle = function () {
+            shuffle(this.array);
+        };
+        this.pos = function (ind) {
+            let x = ind % this.width;
+            let y = (ind - x) / this.width;
+            return new Vector2(x, y);
+        };
+        this.get = function (x, y) {
+            return this.array[this.index(x, y)];
+        };
+        this.swap = function (x, y, x1, y1) {
+            let ind1 = this.index(x, y);
+            let ind2 = this.index(x1, y1);
+            [this.array[ind1], this.array[ind2]] = [
+                this.array[ind2],
+                this.array[ind1],
+            ];
+        };
+        this.grid = function () {
+            let arr = [];
             for (let x = 0; x < this.width; x++) {
-                arr[y].push(this.array[this.index(x, y)]);
+                arr.push([]);
+                for (let y = 0; y < this.height; y++) {
+                    arr[x].push(this.array[this.index(x, y)]);
+                }
             }
-        }
-        return arr;
-    };
-    //this.transpose2 = function () {
-    //    let grid = Object.assign({}, this);
-    //    //let i = 0;
-    //    console.table(grid.grid());
-    //    for (let y = 0; y < this.height; y++) {
-    //        for (let x = y; x < this.width; x++) {
-    //            grid.swap(x, y, y, x);
-    //            console.log(x, y);
-    //        }
-    //    }
-    //    console.table(grid.grid());
-    //    return grid;
-    //}
-    this.transpose2 = function () {
-        let grid = new Array2D(this.height, this.width);
-        console.table(this.grid());
-        let cols = [];
-        for (var i = 0; i < grid.width; i++) {
-            cols.push(this.getCol(i));
-        }
-        for (var i = 0; i < cols.length; i++) {
-            grid.setRow(cols[i]);
-        }
-        console.table(grid.grid());
-        return grid;
-    };
+            return arr;
+        };
+        this.transpose = function () {
+            let grid = this.grid();
+            let arr = [];
+            for (let y = 0; y < this.height; y++) {
+                arr.push([]);
+                for (let x = 0; x < this.width; x++) {
+                    arr[y].push(this.array[this.index(x, y)]);
+                }
+            }
+            return arr;
+        };
+        //this.transpose2 = function () {
+        //    let grid = Object.assign({}, this);
+        //    //let i = 0;
+        //    console.table(grid.grid());
+        //    for (let y = 0; y < this.height; y++) {
+        //        for (let x = y; x < this.width; x++) {
+        //            grid.swap(x, y, y, x);
+        //            console.log(x, y);
+        //        }
+        //    }
+        //    console.table(grid.grid());
+        //    return grid;
+        //}
+        this.transpose2 = function () {
+            let grid = new Array2D(this.height, this.width);
+            console.table(this.grid());
+            let cols = [];
+            for (var i = 0; i < grid.width; i++) {
+                cols.push(this.getCol(i));
+            }
+            for (var i = 0; i < cols.length; i++) {
+                grid.setRow(cols[i]);
+            }
+            console.table(grid.grid());
+            return grid;
+        };
+    }
 }
 function shuffle(arr) {
     arr.sort(() => (Math.random() > 0.5 ? 1 : -1));
@@ -2618,6 +2545,72 @@ function indicesOf(arr, val) {
 
 // #region Canvas
 
+const windowWidth = screen.availWidth;
+const windowHeight = window.innerHeight;
+
+const RECTMODE = {
+    CORNER: 0,
+    CENTER: 1,
+};
+const Camera2D = {
+    x: 0,
+    y: 0,
+    scaleX: 1,
+    scaleY: 1,
+    rectMode: RECTMODE.CORNER,
+    zoomed: 1,
+    convertPos: function (_x, _y) {
+        return [this.x + _x * this.scaleX, this.y + _y * this.scaleY];
+    },
+    invertPos: function (_x, _y) {
+        return [(_x - this.x) / this.scaleX, (_y - this.y) / this.scaleY];
+    },
+    getRect: function (_x, _y, _w, _h) {
+        [_x, _y] = this.convertPos(_x, _y);
+        // if (_w < 0) {
+        //     _x += _w;
+        //     _w *= -1;
+        // }
+        // if (_h < 0) {
+        //     _y += _h;
+        //     _h *= -1;
+        // }
+        if (this.rectMode == RECTMODE.CENTER) {
+            _x -= _w / 2;
+            _y -= _h / 2;
+        }
+        return [_x, _y, _w * this.scaleX, _h * this.scaleY];
+    },
+    translate: function (dx, dy) {
+        this.x += dx;
+        this.y += dy;
+    },
+    zoom: function (zoom, x, y) {
+        this.zoomed *= zoom;
+        this.x = this.x * zoom + x * (1 - zoom);
+        this.y = this.y * zoom + y * (1 - zoom);
+        this.scaleX *= zoom;
+        this.scaleY *= zoom;
+    },
+};
+const DrawShape = {
+    begin: function () {
+        ctx.beginPath();
+    },
+    line: function (ax, ay, bx, by) {
+        [ax, ay] = Camera2D.convertPos(ax, ay);
+        [bx, by] = Camera2D.convertPos(bx, by);
+    },
+};
+function rectMode(rctMode) {
+    Camera2D.rectMode = rctMode;
+}
+function downloadCanvasImage(name = "Canvas_Image.png") {
+    var link = document.createElement("a");
+    link.download = name;
+    link.href = ctx.canvas.toDataURL();
+    link.click();
+}
 {
     let savedColor;
     let savedColor2;
@@ -2673,55 +2666,6 @@ function indicesOf(arr, val) {
         return new TextMeasure(measure);
     }
 }
-let shape = {
-    vertices: [],
-    done: true,
-    begin: function () {
-        this.done = false;
-        this.vertices = [];
-    },
-    addVertex: function (x, y) {
-        [x, y] = Camera2D.convertPos(x, y);
-        this.vertices.push(x, y);
-    },
-    close: function (CLOSE = true) {
-        ctx.beginPath();
-        ctx.moveTo(this.vertices[0], this.vertices[1]);
-        for (i = 2; i < this.vertices.length; i += 2) {
-            ctx.lineTo(this.vertices[i], this.vertices[i + 1]);
-        }
-        if (CLOSE) {
-            ctx.lineTo(this.vertices[0], this.vertices[1]);
-        }
-        ctx.closePath();
-        if (fl) {
-            ctx.fill();
-        }
-        if (st) {
-            ctx.stroke();
-        }
-    },
-    draw: function () {
-        for (var i = 0; i < arguments.length; i += 2) {
-            const [x, y] = Camera2D.convertPos(arguments[i], arguments[i + 1]);
-            arguments[i] = x;
-            arguments[i + 1] = y;
-        }
-        ctx.beginPath();
-        ctx.lineTo(arguments[0], arguments[1]);
-        for (var i = 2; i < arguments.length; i += 2) {
-            ctx.lineTo(arguments[i], arguments[i + 1]);
-        }
-        ctx.lineTo(arguments[0], arguments[1]);
-        ctx.closePath();
-        if (fl) {
-            ctx.fill();
-        }
-        if (st) {
-            ctx.stroke();
-        }
-    },
-};
 const OPEN = 0;
 const CLOSE = 1;
 {
@@ -2741,7 +2685,7 @@ const CLOSE = 1;
             ctx.lineTo(vertices[i], vertices[i + 1]);
         }
         if (close == CLOSE) {
-            console.log(close);
+            //console.log(close);
             ctx.lineTo(vertices[0], vertices[1]);
             ctx.closePath();
         }
@@ -2751,6 +2695,7 @@ const CLOSE = 1;
         if (st) {
             ctx.stroke();
         }
+        vertices = [];
     }
 }
 function setPixel(x, y, col) {
@@ -2778,11 +2723,17 @@ function triangle(x, y, x1, y1, x2, y2) {
         ctx.fill();
     }
 }
-function circle(x, y, r) {
+function circle(x, y, r, arca = 0, arcb = 360) {
     [x, y] = Camera2D.convertPos(x, y);
     ctx.beginPath();
     r = max(r, 0);
-    ctx.arc(x, y, r, 0, TWO_PI);
+    ctx.arc(
+        x,
+        y,
+        r * Camera2D.zoomed,
+        Angle.angleModeToRadians(arca),
+        Angle.angleModeToRadians(arcb)
+    );
     ctx.closePath();
     if (st) {
         ctx.stroke();
@@ -2791,12 +2742,20 @@ function circle(x, y, r) {
         ctx.fill();
     }
 }
-function ellipse(x, y, d, d1) {
+function ellipse(x, y, a, b, arca = 0, arcb = 360) {
     [x, y] = Camera2D.convertPos(x, y);
     var c = ctx.strokeStyle;
     //ctx.strokeStyle = ctx.fillStyle;
     ctx.beginPath();
-    ctx.ellipse(x, y, d / 2, d1 / 2, 0, 0, 2 * Math.PI);
+    ctx.ellipse(
+        x,
+        y,
+        a,
+        b,
+        0,
+        Angle.angleModeToRadians(arca),
+        Angle.angleModeToRadians(arcb)
+    );
     ctx.closePath();
     if (fl) {
         ctx.fill();
@@ -2830,27 +2789,6 @@ const Canvas = {
     fillStyle: undefined,
     colorMode: RGB,
     enabled: false,
-    flipX: function () {
-        WindowHandler.flipX(CanvasWidth);
-    },
-    flipY: function () {
-        WindowHandler.flipY(CanvasHeight);
-    },
-    x: function (x) {
-        return WindowHandler.x(x);
-    },
-    y: function (y) {
-        return WindowHandler.y(y);
-    },
-    w: function (w) {
-        return WindowHandler.w(w);
-    },
-    h: function (h) {
-        return WindowHandler.h(h);
-    },
-    setOrigin: function (x = CanvasWidth / 2, y = CanvasHeight / 2) {
-        WindowHandler.setOrigin(x, y);
-    },
 };
 var ctx,
     CanvasWidth,
@@ -2899,7 +2837,7 @@ function lineWidth(w = ctx.lineWidth) {
 function createCanvas(
     w = windowWidth,
     h = windowHeight,
-    col = "rgb(255, 255, 255)"
+    willReadFrequently = false
 ) {
     var canvas = document.createElement("canvas");
     canvas.width = w;
@@ -2907,23 +2845,19 @@ function createCanvas(
     CanvasWidth = w;
     CanvasHeight = h;
     Canvas.enabled = true;
-    canvas.style.backgroundColor = col;
     document.body.insertBefore(canvas, document.body.childNodes[0]);
-    ctx = canvas.getContext("2d");
+    ctx = canvas.getContext("2d", { willReadFrequently });
+    ctx.imageSmoothingEnabled = false;
     Canvas.lineWidth = ctx.lineWidth;
     Canvas.fillStyle = ctx.fillStyle;
     Canvas.strokeStyle = ctx.strokeStyle;
-    canvas.style.border = "1px solid black";
-    canvas.addEventListener("mouseover", function () {
-        mouseOverCanvas = true;
-    });
-    canvas.addEventListener("mouseout", function () {
-        mouseOverCanvas = false;
-    });
+
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = Canvas.textFontSize + "px " + Canvas.textFontFamily;
+
     Canvas.canvas = canvas;
+    canvas.setAttribute("willReadFrequently", true)
     return canvas;
 }
 function clear(x = 0, y = 0, w = CanvasWidth, h = CanvasHeight) {
@@ -2932,16 +2866,14 @@ function clear(x = 0, y = 0, w = CanvasWidth, h = CanvasHeight) {
     ctx.clearRect(x, y, w, h);
     ctx.setTransform(t);
 }
-function backGround() {
-    let t = ctx.getTransform();
+function backGround(...col) {
+    push();
     ctx.resetTransform();
-    var col = color(arguments[0], arguments[1], arguments[2], arguments[3]);
-    var cl = ctx.fillStyle;
-    //console.log(col);
-    ctx.fillStyle = rgb(...col);
+    saveColor();
+    fill(...col);
     ctx.fillRect(0, 0, CanvasWidth, CanvasHeight);
-    ctx.fillStyle = cl;
-    ctx.setTransform(t);
+    loadColor();
+    pop();
 }
 function line(x, y, x1, y1) {
     [x, y] = Camera2D.convertPos(x, y);
@@ -3337,7 +3269,7 @@ class Image2 {
     onload(func) {
         var ths = this;
         this.image.onload = function () {
-            ths.image.onload = function () {};
+            ths.image.onload = function () { };
             func(ths);
         };
     }
@@ -3349,29 +3281,29 @@ class Image2 {
     }
     function loadPixels() {
         let data = ctx.getImageData(0, 0, CanvasWidth, CanvasHeight);
-        pixels = [];
-        for (var i = 0; i < data.data.length; i += 4) {
-            let arr = data.data.slice(i, i + 4);
-            //console.log(...arr);
-            if (Canvas.colorMode == HSL) {
-                arr = RGBToHSL(...arr);
-            }
-            //console.log(arr);
-            pixels.push([...arr]);
-        }
         Canvas.data = data;
+        setArray(Canvas.data.data, pixels);
+        // for (var i = 0; i < data.data.length; i += 4) {
+        //     let arr = data.data.slice(i, i + 4);
+        //     //console.log(...arr);
+        //     if (Canvas.colorMode == HSL) {
+        //         arr = RGBToHSL(...arr);
+        //     }
+        //     //console.log(arr);
+        //     pixels.push([...arr]);
+        // }
     }
     function updatePixels() {
-        setArray(Canvas.data, joinArrays(pixels));
-        let pixs = [];
-        for (var i = 0; i < pixels.length; i++) {
-            let arr = pixels[i];
-            if (Canvas.colorMode == HSL) {
-                arr = HSLToRGB(...arr);
-            }
-            pixs.push(...arr);
-        }
-        setArray(Canvas.data.data, pixs);
+        // setArray(Canvas.data, joinArrays(pixels));
+        // let pixs = [];
+        // for (var i = 0; i < pixels.length; i++) {
+        //     let arr = pixels[i];
+        //     if (Canvas.colorMode == HSL) {
+        //         arr = HSLToRGB(...arr);
+        //     }
+        //     pixs.push(...arr);
+        // }
+        setArray(Canvas.data.data, pixels);
         ctx.putImageData(Canvas.data, 0, 0);
     }
     function image(image, ...args) {
@@ -3396,7 +3328,7 @@ class Image2 {
         img.src = Image2.ctx.canvas.toDataURL();
         let im = new Image2(img);
         img.onload = function () {
-            img.onload = () => {};
+            img.onload = () => { };
             if (cb) {
                 cb(im);
             }
@@ -3409,12 +3341,12 @@ class Image2 {
         ctx.drawImage(pushedImages.pop());
     }
     function loadImage(name, width, height, cb) {
-        loadingResources++;
+        Control.LOADING++;
         var myImage = new Image();
         myImage.src = name;
         let im = new Image2(myImage);
         myImage.onload = function () {
-            myImage.onload = () => {};
+            myImage.onload = () => { };
             im.width = myImage.width;
             im.height = myImage.height;
             //console.log(myImage.width);
@@ -3423,8 +3355,8 @@ class Image2 {
             } else if (!height && width) {
                 width(im);
             }
-            loadingResources--;
-            checkForStart();
+            Control.LOADING--;
+            Control.startIfLoaded();
         };
         if (width && height) {
             myImage.width = width;
@@ -3452,7 +3384,21 @@ function setArray(arr1, arr2) {
 // #endregion
 
 //#region UI
-
+on.pointerdown.bind(function (button, x, y, event) {
+    for (var i = UI.Elements.length - 1; i >= 0; i--) {
+        let element = UI.Elements[i];
+        if (element.getHoveredInfo() && element.enabled) {
+            UI.Click(element);
+            //console.log(element);
+            mousePressed = false;
+            return;
+        }
+    }
+});
+on.pointerup.bind(function (x, y, dx, dy, event) {
+    //MobileDebug.Log("UI Unclicked", x, y, dx, y);
+    UI.UnClick();
+});
 class UIElement {
     static Selected = false;
     localPosition;
@@ -3479,13 +3425,13 @@ class UIElement {
         this.offset = createVector();
         this.position = createVector(x, y);
         this.id = UI.Elements.length;
-        this.click = new EventHandler();
+        this.onclick = new EventHandler();
         UI.Elements.push(this);
         UI.Relayer();
         //console.log(shapeArgs);
         this.setShape(...shapeArgs);
 
-        if (STARTED) {
+        if (Control.STARTED) {
             this.a = new Vector2(0, 0);
             this.b = new Vector2(CanvasWidth, CanvasHeight);
         }
@@ -3514,25 +3460,10 @@ class UIElement {
     }
     updateUI() {
         this.color = this.baseColor;
-        this.hovered = this.getHoveredInfo();
+        this.getHoveredInfo();
         this.update();
     }
-    update() {
-        if (mousePressed) {
-            let clicked = this.clicked;
-            this.clicked =
-                this.clicked || (this.hovered && !UIElement.Selected);
-            //console.log(this.clicked);
-            if (!clicked && this.clicked) {
-                UIElement.Selected = this;
-                this.OnClick();
-                this.click.Fire(this);
-            }
-        } else {
-            this.clicked = false;
-            UIElement.Selected = false;
-        }
-    }
+    update() { }
     drawUI() {
         saveColor();
         fill(this.color);
@@ -3590,26 +3521,35 @@ class UIElement {
         let textt = this._text(this);
         if (textt.length > 0) {
             ctx.save();
-            fill(0);
+            fill(this._textcolor(this.color));
             textSize(this._textSize);
             text(textt, position.x, position.y);
             ctx.restore();
-        } 
+        }
     }
-    text(text, size) {
-        if (typeof(text) == 'function') {
+    text(text, size, col = color(0)) {
+        if (typeof text == "function") {
             this._text = text;
         } else {
             this._text = () => text;
         }
         this._textSize = size;
+        if (typeof col != "function") {
+            this._textcolor = () => col;
+        } else {
+            this._textcolor = col;
+        }
     }
     _text() {
         return "";
     }
     _textSize;
-    OnClick() {}
+    _textcolor;
     getHoveredInfo() {
+        this.hovered = this.calcHoveredInfo();
+        return this.hovered;
+    }
+    calcHoveredInfo() {
         let mouse1 = mouse.copy();
         let position = this.position;
         if (this.shape == UI.CIRCLE) {
@@ -3632,7 +3572,7 @@ class UIElement {
     }
     bind(type, func, ...args) {
         if (type == "click") {
-            this.click.bind(func, [this, ...args]);
+            this.onclick.bind(func, [this, ...args]);
         }
     }
 }
@@ -3661,14 +3601,12 @@ class Button extends UIElement {
 }
 class Gizmo extends UIElement {
     static DEFAULTRADIUS = 10;
+    static Selected = false;
 
     parent;
-    snapX = 0;
-    snapY = 0;
     mouseOffset;
     lastPosition;
     children = [];
-    snapped = false;
 
     setColor(col) {
         this.baseColor = col;
@@ -3695,7 +3633,18 @@ class Gizmo extends UIElement {
         //console.log(x, y);
         this.setColor(col);
         this.mouseOffset = new Vector2(0, 0);
-        this.move = new EventHandler();
+        this.onmove = new EventHandler();
+
+        this.onclick.bind(
+            function (gizmo) {
+                gizmo.mouseOffset = Vector.sub(
+                    gizmo.getMouse(),
+                    gizmo.localPosition
+                );
+                Gizmo.Selected = gizmo;
+            },
+            [this]
+        );
     }
     get position() {
         return Vector.add(this.localPosition, this.parentPosition);
@@ -3717,7 +3666,7 @@ class Gizmo extends UIElement {
     bind(type, func, ...args) {
         super.bind(type, func, ...args);
         if (type == "move") {
-            this.move.bind(func, [this, ...args]);
+            this.onmove.bind(func, [this, ...args]);
         }
     }
     update() {
@@ -3727,50 +3676,29 @@ class Gizmo extends UIElement {
             let npos = Vector.sub(this.getMouse(), this.mouseOffset);
             //console.log(npos);
             this.localPosition = npos;
-            if (!!this.parent) {
-                // this.position = Vector.constraint(
-                //     this.position,
-                //     this.a,
-                //     this.b
-                // );
+            if (this.parent) {
+                this.position = Vector.constraint(
+                    this.position,
+                    this.a,
+                    this.b
+                );
             }
             this.color = this.clickedColor;
         } else if (this.hovered) {
             this.color = this.hoveredColor;
         }
-        if (this.snapped) {
-            this.localPosition.x = floor(
-                this.localPosition.x + this.mouseOffset.x,
-                this.snapX
-            );
-            this.localPosition.y = floor(
-                this.localPosition.y + this.mouseOffset.y,
-                this.snapY
-            );
-        }
         if (!this.parent) {
-            // this.localPosition = Vector.constraint(
-            //     this.localPosition,
-            //     this.a,
-            //     this.b
-            // );
+            this.localPosition = Vector.constraint(
+                this.localPosition,
+                this.a,
+                this.b
+            );
         }
         if (!Vector.Equal(lastPosition, this.localPosition)) {
             let dt = Vector.sub(this.localPosition, lastPosition);
-
-            //console.log(this.localPosition, lastPosition);
-            this.move.Fire(dt);
+            this.onmove.Fire(dt);
         }
         return this;
-    }
-    setSnap(x, y = x) {
-        this.snapped = true;
-        this.snapX = x;
-        this.snapY = y;
-        return this;
-    }
-    OnClick() {
-        this.mouseOffset = Vector.sub(this.getMouse(), this.localPosition);
     }
     get px() {
         return this.localPosition.x;
@@ -3790,6 +3718,12 @@ class CheckBox extends UIElement {
     constructor(x, y, col = color(0, 255, 0)) {
         super(x, y, UI.CIRCLE, 10);
         this.setColor(col);
+        this.onclick.bind(
+            function (gizmo) {
+                gizmo.checked = !gizmo.checked;
+            },
+            [this]
+        );
     }
     setColor(col) {
         this.baseColor = col;
@@ -3840,7 +3774,7 @@ class Slider extends UIElement {
             normalize(min, max, value) * (bx - ax) + ax,
             normalize(min, max, value) * (by - ay) + ay,
             UI.CIRCLE,
-            10
+            UI.DEFAULT_RADIUS
         );
         this.max = max;
         this.min = min;
@@ -3859,8 +3793,8 @@ class Slider extends UIElement {
     name(name, size, offsetx, offsety) {
         this.nameoffsetx = offsetx;
         this.nameoffsety = offsety;
-        if (typeof(name) == 'function') {
-            this._name = name; 
+        if (typeof name == "function") {
+            this._name = name;
         } else {
             this._name = () => name;
         }
@@ -3895,7 +3829,11 @@ class Slider extends UIElement {
     value(accuracy = 1000) {
         let den = Vector.dist(this.a, this.b);
         let num = Vector.dist(this.localPosition, this.a);
-        return Math.floor((this.min + (this.max - this.min) * (num / den)) * accuracy) / accuracy;
+        return (
+            Math.floor(
+                (this.min + (this.max - this.min) * (num / den)) * accuracy
+            ) / accuracy
+        );
     }
     bind(type, func) {
         super.bind(type, func);
@@ -3918,13 +3856,18 @@ class Slider extends UIElement {
             ctx.save();
             fill(0);
             textSize(this.nameSize);
-            text(name, this.a.x + this.nameoffsetx, this.a.y + this.nameoffsety);
+            text(
+                name,
+                this.a.x + this.nameoffsetx,
+                this.a.y + this.nameoffsety
+            );
             ctx.restore();
         }
     }
 }
 const UI = {
     Elements: [],
+    DEFAULT_RADIUS: 10,
     Relayer: function () {
         this.Elements.sort((a, b) => a.layer - b.layer);
         this.Reorder();
@@ -3932,6 +3875,18 @@ const UI = {
     Reorder: function () {
         for (var i = 0; i < this.Elements.length; i++) {
             this.Elements[i].id = i;
+        }
+    },
+    Click: function (element) {
+        element.clicked = true;
+        UIElement.Selected = element;
+        element.onclick.Fire(element);
+    },
+    UnClick: function (element) {
+        if (UIElement.Selected) {
+            UIElement.Selected.clicked = false;
+            UIElement.Selected = false;
+            Gizmo.Selected = false;
         }
     },
     Draw: function () {
@@ -3943,7 +3898,7 @@ const UI = {
         }
     },
     Update: function () {
-        for (var i = 0; i < this.Elements.length; i++) {
+        for (var i = this.Elements.length - 1; i >= 0; i--) {
             let element = this.Elements[i];
             if (element.updating && element.enabled) {
                 element.updateUI();
@@ -3961,11 +3916,6 @@ const UI = {
     SQUARE: 1,
     RECT: 2,
 };
-// on.click.bind(function() {
-//     for (var i = 0; i < UI.Elements.length; i++) {
-
-//     }
-// });
 //Object.freeze(UI);
 // #endregion
 

@@ -35,7 +35,24 @@ def add(args, clr):
     text = text.replace(canvas_text, canvas_text + "\n    " + script_tag)
     with open("index.html", "w") as file:
         file.write(text)
-   
+def link(args, clr):
+    if len(args) == 0:
+        print("Command: link [Filename]");
+        return
+    
+    canvas_text = "<script src=\"../Canvas.js\"></script>"
+    script_tag = f"<script src=\"{args[0]}\"></script>"
+    
+    with open("index.html") as file:
+        text = file.read()
+    
+    if script_tag in text:
+        return
+    
+    text = text.replace(canvas_text, canvas_text + "\n    " + script_tag)
+    with open("index.html", "w") as file:
+        file.write(text)
+        
 def exit_project(args, clr):
     if len(args) > 0:
         quit()
@@ -50,13 +67,16 @@ def build(args, clr):
             os.chdir("../" + name)
         else:
             print(f"Project {name} does not exist")
+            return
+    else:
+        name = clr.data[1]
     with open("index.html") as file:
         text = file.read()
     text = replace_all_tags(text, "<script src=\"", "\"></script>", "<script>", "</script>");
     text = replace_all_tags(text, "<link rel=\"stylesheet\" href=\"", "\" />", "<style>", "</style>");
     os.chdir(cwd)
     os.chdir("../Built")
-    with open(clr.data[1] + ".html", "w") as file:
+    with open(name+ ".html", "w") as file:
         file.write(text)
     os.chdir("../" + clr.data[1])
     
@@ -104,7 +124,7 @@ def open_project(args, clr):
         print(f"Project {args[0]} does not exist.")
         return
     os.chdir("../" + args[0])      
-    command_line.create_command_line({"add": add, "open": open_project_in_vscode, "build": build}, 
+    command_line.create_command_line({"add": add, "open": open_project_in_vscode, "build": build, "link": link}, 
                                      exit_function=exit_project, 
                                      command_line_data=[clr, args[0]]) 
 def copy_files_to_directory(src, dest):
@@ -138,7 +158,7 @@ def create(args, clr):
     name = args[0]
     
     with open("index.html", "r") as file:
-        index_text = file.read().replace("name", name)
+        index_text = file.read().replace("projectName", name)
     
     with open("script.js", "r") as file:
         script_text = file.read()

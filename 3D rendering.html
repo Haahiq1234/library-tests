@@ -4,6 +4,7 @@
 </head>
 <body>
     <script src="Canvas.js"></script>
+    <script src="vec3.js"></script>
     <script>
         Camera.position.z = -2;
         var points = [
@@ -93,7 +94,7 @@
             frameRate(60);
             //noLoop();
             Camera.setSpeed(speed, speed, speed)
-            Canvas.setOrigin();
+            Camera2D.translate(CanvasWidth / 2, CanvasHeight / 2);
             setAxis("rot", "g", "h");
             slider = createSlider(2, 20, 1, 10, "resolution");
         }

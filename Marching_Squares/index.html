@@ -36,7 +36,7 @@
                 clear(mouse.x - radius, mouse.y - radius, radius * 2, radius * 2);
                 let x = floorDiv(mouse.x - radius, grid.cellwidth);
                 let y = floorDiv(mouse.y - radius, grid.cellwidth);
-                console.log(x, y, mousewidth, mouseheight);
+                //console.log(x, y, mousewidth, mouseheight);
                 for (var i = x + innerRadius; i < x + mousewidth - innerRadius; i++) {
                     for (var j = y + innerRadius; j < y + mouseheight - innerRadius; j++) {
                         let k = grid.index(i, j);

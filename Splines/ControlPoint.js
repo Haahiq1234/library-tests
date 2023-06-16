@@ -3,10 +3,12 @@ class ControlPoint {
     a;
     b;
     static points = [];
-    constructor(x, y) {
+    constructor(x, y, dx, dy) {
         this.gizmo = new Gizmo(x, y);
-        this.a = new Gizmo(0, 20);
-        this.b = new Gizmo(0, -20);
+        this.a = new Gizmo(dx, dy);
+        this.a.layer = 1;
+        this.b = new Gizmo(-dx, -dy);
+        this.b.layer = 1;
 
         this.a.setParent(this.gizmo, false);
         this.b.setParent(this.gizmo, false);

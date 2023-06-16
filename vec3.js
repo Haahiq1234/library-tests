@@ -312,8 +312,7 @@ function Vector3(x = 0, y = x, z = x) {
     //console.log(this.ortho());
 }
 
-on.setUp.bind(function () {
-
+on.start.bind(function () {
     Camera.projectionMatrix = Matrices.identity(4);
 });
 

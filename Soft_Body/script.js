@@ -1,5 +1,6 @@
 const softBody = new SoftBody(50, 50);
 const menu = new Menu();
+var mousePressedAgain = false;
 
 function setUp() {
     createCanvas(min(window.innerWidth, 400), 500);
@@ -12,7 +13,8 @@ function draw() {
     if (menu.enabled) {
         menu.update();
     } else {
-        softBody.addForce(new Vector2(GetAxis("horizontal") * 2, 0));
+        softBody.addForce(new Vector2(GetAxis("horizontal") * 4, 0));
+        
         softBody.update();
     }
 }
@@ -26,3 +28,11 @@ function key_Press() {
 function key_Down() {
     //console.log(keyCode);
 }
+on.pointerup.bind(function(x, y, px, py) {
+    if (menu.enabled) return;
+    let dx = x - px;
+    let dy = y - py;
+    //if (-dy > abs(dx)) {
+        softBody.addForce(new Vector2(dx, dy));
+    //}
+});

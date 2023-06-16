@@ -28,4 +28,19 @@ class Curve {
                 Vector.mult(this.d, t_cube),
             );
     }
+    vel(t, t_square) {
+        return Vector.add(
+                Vector.mult(this.a, -3 * t_square + 6 * t - 3),
+                Vector.mult(this.b, 6 * t_square - 12 * t + 3),
+                Vector.mult(this.c, -6 * t_square + 6 * t),
+                Vector.mult(this.d, 3 * t_square),
+            );
+    }
+    tan(t, t_square) {
+        return this.vel(t, t_square).normalize();
+    }
+    normal(t, t_square) {
+        let p = this.tan(t, t_square);
+        return new Vector2(-p.y, p.x);
+    }
 }

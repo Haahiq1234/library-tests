@@ -2,8 +2,9 @@ class SoftBody {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+        this.springdata = [];
     }
-    generate(width, height, distanceBetweenPoints, ks, kd, gravity, radius) {
+    generate(width, height, distanceBetweenPoints, ks, kd, gravity, radius, extra) {
         this.width = width;
         this.height = height;
         this.ks = ks;
@@ -21,13 +22,23 @@ class SoftBody {
         for (var i = 0; i < this.physics.points.length; i++) {
             let x = i % width;
             let y = (i - x) / width;
-            this.addSpring(i, x + 1, y);
-            this.addSpring(i, x,     y + 1);
-            this.addSpring(i, x + 1, y + 1);
-            this.addSpring(i, x - 1, y + 1);
+            this.addSpring(i, x + 1, y, true);
+            this.addSpring(i, x,     y + 1, true);
+            this.addSpring(i, x + 1, y + 1, true);
+            this.addSpring(i, x - 1, y + 1, true);
+        }
+        if (extra) {
+            //let mx = floorDiv(this.width, 2);
+            //let my = floorDiv(this.height, 2);
+
+            this.addSpring(0, this.width - 1, this.height - 1, true);
+            this.addSpring(this.index(0, this.height - 1), this.width - 1, 0, true);
+
+            //this.addSpring(this.index(mx, 0), mx, this.height - 1, false);
+            //this.addSpring(this.index(0, my), this.width - 1, my, false);
         }
     }
-    addSpring(i, x, y) {
+    addSpring(i, x, y, show) {
         //console.log(x, y);
         if (this.inBounds(x, y)) {
           let j = this.index(x, y);
@@ -39,9 +50,12 @@ class SoftBody {
               this.kd
             )
           );
+          this.springdata.push(show);
         }
     }
     addForce(f) {
+        if (f.mag() == 0) return;
+        //console.log(f);
         for (var point of this.physics.points) {
             point.addForce(f);
         }
@@ -54,7 +68,10 @@ class SoftBody {
     }
     update() {
         this.physics.update();
-        for (var spring of this.physics.springs) {
+        for (var i = 0; i < this.physics.springs.length; i++) 
+        {
+            if (!this.springdata[i]) continue;
+            let spring = this.physics.springs[i];
             line(spring.a.pos.x, spring.a.pos.y, spring.b.pos.x, spring.b.pos.y);
         }
         for (var point of this.physics.points) {

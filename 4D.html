@@ -75,9 +75,8 @@
             Camera.setSpeed(speed, speed, speed);
             slider = createSlider(0, 10, 1, 2, "Distance");
             dSl = createSlider(0, ds, 1, ds, "Dimensions To Draw");
-            Canvas.setOrigin();
+            Camera2D.translate(CanvasWidth / 2, CanvasHeight / 2);
             rotateY(-90);
-            //noLoop();
         }
         function draw() {
             //return null;

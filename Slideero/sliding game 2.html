@@ -1,0 +1,242 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+    <script src="../Canvas.js"></script>
+    <script>
+        var grid;
+        var bgColor = "rgb(189, 177, 165)";
+        var width;
+        let selectingModes = 0;
+        let lastPos = createVector(-1, -1);
+        var height;
+        var cellPadding = 5;
+        let designs = [];
+        let que = [];
+        let selectionMode = false;
+        let selecting = false;
+        let finished = false;
+        var rows = 5;
+        var cols = 5;
+        let textSizes = 48;
+        function setUp() {
+            createCanvas(80 * rows, 80 * cols, bgColor);
+            textAlign(TEXT.CENTER, TEXT.MIDDLE);
+            frameRate(60);
+            grid = new Array2D(cols, rows);
+            width = CanvasWidth / cols;
+            height = CanvasHeight / rows;
+            for (var x = 0; x < grid.width; x++) {
+                for (var y = 0; y < grid.height; y++) {
+                    grid.set(x, y, grid.index(x, y));
+                    designs.push(new Tile(y, x, grid.index(y, x) + 1));
+                    //console.table(designs);
+                }
+            }
+            grid.array[grid.array.length - 1] = -1;
+            //grid = grid.transpose2();
+            //console.table(grid.grid());
+            //console.table(grid.transpose2().grid());
+            grid.shuffle();
+
+            update();
+            //console.table(designs);
+        }
+        function finish() {
+            grid.array.sort((a, b) => { return a - b });
+            grid.array.push(grid.array.shift());
+        }
+        function displayTime() {
+            let tm = (Control.FRAME_NO / Time.frameRate);
+            let seconds = Math.floor(tm % 60);
+            let minutes = Math.floor(tm - seconds) / 60;
+            let forDisplayTime = minutes + ":";
+            forDisplayTime += (seconds > 10) ? seconds : "0" + seconds;
+            textSize(30);
+            fill(0);
+            text(forDisplayTime, CanvasWidth - 25, 20);
+        }
+        function check() {
+            let done = 1;
+            for (var i = 0; i < designs.length - 1; i++) {
+                if (designs[i].done) {
+                    done++;
+                }
+            }
+            if (done == designs.length) {
+                grid.set(grid.width - 1, grid.width - 1, cols * rows - 1);
+                finished = true;
+                noLoop();
+                drawGrid();
+                displayTime();
+            }
+        }
+        function update() {
+            for (let i = 0; i < grid.width; i++) {
+                for (let j = 0; j < grid.height; j++) {
+                    let ind = grid.get(i, j);
+                    if (ind == -1) {
+                        ind = designs.length - 1;
+                    }
+                    designs[ind].x = i * width + width / 2;
+                    designs[ind].y = j * height + height / 2;
+                }
+            }
+        }
+        function draw() {
+            clear();
+            drawGrid();
+            if (!finished) {
+                displayTime();
+            }
+            if (selecting) {
+                select();
+            }
+            check();
+        }
+        function drawGrid() {
+            for (let i = 0; i < grid.width; i++) {
+                for (let j = 0; j < grid.height; j++) {
+                    let grd = grid.grid();
+                    let ind = grd[i][j];
+                    let sl = false;
+                    for (var pos of que) {
+                        sl = (pos.x == i && pos.y == j) || sl;
+                    }
+                    if (ind >= 0) {
+                        designs[ind].show(i * width + width / 2, j * height + height / 2, sl);
+                    } else {
+                        ind = designs.length - 1;
+                        designs[ind].x = i * width + width / 2;
+                        designs[ind].y = j * height + height / 2;
+                    }
+                }
+            }
+        }
+        function key_Down() {
+            if (keyCode == "l") {
+                finish();
+                finished = true;
+            } else if (keyCode == key.backSpace) {
+                if (finished == true) {
+                    grid.array[grid.array.length - 1] = -1;
+                    finished = false;
+                }
+                grid.shuffle();
+                //update();
+            }
+            if (keyCode == key.space) {
+                selectionMode = !selectionMode;
+            } else if (keyCode == "1") {
+                selectingModes = 0;
+            } else if (keyCode == "2") {
+                selectingModes = 1;
+            }
+        }
+        function Tile(x, y, i) {
+            this.x = x * width + width / 2;
+            this.baseX = x * width + width / 2;
+            this.y = y * height + height / 2;
+            this.baseY = y * height + height / 2;
+            this.val = i;
+            this.done = false;
+            this.speedX = width / 10;
+            this.speedY = height / 10;
+            this.show = function (x, y, sl) {
+                if (this.val != undefined) {
+                    this.x += sign(x - this.x) * this.speedX;
+                    this.y += sign(y - this.y) * this.speedY;
+                    noStroke();
+                    if (this.baseX == this.x && this.baseY == this.y) {
+                        fill(0, 255, 0);
+                        this.done = true;
+                    } else {
+                        fill(0, 0, 255);
+                        this.done = false;
+                    }
+                    rect(this.x + cellPadding - width / 2, this.y + cellPadding - width / 2, width - cellPadding * 2, height - cellPadding * 2);
+                    fill(255, 255, 0);
+                    textSize(textSizes);
+                    //console.log(this.x, this.y);
+                    text(this.val, this.x, this.y + 5);
+                    if (sl) {
+                        nofill();
+                        stroke(0, 175, 0);
+                        lineWidth(5);
+                        rect(this.x + cellPadding - width / 2, this.y + cellPadding - width / 2, width - cellPadding * 2, height - cellPadding * 2);
+                    }
+                }
+            }
+        }
+        on.pointerdown.bind(function () {
+            if (selectionMode) {
+                selecting = true;
+            } else {
+                let x = Math.floor(mouse.x / width);
+                let y = Math.floor(mouse.y / height);
+                if (x > -1 && x < cols && y > -1 && y < rows) {
+                    let val = grid.get(x, y);
+                    if (val > -1) {
+                        move(x, y);
+                    }
+                }
+            }
+        });
+        function mouse_Up() {
+            selecting = false;
+            if (selectingModes == 0) {
+                for (var i = 0; i < que.length; i = i) {
+                    let pos = que.shift();
+                    move(pos.x, pos.y);
+                }
+            } else if (selectingModes == 1) {
+                for (var i = 0; i < que.length; i = i) {
+                    let pos = que.pop();
+                    move(pos.x, pos.y);
+                }
+            }
+        }
+        function select() {
+            let x = Math.floor(mouse.x / width);
+            let y = Math.floor(mouse.y / height);
+            if (x > -1 && x < cols && y > -1 && y < rows) {
+                let val = grid.get(x, y);
+                if (val > -1) {
+                    if (lastPos.x != x || lastPos.y != y) {
+                        que.push(createVector(x, y));
+                        lastPos = createVector(x, y);
+                    }
+                }
+            }
+        }
+        function move(x, y) {
+            //left
+            if (x - 1 >= 0 && grid.get(x - 1, y) == -1) {
+                grid.swap(x - 1, y, x, y);
+            }
+            //right
+            if (x + 1 < cols && grid.get(x + 1, y) == -1) {
+                grid.swap(x + 1, y, x, y);
+            }
+            //up
+            if (y - 1 >= 0 && grid.get(x, y - 1) == -1) {
+                grid.swap(x, y - 1, x, y);
+            }
+            //down
+            if (y + 1 < rows && grid.get(x, y + 1) == -1) {
+                grid.swap(x, y + 1, x, y);
+
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+    <script src="../Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 5;
+        var grid;
+        var bgColor = "rgb(189, 177, 165)";
+        var width;
+        var cellPadding = 5;
+        const colors = {
+            0: "rgb(218, 195, 177)",
+            2: "rgb(238, 228, 218)", //  this is working
+            4: "rgb(237, 224, 200)",
+            8: "rgb(242, 177, 121)",
+            16: "rgb(245, 149, 99)",
+            32: "rgb(246, 124, 96)",
+            64: "rgb(246, 94, 59)",
+            128: "rgb(237, 207, 115)",
+            256: "rgb(237, 204, 98)",
+            512: "rgb(237, 200, 80)",
+            1024: "rgb(237, 197, 63)",
+            2048: "rgb(237, 194, 45)"
+        }
+        function setUp() {
+            createCanvas(400, 400, bgColor);
+            width = 100;
+            frameRate(FramesPerSecond);
+            grid = create2DArray(4, 4, 0);
+            addNumber();
+            addNumber();
+        }
+        function draw() {
+            clear();
+            drawGrid();
+        }
+        function key_Down() {
+            if (keyCode == key.up) {
+                for (var i = 0; i < grid.length; i++) {
+                    grid[i] = operate(grid[i]);
+                }
+                addNumber();
+            }
+            if (keyCode == key.down) {
+                for (var i = 0; i < grid.length; i++) {
+                    grid[i] = operate(grid[i].reverse()).reverse();
+                }
+                addNumber();
+            }
+            if (keyCode == key.right) {
+                for (var i = 0; i < grid[0].length; i++) {
+                    setRow(operate(getRow(i).reverse()).reverse(), i);
+                }
+                addNumber();
+            }
+            if (keyCode == key.left) {
+                for (var i = 0; i < grid[0].length; i++) {
+                    setRow(operate(getRow(i)), i);
+                }
+                addNumber();
+            }
+        }
+        function operate(arr) {
+            arr = slide(arr);
+            arr = combine(arr);
+            arr = slide(arr);
+            return arr;
+        }
+        function getRow(ind) {
+            let arr = [];
+            for (var i = 0; i < grid.length; i++) {
+                arr.push(grid[i][ind]);
+            }
+            return arr;
+        }
+        function setRow(arr, ind) {
+            for (var i = 0; i < grid.length; i++) {
+                grid[i][ind] = arr[i];
+            }
+        }
+        function drawGrid() {
+            for (let i = 0; i < grid.length; i++) {
+                for (let j = 0; j < grid[0].length; j++) {
+                    fill(colors["" + grid[i][j]]);
+                    noStroke();
+                    rect(i * width + cellPadding, j * width + cellPadding, width - cellPadding * 2, width - cellPadding * 2);
+                    //nofill();
+                    //rect(i * width, j * width, width, width);
+                    if (grid[i][j] != 0) {
+                        textAlign(TEXT.CENTER, TEXT.MIDDLE);
+                        fill("black");
+                        textSize(64);
+                        text(grid[i][j], i * width + width / 2, j * width + width / 2);
+                    }
+                }
+            }
+        }
+        function addNumber() {
+            let options = [];
+            for (let i = 0; i < grid.length; i++) {
+                for (let j = 0; j < grid[0].length; j++) {
+                    if (grid[i][j] == 0) {
+                        options.push({
+                            x: i,
+                            y: j
+                        });
+                    }
+                }
+            }
+            if (options.length > 0) {
+                let option = Random.element(options);
+                grid[option.x][option.y] = Random.rangeInt(1, 2) * 2;
+            }
+        }
+        function combine(arr) {
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i] == arr[i + 1]) {
+                    arr[i] *= 2;
+                    arr[i + 1] = 0;
+                }
+            }
+            return arr;
+        }
+        function slide(arr) {
+            let lt = arr.length;
+            arr = arr.filter(val => val);
+            let missing = lt - arr.length;
+            let zeros = new Array(missing).fill(0);
+            arr = arr.concat(zeros);
+            return arr;
+        }
+    </script>
+    <script src="Canvas.js"></script>
+</body>
+
+</html>

@@ -1,9 +1,17 @@
-Gizmo.DEFAULTRADIUS = 7.5;
+Gizmo.DEFAULTRADIUS = 10;
 const spline = new Spline();
 
-spline.addPoint(100, 100);
-spline.addPoint(200, 100);
-spline.addPoint(300, 100);
+let r = new Vector2(100, 100).mag();
+let armLength = r * ((sqrt(2) - 1) * 50 / 51);
+
+spline.addPoint(100, 100, -armLength, armLength);
+spline.addPoint(300, 100, -armLength, -armLength);
+spline.addPoint(300, 300, armLength, -armLength);
+spline.addPoint(100, 300, armLength, armLength);
+spline.addPoint(100, 100, -armLength, armLength);
+
+
+var pressedMouse = false;
 
 function setUp() {
     createCanvas(400, 400);
@@ -12,12 +20,15 @@ function setUp() {
 }
 function draw() {
     clear();
-    //curve.draw();
     spline.draw();
+    //console.log(Mouse.timeSinceHeld);
 }
-
-function key_Press() {
-    if (keyCode == key.space) {
-        spline.addPoint(mouse.x, mouse.y);
+function addPointOnMouse() {    
+    let a = spline.addPoint(mouse.x, mouse.y, 0, 0).a;
+    UI.Click(a);
+}
+on.pointerdown.bind(function(x, y) {
+    if (GetKey(key.space)) {
+        spline.addPoint(x, y);
     }
-}
+});

@@ -4,16 +4,17 @@ class GraphSystem {
         this.system.scaleY = -5;
         this.system.scaleX = 5;
         var graph = this;
-        on.setUp.bind(function() {graph.init()});
+        on.start.bind(function() {graph.init()});
 
         this.minsize = 25;
         this.maxsize = 75;
 
         this.size = 50;
         var graph = this;
-        on.wheel.bind(function() {
-            graph.size = graph.calculateSize();
-        });
+        // on.wheel.bind(function(delta) {
+        //     //graph.size = graph.calculateSize();
+        //     //graph.zoom();
+        // });
     }
     init() {
         console.log("Hello");
@@ -58,6 +59,7 @@ class GraphSystem {
     }
     graph(f, d, r=2) {
         stroke(100);
+        lineWidth(2);
         let px = this.system.deformx(0);
         let py = f(px);
         for (var i = 1; i < CanvasWidth; i+=r) {
@@ -67,5 +69,20 @@ class GraphSystem {
             px = x;
             py = y;
         }
+        let mx = this.system.deformx(mouse.x);
+        let my = f(mx);
+
+
+        let dy = d(mx) * this.system.scaleY;
+
+        let p = this.system.transform(mx, my);
+        const length = mag(this.system.scaleX, dy);
+        const scale = 100 / length;
+        lineWidth(2);
+        stroke(0);
+        line(p.x - scale * this.system.scaleX, p.y - dy * scale, p.x + scale * this.system.scaleX, p.y + dy * scale);
+
+        circle(p.x, p.y, 5);
+        text(`(${floor(mx, 0.001)}, ${floor(my, 0.001)})`, p.x + 50, p.y + 20);
     }
 }

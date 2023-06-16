@@ -89,7 +89,7 @@
                 this.vel.add(Vector.div(f, this.mass));
             }
             update() {
-                this.vel.x += GetAxis("horizontal", "key") * 3;
+                this.vel.x += GetAxis("horizontal") * 3;
                 this.vel.x = constraint(this.vel.x, -10, 10);
                 this.addForce(Vector.mult(gravity, this.mass));
                 this.pos.add(this.vel);

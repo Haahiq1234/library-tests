@@ -57,7 +57,8 @@
                 lineWidth(5);
                 //ln(this.lastPoint, vel);
                 let mid = createVector(600, 200);
-                ln(mid, Vector.add(mid, vel2));
+                let p = Vector.add(mid, vel2);
+                circle(p.x, p.y, 5);
 
                 if (this.t < 1) {
                     this.t += this.inc;
@@ -72,11 +73,10 @@
                 for (let P of this.points) {
                     pt(P);
                 }
-
-                //if (this.t > 1 || this.t < 0) {
-                //    this.inc *= -1;
-                //}
             }
+        }
+        function lerp(a, b, t) {
+            return Vector.lerp(a, b, t);
         }
         function ln(A, B) {
             line(A.x, A.y, B.x, B.y);
