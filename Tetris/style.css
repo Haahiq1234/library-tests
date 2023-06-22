@@ -1,0 +1,5 @@
+* {
+    image-rendering: -webkit-optimize-contrast;
+    /* Chrome, Edge, Opera, and Safari */
+    image-rendering: crisp-edges;
+}

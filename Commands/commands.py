@@ -1,64 +1,103 @@
-import sys;
+import sys
+
 sys.path.append("E:/Python")
 import command_line
 import os
-#import webbrowser
-from datetime import date;
+
+# import webbrowser
+from datetime import date
 import time
 import shutil
-    
+
 cwd = os.getcwd()
-    
+
+
 def add(args, clr):
     if len(args) == 0:
-        print("Command: add [Filename] [Add class]");
+        print("Command: add [Filename] [Properties]")
         return
-    
-    canvas_text = "<script src=\"../Canvas.js\"></script>"
-    script_tag = f"<script src=\"{args[0]}\"></script>"
-    
+    if ".js" in args[0]:
+        add_js_file(args, clr)
+    if not "." in args[0] and not os.path.exists(args[0]):
+        os.mkdir(args[0])
+        print(f"Created Folder {args[0]}")
+
+
+def add_js_file(args, clr):
+    canvas_text = '<script src="../Canvas.js"></script>'
+    script_tag = f'<script src="{args[0]}"></script>'
+
     with open("index.html") as file:
         text = file.read()
-    
+
+    classname = args[0].replace(".js", "").split("/")[-1]
+    if len(args) > 1:
+        if args[1] == "grid":
+            with open(cwd + "/gridclassscript.js") as file:
+                script_text = file.read()
+        elif args[1] == "main":
+            with open(cwd + "/mainclassscript.js") as file:
+                script_text = file.read()
+        with open("script.js") as file:
+            script_file_text = file.read()
+        with open("script.js", "w") as file:
+            file.write(
+                "const "
+                + classname.lower()
+                + " = new "
+                + classname
+                + "();\n"
+                + script_file_text
+            )
+    else:
+        with open(cwd + "/classscript.js") as file:
+            script_text = file.read()
+    with open(args[0], "w") as file:
+        file.write(
+            script_text.replace("upperName", classname).replace(
+                "lowerName", classname.lower()
+            )
+        )
+        pass
     if script_tag in text:
         return
-    
-        
-    with open(args[0], "w") as file:
-        script_text = ""    
-        if "-y" in args:
-            with open(cwd + "/classscript.js") as file2:
-                script_text = file2.read().replace("name", args[0].replace(".js", ""))
-        file.write(script_text)
-        pass
-    
+
     text = text.replace(canvas_text, canvas_text + "\n    " + script_tag)
     with open("index.html", "w") as file:
         file.write(text)
+
+
 def link(args, clr):
     if len(args) == 0:
-        print("Command: link [Filename]");
+        print("Command: link [Filename]")
         return
-    
-    canvas_text = "<script src=\"../Canvas.js\"></script>"
-    script_tag = f"<script src=\"{args[0]}\"></script>"
-    
+
+    if ".js" in args[0]:
+        link_js(args, clr)
+
+
+def link_js(args, clr):
+    canvas_text = '<script src="../Canvas.js"></script>'
+    script_tag = f'<script src="{args[0]}"></script>'
+
     with open("index.html") as file:
         text = file.read()
-    
+
     if script_tag in text:
         return
-    
+
     text = text.replace(canvas_text, canvas_text + "\n    " + script_tag)
     with open("index.html", "w") as file:
         file.write(text)
-        
+
+
 def exit_project(args, clr):
     if len(args) > 0:
         quit()
     os.chdir(cwd)
     clr.running = False
-    pass 
+    pass
+
 
 def build(args, clr):
     if len(args) > 0:
@@ -72,14 +111,19 @@ def build(args, clr):
         name = clr.data[1]
     with open("index.html") as file:
         text = file.read()
-    text = replace_all_tags(text, "<script src=\"", "\"></script>", "<script>", "</script>");
-    text = replace_all_tags(text, "<link rel=\"stylesheet\" href=\"", "\" />", "<style>", "</style>");
+    text = replace_all_tags(
+        text, '<script src="', '"></script>', "<script>", "</script>"
+    )
+    text = replace_all_tags(
+        text, '<link rel="stylesheet" href="', '" />', "<style>", "</style>"
+    )
     os.chdir(cwd)
     os.chdir("../Built")
-    with open(name+ ".html", "w") as file:
+    with open(name + ".html", "w") as file:
         file.write(text)
     os.chdir("../" + clr.data[1])
-    
+
+
 def replace_all_tags(text, tag_start, tag_end, actual_tag_start, actual_tag_end):
     tag_start_len = len(tag_start)
     tag_end_len = len(tag_end)
@@ -89,12 +133,14 @@ def replace_all_tags(text, tag_start, tag_end, actual_tag_start, actual_tag_end)
     new_tags = []
     prev_tags = []
     for i in range(len(start_indices)):
-        prev_tag = text[start_indices[i]: end_indices[i] + tag_end_len]
-        file_name = text[start_indices[i] + tag_start_len: end_indices[i]]
+        prev_tag = text[start_indices[i] : end_indices[i] + tag_end_len]
+        file_name = text[start_indices[i] + tag_start_len : end_indices[i]]
         print(file_name)
         with open(file_name) as file:
             file_text = file.read().replace("\n", "\n        ")
-        new_tag = actual_tag_start + "\n        " + file_text + "\n    " + actual_tag_end
+        new_tag = (
+            actual_tag_start + "\n        " + file_text + "\n    " + actual_tag_end
+        )
         new_tags.append(new_tag)
         prev_tags.append(prev_tag)
     for i in range(len(prev_tags)):
@@ -102,31 +148,38 @@ def replace_all_tags(text, tag_start, tag_end, actual_tag_start, actual_tag_end)
     return text
     pass
 
-def find_all_instances(string:str, sub_string:str):
-    sub_string_len = len(sub_string);
+
+def find_all_instances(string: str, sub_string: str):
+    sub_string_len = len(sub_string)
     i = 0
     indices = []
-    while True:        
-        index = string.find(sub_string, i);
+    while True:
+        index = string.find(sub_string, i)
         if index == -1:
-            break;
+            break
         else:
-            indices.append(index);
+            indices.append(index)
             i = index + sub_string_len - 1
-    return indices;
-    
+    return indices
+
+
 def open_project_in_vscode(args, clr):
-    os.system("code .");
+    os.system("code .")
     pass
+
 
 def open_project(args, clr):
     if not os.path.exists("../" + args[0]):
         print(f"Project {args[0]} does not exist.")
         return
-    os.chdir("../" + args[0])      
-    command_line.create_command_line({"add": add, "open": open_project_in_vscode, "build": build, "link": link}, 
-                                     exit_function=exit_project, 
-                                     command_line_data=[clr, args[0]]) 
+    os.chdir("../" + args[0])
+    command_line.create_command_line(
+        {"add": add, "open": open_project_in_vscode, "build": build, "link": link},
+        exit_function=exit_project,
+        command_line_data=[clr, args[0]],
+    )
+
+
 def copy_files_to_directory(src, dest):
     for file_name in os.listdir(src):
         source = src + "/" + file_name
@@ -134,7 +187,7 @@ def copy_files_to_directory(src, dest):
         print(source, destination)
         if os.path.isfile(source):
             shutil.copy(source, destination)
-            print('copied', file_name)
+            print("copied", file_name)
 
 
 def copy(args, clr):
@@ -151,18 +204,19 @@ def copy(args, clr):
 
     os.chdir(cwd)
 
+
 def create(args, clr):
-    if len(args)==0:
+    if len(args) == 0:
         print("create [Project Name]")
         return
     name = args[0]
-    
+
     with open("index.html", "r") as file:
         index_text = file.read().replace("projectName", name)
-    
+
     with open("script.js", "r") as file:
         script_text = file.read()
-        
+
     os.chdir("../")
     if os.path.exists(name):
         if os.path.exists(name + "/index.html"):
@@ -172,17 +226,18 @@ def create(args, clr):
     else:
         os.mkdir(name)
     os.chdir(name)
-    
+
     with open("index.html", "w") as file:
         file.write(index_text)
-    
+
     with open("script.js", "w") as file:
         file.write(script_text)
-    
+
     with open("style.css", "w") as file:
         file.write("")
-        
+
     open_project([name], clr)
+
 
 def build_project(args, clr):
     if len(args) == 0:
@@ -192,26 +247,36 @@ def build_project(args, clr):
         print(f"Project {args[0]} does not exist.")
         return
     os.chdir("../" + args[0])
-    clr.data = [0, args[0]];
+    clr.data = [0, args[0]]
     build(args, clr)
     clr.data = []
     os.chdir(cwd)
 
+
 def git(args, clr):
     if "push" in args:
         td = date.today()
-        dt = str(td.day) + "/" + str(td.month) + "/" + str(td.year) + " " + time.strftime("%H:%M:%S")
+        dt = (
+            str(td.day)
+            + "/"
+            + str(td.month)
+            + "/"
+            + str(td.year)
+            + " "
+            + time.strftime("%H:%M:%S")
+        )
         os.system("git add --all")
-        os.system("git commit -m \"Update " + dt + "\"")
+        os.system('git commit -m "Update ' + dt + '"')
         os.system("git push")
     pass
+
 
 commands = {
     "create": create,
     "open": open_project,
     "build": build_project,
     "git": git,
-    "copy":copy
+    "copy": copy,
 }
 
 

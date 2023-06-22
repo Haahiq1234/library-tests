@@ -12,7 +12,7 @@ function download(filename, text) {
     element.click();
 }
 function print(...messages) {
-    console.log(...messages);
+    Debug.Log(...messages);
 }
 {
     let storageTypes = [];
@@ -138,6 +138,7 @@ const on = {
     draw: new EventHandler(),
     pointerdown: new EventHandler(),
     pointerup: new EventHandler(),
+    key: new EventHandler(),
     keydown: new EventHandler(),
     keyup: new EventHandler(),
     wheel: new EventHandler(),
@@ -201,14 +202,47 @@ const on = {
         on.pointerdown.Fire(event.clientX, event.clientY, event);
     };
     document.onkeyup = function (event) {
+        keyCode = event.key;
+        on.key.Fire(keyCode, event);
+        Input.pressed[keyCode] = false;
         on.keyup.Fire(event.key, event);
     };
     document.onkeydown = function (event) {
-        on.keydown.Fire(event.key, event);
+        keyCode = event.key;
+        if (!Input.pressed[keyCode]) {
+            on.keydown.Fire(event.key, event);
+            Input.pressed[keyCode] = true;
+        }
     };
     document.onwheel = function (event) {
         on.wheel.Fire(event.deltaY / -100, event);
     };
+}
+// #endregion
+
+// #region Mobile
+const Debug = {
+    isMobile: IsMobile(),
+    intitialized: false,
+    element: undefined,
+    init: function () {
+        this.intitialized = true;
+        this.element = document.createElement("div");
+        document.body.appendChild(this.element);
+    },
+    Log: function (...messages) {
+        if (this.isMobile) {
+            if (!this.intitialized) {
+                this.init();
+            }
+            for (var message of messages) {
+                this.element.innerHTML += message;
+
+            }
+        } else {
+            console.log(...messages);
+        }
+    }
 }
 // #endregion
 
@@ -399,8 +433,22 @@ Vector.mult = function (v, m) {
     return new Vector2(v.x * m, v.y * m);
 };
 Vector.min = function (...args) {
-    args = splitArray(args);
-    return createVector(Math.min(...args.x), Math.min(...args.y));
+    let x = args[0].x;
+    let y = args[0].y;
+    for (var i = 1; i < args.length; i++) {
+        x = min(x, args[i].x);
+        y = min(y, args[i].y);
+    }
+    return new Vector2(x, y);
+};
+Vector.max = function (...args) {
+    let x = args[0].x;
+    let y = args[0].y;
+    for (var i = 1; i < args.length; i++) {
+        x = max(x, args[i].x);
+        y = max(y, args[i].y);
+    }
+    return new Vector2(x, y);
 };
 Vector.neg = function (vec) {
     return new Vector2(-vec.x, -vec.y);
@@ -413,10 +461,6 @@ Vector.avg = function (...vecs) {
         y += vecs[i].y;
     }
     return new Vector2(x / vecs.length, y / vecs.length);
-};
-Vector.max = function (...args) {
-    args = splitArray(args);
-    return createVector(Math.max(...args.x), Math.max(...args.y));
 };
 Vector.add = function (...vs) {
     let x = 0;
@@ -569,6 +613,11 @@ function Vector2(x = 0, y = x) {
 // #endregion
 
 // #region Input
+const Input = {
+    pressed: {
+
+    }
+}
 const Mouse = {
     position: new Vector2(0, 0),
     previous: new Vector2(0, 0),
@@ -645,13 +694,13 @@ var mouse2 = new Vector2(0, 0);
     function GetAxis(TAxis, TKey = "both") {
         let axis = Axii[TAxis];
         if (TKey == axis.Nm || TKey == "both") {
-            let neg = -(pressed[axis.neg] ?? false);
-            let pos = +(pressed[axis.pos] ?? false);
+            let neg = -(Input.pressed[axis.neg] ?? false);
+            let pos = +(Input.pressed[axis.pos] ?? false);
             return neg + pos;
         }
         if (TKey == axis.altNm || TKey == "both") {
-            let neg = -(pressed[axis.altN] ?? false);
-            let pos = +(pressed[axis.altP] ?? false);
+            let neg = -(Input.pressed[axis.altN] ?? false);
+            let pos = +(Input.pressed[axis.altP] ?? false);
             return neg + pos;
         }
         return 0;
@@ -690,25 +739,8 @@ var mouse2 = new Vector2(0, 0);
         //console.log("Hello");
     });
     function GetKey(keyCode) {
-        return Boolean(pressed[keyCode]);
+        return Boolean(Input.pressed[keyCode]);
     }
-    const pressed = {};
-    on.keydown.bind(function (event) {
-        keyCode = event;
-        if (!pressed[keyCode]) {
-            if (window.key_Down) {
-                key_Down();
-            }
-            pressed[keyCode] = true;
-        }
-    });
-    on.keyup.bind(function (event) {
-        keyCode = event;
-        pressed[keyCode] = false;
-        if (window.key_Up) {
-            key_Up();
-        }
-    });
 } // code
 //#endregion
 
@@ -2020,7 +2052,7 @@ const Shapes = {
 };
 // #endregion
 
-// #region color
+// #region Color
 function RGBToHSL(r, g, b, a = 255) {
     // Make r, g, and b fractions of 1
     r /= 255;
@@ -2100,6 +2132,9 @@ function HSLToRGB(h, s, l, a = 255) {
 
     return [r, g, b, a];
 }
+function setAlpha(alpha) {
+    ctx.globalAlpha = constraint(alpha, 0, 255) / 255;
+}
 var fl = true;
 var st = true;
 function brightness(rgb) {
@@ -2116,9 +2151,6 @@ function addAlpha(col, al, mode) {
         return col.replace("b(", "ba(").replace(")", ", " + al / 255 + ")");
     }
 }
-function alpha(al) {
-    ctx.globalAlpha = al / 255;
-}
 function colorMode(mode) {
     Canvas.colorMode = mode;
 }
@@ -2130,6 +2162,11 @@ for (var i = 0; i < 255; i++) {
     alphaValues.unshift(hex);
 }
 function rgb(...args) {
+    //console.log(args);
+    if (typeof args[0] == "object") {
+        console.log(args);
+        return args[0].gradient;
+    }
     if (typeof args[0] == "string") {
         return args[0];
     }
@@ -2178,6 +2215,9 @@ function invertColor(col) {
 }
 function color() {
     args = filterArray(arguments);
+    if (args[0] instanceof LinearGradient || args[0] instanceof RadialGradient || args[0] instanceof ConicGradient) {
+        return args[0].gradient;
+    }
     if (typeof args[0] == "string") {
         return args[0];
     }
@@ -2251,11 +2291,6 @@ function HSVtoHSL(h, sv, v, a = 255) {
     return [h, sl * 255, l * 255, a];
 }
 function splitRGB(rgba) {
-    //let col = rgb.split(", ");
-    //let r = parseFloat(col[0].split("rgba(")[1]);
-    //let g = parseFloat(col[1]);
-    //let b = parseFloat(col[2]);
-    //let a = parseFloat(col[3].slice(0, col[3].length - 1)) * 255;
     let r = rgba[0];
     let g = rgba[1];
     let b = rgba[2];
@@ -2340,7 +2375,6 @@ function stroke() {
             col = rgb(...col);
         }
     }
-    //console.log(col);
     ctx.strokeStyle = col;
     Canvas.strokeStyle = col;
 }
@@ -2544,7 +2578,30 @@ function indicesOf(arr, val) {
 // #endregion
 
 // #region Canvas
-
+class LinearGradient {
+    constructor(...args) {
+        this.gradient = ctx.createLinearGradient(...args);
+    }
+    add(t, ...col) {
+        this.gradient.addColorStop(t, rgb(color(...col)));
+    }
+}
+class ConicGradient {
+    constructor(...args) {
+        this.gradient = ctx.createConicGradient(...args);
+    }
+    add(t, ...col) {
+        this.gradient.addColorStop(t, rgb(color(...col)));
+    }
+}
+class RadialGradient {
+    constructor(...args) {
+        this.gradient = ctx.createRadialGradient(...args);
+    }
+    add(t, ...col) {
+        this.gradient.addColorStop(t, rgb(color(...col)));
+    }
+}
 const windowWidth = screen.availWidth;
 const windowHeight = window.innerHeight;
 
@@ -2593,7 +2650,7 @@ const Camera2D = {
         this.scaleY *= zoom;
     },
 };
-const DrawShape = {
+const ShapePath = {
     begin: function () {
         ctx.beginPath();
     },
@@ -2602,6 +2659,22 @@ const DrawShape = {
         [bx, by] = Camera2D.convertPos(bx, by);
     },
 };
+function squircle(x, y, w, h, r) {
+    [x, y, w, h] = Camera2D.getRect(x, y, w, h);
+    r = min(abs(r * Camera2D.zoomed), w / 2, h / 2);
+    ctx.beginPath();
+    ctx.arc(x + r, y + r, r, PI, 3 / 2 * PI);
+    ctx.arc(x + w - r, y + r, r, -PI / 2, 0);
+    ctx.arc(x + w - r, y + h - r, r, 0, PI / 2);
+    ctx.arc(x + r, y + h - r, r, PI / 2, PI);
+    ctx.closePath();
+    if (st) {
+        ctx.stroke();
+    }
+    if (fl) {
+        ctx.fill();
+    }
+}
 function rectMode(rctMode) {
     Camera2D.rectMode = rctMode;
 }
@@ -2680,7 +2753,7 @@ const CLOSE = 1;
     }
     function endShape(close = CLOSE) {
         ctx.beginPath();
-        ctx.lineTo(vertices[0], vertices[1]);
+        ctx.moveTo(vertices[0], vertices[1]);
         for (var i = 2; i < vertices.length; i += 2) {
             ctx.lineTo(vertices[i], vertices[i + 1]);
         }
