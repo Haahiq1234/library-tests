@@ -135,6 +135,7 @@ const on = {
     click: new EventHandler(),
     pointermove: new EventHandler(),
     start: new EventHandler(),
+    update: new EventHandler(),
     draw: new EventHandler(),
     pointerdown: new EventHandler(),
     pointerup: new EventHandler(),
@@ -220,7 +221,7 @@ const on = {
 }
 // #endregion
 
-// #region Mobile
+// #region Debug
 const Debug = {
     isMobile: IsMobile(),
     intitialized: false,
@@ -867,10 +868,11 @@ function redraw(timeStamp) {
         UI.Update();
         ctx.save();
     }
-    on.draw.Fire();
+    on.update.Fire();
     if (window.draw) {
         draw();
     }
+    on.draw.Fire();
     if (Canvas.enabled) {
         UI.Draw();
     }

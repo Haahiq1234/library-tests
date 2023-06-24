@@ -233,8 +233,7 @@ def create(args, clr):
     with open("script.js", "w") as file:
         file.write(script_text)
 
-    with open("style.css", "w") as file:
-        file.write("")
+    copy_files_to_directory(cwd + "/Files", os.getcwd())
 
     open_project([name], clr)
 

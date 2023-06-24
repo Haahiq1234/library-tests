@@ -93,20 +93,24 @@ class Grid extends Array2D {
                     this.freeSpot.y,
                     new Vector2(x * this.cellwidth, y * this.cellheight)
                 );
-                this.toAnimate.push([
-                    this.freeSpot.x,
-                    this.freeSpot.y,
-                    dx * this.cellwidth,
-                    dy * this.cellheight,
-                ]);
-                //console.log(this.toAnimate[this.toAnimate.length - 1]);
+                let b = this.freeSpot;
+                let cw = this.cellwidth;
+                let ch = this.cellheight;
+                var grid = this;
+                new Animator([], this.framesPerSize, () => true, function (t) {
+                    let pos = new Vector2(
+                        ((1 - t) * x + t * b.x) * cw,
+                        ((1 - t) * y + t * b.y) * ch
+                    );
+                    grid.positions.set(b.x, b.y, pos);
+                });
             }
             this.freeSpot = pos;
         }
     }
+
     draw() {
         backGround(189, 177, 165);
-        this.animate();
         let done = true;
         if (this.image) {
             for (var i = 0; i < this.width; i++) {
@@ -131,31 +135,6 @@ class Grid extends Array2D {
             this.end();
         }
         //console.log(running);
-    }
-    animate() {
-        for (var k = 0; k < this.toAnimate.length; k++) {
-            let animation = this.toAnimate[k];
-            let i = animation[0];
-            let j = animation[1];
-            let xs = -sign(animation[2]) * this.xspeed;
-            let ys = -sign(animation[3]) * this.yspeed;
-
-            let pos = this.positions.get(i, j);
-            pos.x += xs;
-            pos.y += ys;
-            this.positions.set(i, j, pos);
-
-            animation[2] += xs;
-            animation[3] += ys;
-
-            if (
-                abs(animation[2]) < this.xspeed / 1.5 &&
-                abs(animation[3]) < this.yspeed / 1.5
-            ) {
-                this.toAnimate.splice(k, 1);
-                k--;
-            }
-        }
     }
     recalculatePositions() {
         for (var i = 0; i < this.width; i++) {
