@@ -254,18 +254,22 @@ def build_project(args, clr):
 
 def git(args, clr):
     if "push" in args:
-        td = date.today()
-        dt = (
-            str(td.day)
-            + "/"
-            + str(td.month)
-            + "/"
-            + str(td.year)
-            + " "
-            + time.strftime("%H:%M:%S")
-        )
+        if len(args) == 1:
+            td = date.today()
+            dt = (
+                str(td.day)
+                + "/"
+                + str(td.month)
+                + "/"
+                + str(td.year)
+                + " "
+                + time.strftime("%H:%M:%S")
+            )
+            message = "Update: " + dt
+        else:
+            message = args[1]
         os.system("git add --all")
-        os.system('git commit -m "Update ' + dt + '"')
+        os.system('git commit -m "' + message + '"')
         os.system("git push")
     pass
 
