@@ -1,10 +1,6 @@
 const GRAVITY = 0.5;
-const JUMPPOWER = 10;
+const JUMPPOWER = 15;
 const MOVEMENTSPEED = 7.5;
-const STEPSIZE = 60;
-const FOOTSPEED = 30;
-const ANGLESPEED = 180 / STEPSIZE;
-const DISTANCEBETWEENFEET = 50;
 
 class Player {
     constructor(x, y) {
@@ -41,10 +37,10 @@ class Player {
     }
     update() {
         if (!this.grounded) {
-            this.vel.y += GRAVITY;
+            this.vel.y += GRAVITY * Time.deltaTime / 10;
         }
-        this.vel.x = GetAxis("horizontal") * MOVEMENTSPEED;
-        this.pos.add(this.vel);       
+        this.vel.x = GetAxis("horizontal") * MOVEMENTSPEED * Time.deltaTime / 10;
+        this.pos.add(Vector.mult(this.vel, Time.deltaTime / 10));       
 
         this.bindToScreen();
     }
@@ -55,6 +51,7 @@ class Player {
     }
     draw() {
         fill(255, 0, 0);
+        noStroke();
         rect(this.pos.x, this.pos.y, this.size.x, this.size.y);
     }
 }

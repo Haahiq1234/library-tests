@@ -868,10 +868,12 @@ function redraw(timeStamp) {
         UI.Update();
         ctx.save();
     }
+    push();
     on.update.Fire();
     if (window.draw) {
         draw();
     }
+    pop();
     on.draw.Fire();
     if (Canvas.enabled) {
         UI.Draw();
@@ -1895,7 +1897,7 @@ const Shapes = {
                     right.push(new Vector2(ax + aw, ay + y));
                     left.push(new Vector2(ax, ay + ah - y));
                 }
-                console.log(top, bottom, right, left);
+                //console.log(top, bottom, right, left);
                 return [...top, ...right, ...bottom, ...left];
             },
             get2: function (x, y, w, h) {
@@ -3464,7 +3466,6 @@ on.pointerdown.bind(function (button, x, y, event) {
         let element = UI.Elements[i];
         if (element.getHoveredInfo() && element.enabled) {
             UI.Click(element);
-            //console.log(element);
             mousePressed = false;
             return;
         }
@@ -3846,8 +3847,8 @@ class Slider extends UIElement {
         col = color(0, 255, 0)
     ) {
         super(
-            normalize(min, max, value) * (bx - ax) + ax,
-            normalize(min, max, value) * (by - ay) + ay,
+            normalize(value, min, max) * (bx - ax) + ax,
+            normalize(value, min, max) * (by - ay) + ay,
             UI.CIRCLE,
             UI.DEFAULT_RADIUS
         );
