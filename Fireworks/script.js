@@ -10,7 +10,7 @@ function setUp() {
     textFont("Verdana");
 }
 function draw() {
-    backGround(1, 50, 32, 100);
+    backGround(1, 50, 32, 70);
     fill(207, 181, 59);
     //text("Eid", CanvasWidth / 2, CanvasHeight * 2.5 / 5);
     //text("Mubarak", CanvasWidth / 2, CanvasHeight / 5 * 3.5);
