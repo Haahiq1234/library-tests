@@ -1,4 +1,4 @@
-const grid = new Grid(6, 6, /*loadImage("../Diamond_Ore.png")*/);
+const grid = new Grid(3, 3, /*loadImage("../Diamond_Ore.png")*/);
 const menu = new Menu();
 
 function setUp() {
