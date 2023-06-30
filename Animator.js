@@ -3,18 +3,21 @@ class Animator {
 
     }
     static animators = [];
-    constructor(data, frames, onend, onupdate) {
+    constructor(data, frames, onupdate, onend) {
         this.data = data;
         this.duration = frames;
         this.startFrame = Control.FRAME_NO;
         this.onend = onend;
         this.onupdate = onupdate;
+        this.isCancelled = false;
 
         Animator.animators.push(this);
     }
+    cancel() {
+        this.isCancelled = true;
+    }
     ended() {
-        //console.log(Control.FRAME_NO, this.startFrame, this.duration);
-        if (Control.FRAME_NO > this.startFrame + this.duration) {
+        if (Control.FRAME_NO > this.startFrame + this.duration || this.isCancelled) {
             this.onend();
             return true;
         }

@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,15 +8,15 @@
     <title>Document</title>
     <link rel="stylesheet" href="../style.css" />
 </head>
+
 <body>
     <script src="../Canvas.js"></script>
+    <script src="../Animator.js"></script>
     <script src="script.js"></script>
     <script>
         const player = new Player(200, 200);
         function setUp() {
             createCanvas();
-            lineCap(LINE.ROUND);
-            lineWidth(10);
         }
         function draw() {
             clear();
@@ -29,4 +30,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -67,13 +67,13 @@ class Grid extends Array2D {
     }
     onkeydown(keyCode) {
         if (this.freeSpot.x > 0 && keyCode == key.right) {
-            this.move(this.freeSpot.x - 1, this.freeSpot.y);
+            this.move(this.freeSpot.x - 1, this.freeSpot.y, true);
         } else if (this.freeSpot.y > 0 && keyCode == key.down) {
-            this.move(this.freeSpot.x, this.freeSpot.y - 1);
+            this.move(this.freeSpot.x, this.freeSpot.y - 1, true);
         } else if (this.freeSpot.x < this.width - 1 && keyCode == key.left) {
-            this.move(this.freeSpot.x + 1, this.freeSpot.y);
+            this.move(this.freeSpot.x + 1, this.freeSpot.y, true);
         } else if (this.freeSpot.y < this.height - 1 && keyCode == key.up) {
-            this.move(this.freeSpot.x, this.freeSpot.y + 1);
+            this.move(this.freeSpot.x, this.freeSpot.y + 1, true);
         }
     }
     drawTimer() {
@@ -97,13 +97,13 @@ class Grid extends Array2D {
                 let cw = this.cellwidth;
                 let ch = this.cellheight;
                 var grid = this;
-                new Animator([], this.framesPerSize, () => true, function (t) {
+                this.animation = new Animator([], this.framesPerSize, function (t) {
                     let pos = new Vector2(
                         ((1 - t) * x + t * b.x) * cw,
                         ((1 - t) * y + t * b.y) * ch
                     );
                     grid.positions.set(b.x, b.y, pos);
-                });
+                }, function () { grid.positions.set(b.x, b.y, new Vector2(b.x * cw, b.y * ch)) });
             }
             this.freeSpot = pos;
         }

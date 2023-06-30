@@ -503,10 +503,18 @@ Vector.randomVelocity = function (minSpeed, maxSpeed) {
         Random.range(minSpeed, maxSpeed)
     );
 };
+Vector.random = function (aMag, bMag, aAngle = 0, bAngle = 360) {
+    let r = Random.range(aMag, bMag);
+    let a = Random.range(aAngle, bAngle);
+    return Vector.FromAngle(a, r);
+}
 Vector.directionVector = function (a, b) {
     let d = new Vector2(b.x - a.x, b.y - a.y).normalize();
     return d;
 };
+Vector.FromAngle = function (an, r = 1) {
+    return new Vector2(cos(an) * r, sin(an) * r);
+}
 Vector.angle = function (a, b) {
     return this.directionVector(a, b).heading();
 };
@@ -802,23 +810,11 @@ const Control = {
         }
     },
     callRedraw: function (timeStamp) {
-        if (!Control.FRAME_DRAWN) {
-            if (!Control.FIXED_FPS) {
-                Time.deltaTime = timeStamp - Time.time;
-                Time.frameRate = 1000 / Time.deltaTime;
-                Time.time = timeStamp;
-            } else {
-                Time.time += Time.deltaTime;
-            }
-            if (mousePressed && Mouse.timeSinceHeld > -1) {
-                Mouse.timeSinceHeld += Time.deltaTime;
-            }
-            redraw();
-            if (!Control.FIXED_FPS) {
-                Control.LOOP_ID = requestAnimationFrame(Control.callRedraw);
-            }
-            Control.FRAME_DRAWN = false;
+        redraw(timeStamp);
+        if (!Control.FIXED_FPS) {
+            Control.LOOP_ID = requestAnimationFrame(Control.callRedraw);
         }
+        Control.FRAME_DRAWN = false;
     },
     startIfLoaded: function () {
         //console.log(this.LOADED && this.LOADING == 0 && !this.STARTED);
@@ -860,7 +856,17 @@ function noLoop() {
 function loop() {
     Control.loop();
 }
-function redraw(timeStamp) {
+function redraw(timeStamp = Time.time + Time.deltaTime) {
+    if (Control.FRAME_DRAWN) {
+        return;
+    }
+    if (!Control.FIXED_FPS) {
+        Time.deltaTime = timeStamp - Time.time;
+        Time.frameRate = 1000 / Time.deltaTime;
+        Time.time = timeStamp;
+    } else {
+        Time.time += Time.deltaTime;
+    }
     Mouse.previous.set(Mouse.x, Mouse.y);
     Mouse.position.set(mouse2.x, mouse2.y);
     Control.FRAME_NO++;
@@ -1710,35 +1716,25 @@ function mult(...args) {
 let Random = {
     range: function () {
         args = arguments;
-        let r = 0;
-        let a = 0;
-        if (args.length > 1) {
-            r = args[0];
-            a = 1;
-            args[1] -= args[0];
+        if (args.length == 1) {
+            return Math.random() * args[0];
+        } else {
+            return Math.random() * (args[1] - args[0]) + args[0];
         }
-        r += Math.random() * args[a];
-        return r;
     },
     rangeInt: function RandomInt() {
         args = arguments;
-        let r = 0;
-        let a = 0;
-        if (args.length > 1) {
-            r = args[0];
-            a = 1;
-            args[1] -= args[0];
+        if (args.length == 1) {
+            return Math.floor(Math.random() * args[0]);
+        } else {
+            return Math.floor(Math.random() * (args[1] - args[0]) + args[0]);
         }
-        r += Math.floor(Math.random() * args[a]);
-        return r;
     },
     element: function (arr) {
-        let r = Math.floor(Math.random() * arr.length);
-        return arr[r];
+        return arr[this.rangeInt(arr.length)];
     },
     choice: function () {
-        let r = this.rangeInt(arguments.length);
-        return arguments[r];
+        return arguments[this.rangeInt(arguments.length)];
     },
 };
 let geometry = {
@@ -2167,12 +2163,14 @@ for (var i = 0; i < 255; i++) {
 }
 function rgb(...args) {
     //console.log(args);
-    if (typeof args[0] == "object") {
-        console.log(args);
-        return args[0].gradient;
+    if (typeof args[0] == "object" && !(args[0] instanceof Array)) {
+        return args[0];
     }
     if (typeof args[0] == "string") {
         return args[0];
+    }
+    if (args[0] instanceof Array) {
+        args = args[0];
     }
     if (args.length == 1) {
         args[0] = constraint(args[0], 0, 255);
@@ -2219,15 +2217,21 @@ function invertColor(col) {
 }
 function color() {
     args = filterArray(arguments);
-    if (args[0] instanceof LinearGradient || args[0] instanceof RadialGradient || args[0] instanceof ConicGradient) {
+    if (args[0].gradient) {
         return args[0].gradient;
+    }
+    if (args[0].string) {
+        if (args.length > 1) {
+            return [args[0].r, args[0].g, args[0].b, args[1]];
+        }
+        return [args[0].r, args[0].g, args[0].b, args[0].a];
     }
     if (typeof args[0] == "string") {
         return args[0];
     }
     if (Canvas.colorMode == RGB) {
         if (args[0] instanceof Array) {
-            return color(...args[0]);
+            return args[0];
         }
         if (args.length == 1) {
             args[0] = constraint(args[0], 0, 255);
@@ -2294,84 +2298,51 @@ function HSVtoHSL(h, sv, v, a = 255) {
     }
     return [h, sl * 255, l * 255, a];
 }
-function splitRGB(rgba) {
-    let r = rgba[0];
-    let g = rgba[1];
-    let b = rgba[2];
-    let a = rgba[3];
-    return {
-        r: r,
-        g: g,
-        b: b,
-        a: a,
-        mult: function (t) {
-            return color(r * t, g * t, b * t, a);
-        },
-        string: function () {
-            return rgb(r, g, b, a);
-        },
-    };
-}
-const Colors = {
-    add: function (...args) {
-        let cols = [];
-        for (var i = 0; i < args.length; i++) {
-            cols.push(splitRGB(args[i]));
-        }
-        cols = splitArray(cols);
-
-        let sum = {
-            r: ArrayMath.number(cols.r),
-            g: ArrayMath.number(cols.g),
-            b: ArrayMath.number(cols.b),
-            a: ArrayMath.number(cols.a),
-        };
-        return color(sum.r, sum.g, sum.b, sum.a);
-    },
-    sub: function () { },
-    weighted: function (...args) {
-        let cols = [];
-        for (var i = 0; i < args.length; i += 2) {
-            cols.push(splitRGB(args[i]).mult(args[i + 1]));
-        }
-        let col = this.add(...cols);
-        return col;
-    },
-    interpolate: function (a, b, t) {
-        return Colors.weighted(a, 1 - t, b, t);
-    },
-    avg: function (...cols) {
-        let col = this.add(...cols);
-        col = Color.mult(col, 1 / cols.length);
-        return col;
-    },
-};
-const Color = {
-    mult: (col, t) => col.map((a, i) => (i == 3 ? a : a * t)),
-    setAlpha: function (col, alpha) {
-        let c = splitRGB(col);
-        c.a = alpha;
-        return c.string();
-    },
-    RandomColorBetween: function (...args) {
-        let arr = [];
-        for (var i = 0; i < args.length; i += 2) {
-            if (i + 1 >= args.length) {
-                arr.push(args[i]);
-            } else {
-                arr.push(Random.range(args[i], args[i + 1]));
+const Rgb = {
+    add: function (...cols) {
+        let arr = [0, 0, 0, 255];
+        for (var col of cols) {
+            for (let i = 0; i < 3; i++) {
+                arr[i] += col[i];
             }
+            arr[3] = min(arr[3], col[3]);
         }
-        return color(...arr);
+        return arr;
     },
-    RandomColor: function (...args) {
-        let arr = [];
-        for (var i = 0; i < args.length; i++) {
-            arr.push(Random.range(0, args[i]));
+    mults: function (col, s) {
+        return [col[0] * s, col[1] * s, col[2] * s, col[3]];
+    },
+    split: function (rgba) {
+        let r = rgba[0];
+        let g = rgba[1];
+        let b = rgba[2];
+        let a = rgba[3];
+        return {
+            r: r,
+            g: g,
+            b: b,
+            a: a,
+            mult: function (t) {
+                return color(r * t, g * t, b * t, a);
+            },
+            string: function () {
+                return rgb(r, g, b, a);
+            },
+        };
+    },
+    random: function (...args) {
+        if (args.length == 3) {
+            return color(Random.rangeInt(args[0]), Random.rangeInt(args[1]), Random.rangeInt(args[2]));
         }
-        return color(...arr);
-    },
-};
+        if (args.length == 6) {
+            return color(
+                Random.rangeInt(args[0], args[1]),
+                Random.rangeInt(args[2], args[3]),
+                Random.rangeInt(args[4], args[5])
+            );
+        }
+    }
+}
 function stroke() {
     var col = color(...arguments);
     if (col instanceof Array) {
@@ -2606,7 +2577,7 @@ class RadialGradient {
         this.gradient.addColorStop(t, rgb(color(...col)));
     }
 }
-const windowWidth = screen.availWidth;
+const windowWidth = window.innerWidth;
 const windowHeight = window.innerHeight;
 
 const RECTMODE = {
@@ -2891,6 +2862,7 @@ function textFont(font) {
 }
 function textSize(size) {
     ctx.font = size + "px " + Canvas.textFontFamily;
+    Canvas.textFontSize = size;
 }
 function text(txt, x, y) {
     [x, y] = Camera2D.convertPos(x, y);
@@ -3265,9 +3237,9 @@ function pixelDensity(val) {
 
 // #region Image
 var pixels = [];
-class Image2 {
+class CImage {
     static canvas = document.createElement("canvas");
-    static ctx = Image2.canvas.getContext("2d");
+    static ctx = CImage.canvas.getContext("2d");
     constructor(im) {
         this.width = im.width;
         this.height = im.height;
@@ -3275,10 +3247,10 @@ class Image2 {
     }
     loadPixels() {
         this.pixels = [];
-        Image2.canvas.width = this.width;
-        Image2.canvas.height = this.height;
-        Image2.ctx.drawImage(this.image, 0, 0);
-        this.data = Image2.ctx.getImageData(0, 0, this.width, this.height);
+        CImage.canvas.width = this.width;
+        CImage.canvas.height = this.height;
+        CImage.ctx.drawImage(this.image, 0, 0);
+        this.data = CImage.ctx.getImageData(0, 0, this.width, this.height);
         for (var i = 0; i < this.data.data.length; i += 4) {
             let col = [...this.data.data.slice(i, i + 4)];
             if (Canvas.colorMode == HSL) {
@@ -3330,10 +3302,10 @@ class Image2 {
             pixs.push(...col);
         }
         setArray(this.data.data, pixs);
-        Image2.canvas.width = this.width;
-        Image2.canvas.height = this.height;
-        Image2.ctx.putImageData(this.data, 0, 0);
-        this.image.src = Image2.ctx.canvas.toDataURL();
+        CImage.canvas.width = this.width;
+        CImage.canvas.height = this.height;
+        CImage.ctx.putImageData(this.data, 0, 0);
+        this.image.src = CImage.ctx.canvas.toDataURL();
         //console.log(this.image);
     }
     download(name) {
@@ -3397,13 +3369,13 @@ class Image2 {
         return img;
     }
     function createImage(w, h, cb) {
-        Image2.canvas.width = w;
-        Image2.canvas.height = h;
+        CImage.canvas.width = w;
+        CImage.canvas.height = h;
         let img = new Image(w, h);
-        Image2.ctx.fillStyle = color(0, 0, 0, 0);
-        Image2.ctx.fillRect(0, 0, w, h);
-        img.src = Image2.ctx.canvas.toDataURL();
-        let im = new Image2(img);
+        CImage.ctx.fillStyle = color(0, 0, 0, 0);
+        CImage.ctx.fillRect(0, 0, w, h);
+        img.src = CImage.ctx.canvas.toDataURL();
+        let im = new CImage(img);
         img.onload = function () {
             img.onload = () => { };
             if (cb) {
@@ -3421,12 +3393,15 @@ class Image2 {
         Control.LOADING++;
         var myImage = new Image();
         myImage.src = name;
-        let im = new Image2(myImage);
+        let im = new CImage(myImage);
+        if (width && height) {
+            myImage.width = width;
+            myImage.height = height;
+        }
         myImage.onload = function () {
             myImage.onload = () => { };
             im.width = myImage.width;
             im.height = myImage.height;
-            //console.log(myImage.width);
             if (cb) {
                 cb(im);
             } else if (!height && width) {
@@ -3435,14 +3410,8 @@ class Image2 {
             Control.LOADING--;
             Control.startIfLoaded();
         };
-        if (width && height) {
-            myImage.width = width;
-            myImage.height = height;
-        }
         return im;
     }
-    Image2.canvas = Image2.canvas;
-    Image2.ctx = Image2.ctx;
 }
 function joinArrays(arrs) {
     let arr = [];

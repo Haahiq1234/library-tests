@@ -1,34 +1,21 @@
 <html>
+
 <head>
-    <link href="style.css" rel="stylesheet"/>
+    <link href="../style.css" rel="stylesheet" />
 </head>
+
 <body>
-    <script src="Canvas.js"></script>
+    <script src="../Canvas.js"></script>
     <script>
-        var FramesPerSecond = 80;
         var fireworkChance = 3;
         var fireworks = [];
-        var gravity;
-        let allowed = false;
-        let textColor = color(1, 100, 32);
+        var gravity = new Vector2(0, 0.25);
         function setUp() {
             createCanvas();
-            //frameRate(FramesPerSecond);
-            //noLoop();
             fireworks.push(new FireWork());
-            gravity = new Vector2(0, 0.25);
         }
         function draw() {
-            
             backGround(255, 50);
-            //Canvas.flipY();
-            //if (frameNo % 160 == 0) {
-            //    textColor = Color.RandomColor(255, 255, 255);
-            //    //console.log(textColor);
-            //    fill(textColor);
-            //    stroke(textColor);
-            //}
-            //saveColor();
             for (let i = 0; i < fireworks.length; i++) {
                 fireworks[i].Update();
                 if (fireworks[i].done()) {
@@ -39,11 +26,6 @@
             if (Random.range(1) < 0.01 * fireworkChance) {
                 fireworks.push(new FireWork());
             }
-            //loadColor();
-            //text("Eid Mubarak", CanvasWidth / 2, CanvasHeight / 2);
-        }
-        function drawText() {
-
         }
         function key_Press() {
             if (keyCode == key.backSpace) {
@@ -56,16 +38,14 @@
                 redraw();
             }
         }
-        function Particle(pos, size, acc, col, spanned = false) {
+        function Particle(pos, size, vel, col, spanned = false) {
             this.position = pos.copy();
-            this.velocity = new Vector2(0, 0);
+            this.velocity = vel;
             this.size = size;
-            this.color = splitRGB(col);
-            //console.log(col);
-            this.acceleration = acc;
+            this.color = Rgb.split(col);
+            this.acceleration = new Vector2(0, 0);
             this.spanned = spanned;
             this.span = 1;
-            this.originalSpan = this.span;
             this.addForce = function (force) {
                 this.acceleration = force;
             }
@@ -79,14 +59,13 @@
                     this.span -= 0.01;
                 }
                 fill(c);
-                stroke(c);
+                noStroke();
                 circle(this.position.x, this.position.y, this.size / 2 * Math.max(this.span, 0.5));
             }
 
         }
         function FireWork() {
-            this.color = Color.RandomColor
-                (255, 255, 255);
+            this.color = Rgb.random(255, 255, 255);
             this.firework = new Particle(createVector(Random.range(CanvasWidth), CanvasHeight), Random.rangeInt(4, 5), new Vector2(0, Random.rangeInt(-7, -14)), this.color);
             this.exploded = false;
             this.particles = [];
@@ -123,4 +102,5 @@
     </script>
 
 </body>
+
 </html>
