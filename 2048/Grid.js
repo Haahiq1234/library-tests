@@ -6,8 +6,8 @@ class Grid extends Array2D {
     ];
     colors = [
         "rgb(218, 195, 177)",
-        "rgb(238, 228, 218)", 
-        "rgb(237, 224, 200)", 
+        "rgb(238, 228, 218)",
+        "rgb(237, 224, 200)",
         "rgb(242, 177, 121)",
         "rgb(245, 149, 99)",
         "rgb(246, 124, 96)",
@@ -20,47 +20,37 @@ class Grid extends Array2D {
     ];
     constructor(width, height) {
         super(width, height);
+        this.positions = new Array2D(width, height);
         this.addRandom();
         let graph = this;
         on.start.bind(() => graph.init());
     }
+    resetPosition(i, j) {
+        this.positions.set(i, j, new Vector2(i * this.cellwidth, j * this.cellheight));
+    }
     init() {
         this.cellwidth = CanvasWidth / this.width;
         this.cellheight = CanvasHeight / this.height;
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
+                this.resetPosition(i, j);
+            }
+        }
         noStroke();
     }
-    swipeDown() {
-        for (let i = 0; i < this.width; i++) {
-            this.setCol(operate(this.getCol(i).reverse()).reverse(), i);
-        }
-        let possibilities = this.getPossibilities();
-        this.addRandom(possibilities);
-    }
-    swipeUp() {
-        for (let i = 0; i < this.width; i++) {
-            this.setCol(operate(this.getCol(i)), i);
-        }
-        let possibilities = this.getPossibilities();
-        this.addRandom(possibilities);
-    }
-    swipeLeft() {
-        for (let j = 0; j < this.width; j++) {
-            this.setRow(operate(this.getRow(j)), j);
-        }
-        let possibilities = this.getPossibilities();
-        this.addRandom(possibilities);
-    }
-    swipeRight() {
-        for (let j = 0; j < this.width; j++) {            
-            this.setRow(operate(this.getRow(j).reverse()).reverse(), j);
-        }
-        let possibilities = this.getPossibilities();
-        this.addRandom(possibilities);
-    }
-    addRandom(possibilities=this.getPossibilities()) {
+    addRandom(possibilities = this.getPossibilities()) {
         let choice = Random.element(this.choices);
         let pos = Random.element(possibilities);
         this.set(pos.x, pos.y, choice);
+    }
+    operate(dimension, f) {
+        let len = this.getDimensionSize(1 - dimension);
+        console.log(len);
+        for (var i = 0; i < len; i++) {
+            this.setDimensionArr(dimension, i, f(operate(f(this.getDimensionArr(dimension, i)))));
+        }
+        let possibilities = this.getPossibilities();
+        this.addRandom(possibilities);
     }
     getPossibilities() {
         let possibilities = [];
@@ -104,7 +94,15 @@ function operate(arr) {
     return arr;
 }
 function slide(arr) {
-    return arr.sort((a, b) => (b==0)? -1 : 1);
+    let order = getSortingOrder(arr, sortingFunction);
+    arr.sort(sortingFunction);
+    //console.log(arr);
+    return order;
+}
+function sortingFunction(a, b) {
+    let condition = (b == 0);
+    if (condition && a == 0) return 0;
+    return condition ? -1 : 1;
 }
 function combine(arr) {
     for (var i = 0; i < arr.length - 1; i++) {
@@ -113,4 +111,12 @@ function combine(arr) {
             arr[i + 1] = 0;
         }
     }
+}
+function getSortingOrder(arr, f) {
+    let order = [];
+    for (var i = 0; i < arr.length; i++) {
+        order.push(i);
+    }
+    order.sort((a, b) => f(arr[a], arr[b]));
+    return order;
 }

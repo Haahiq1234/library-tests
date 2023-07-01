@@ -630,7 +630,8 @@ const Input = {
 const Mouse = {
     position: new Vector2(0, 0),
     previous: new Vector2(0, 0),
-    timeSinceHeld: 0,
+    startPress: new Vector2(0, 0),
+    pressedTime: 0,
     get x() {
         return this.position.x;
     },
@@ -736,16 +737,13 @@ var mouse2 = new Vector2(0, 0);
     }
     on.pointerdown.bind(function (x, y) {
         mousePressed = true;
+        Mouse.pressedTime = new Date();
+        Mouse.startPress.set(x, y);
         mouse.set(...Camera2D.invertPos(x, y));
         mouse2.set(x, y);
-        if (window.mouse_Down) {
-            mouse_Down();
-        }
     });
     on.pointerup.bind(function () {
         mousePressed = false;
-        Mouse.timeSinceHeld = 0;
-        //console.log("Hello");
     });
     function GetKey(keyCode) {
         return Boolean(Input.pressed[keyCode]);
@@ -874,8 +872,8 @@ function redraw(timeStamp = Time.time + Time.deltaTime) {
         UI.Update();
         ctx.save();
     }
-    push();
     on.update.Fire();
+    push();
     if (window.draw) {
         draw();
     }
@@ -2422,29 +2420,23 @@ class Array2D {
         };
         this.set = function (x, y, val) {
             let ind = this.index(x, y);
-            if (x < 0 || y < 0 || x > 4 || y > 4) {
-                //console.trace(val, x, y);
-            }
+            // if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+            //     console.log("Position(" + x + ", " + y + ") out of bounds of 2d array");
+            // }
             this.array[ind] = val;
         };
         this.index = function (x, y) {
             return y * this.width + x;
         };
-        this.setRow = function (rw, row) {
+        this.setRow = function (j, arr) {
             for (var i = 0; i < this.width; i++) {
-                this.array[this.index(i, row)] = rw[i];
+                this.array[this.index(i, j)] = arr[i];
             }
         };
-        this.setCol = function (cl, col) {
-            for (var i = 0; i < this.height; i++) {
-                this.array[this.index(col, i)] = cl[i];
+        this.setCol = function (i, arr) {
+            for (var j = 0; j < this.height; j++) {
+                this.array[this.index(i, j)] = arr[j];
             }
-        };
-        this.shuffleCol = function (cl) {
-            this.setCol(shuffle(this.getCol(cl)), cl);
-        };
-        this.shuffleRow = function (rw) {
-            this.setRow(shuffle(this.getRow(rw)), rw);
         };
         this.shuffle = function () {
             shuffle(this.array);
@@ -2457,6 +2449,23 @@ class Array2D {
         this.get = function (x, y) {
             return this.array[this.index(x, y)];
         };
+        this.getDimensionSize = function (dimension) {
+            return dimension == 0 ? this.width : this.height;
+        }
+        this.getDimensionArr = function (dimension, pos) {
+            if (dimension == 0) {
+                return this.getCol(pos);
+            } else if (dimension == 1) {
+                return this.getRow(pos);
+            }
+        }
+        this.setDimensionArr = function (dimension, pos, arr) {
+            if (dimension == 0) {
+                this.setCol(pos, arr);
+            } else if (dimension == 1) {
+                this.setRow(pos, arr);
+            }
+        }
         this.swap = function (x, y, x1, y1) {
             let ind1 = this.index(x, y);
             let ind2 = this.index(x1, y1);
