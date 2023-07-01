@@ -9,7 +9,7 @@ function setUp() {
 
     console.log(grid);
     noLoop();
-    let length = min(CanvasWidth, CanvasHeight) / 2;
+    let length = min(CanvasWidth, CanvasHeight) / 4;
     addSlideEvent(function (ax, ay, bx, by) {
         let dx = bx - ax;
         let dy = by - ay;
