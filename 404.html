@@ -1,4 +1,17 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>404</title>
+	<style>
+		.lst {
+			height: 30px;
+			border: solid 1px black
+		}
+	</style>
+</head>
 
 <body>
 	<script>
@@ -13,20 +26,21 @@
 		async function getDirectoryFiles(dir) {
 			const response = await fetch('https://api.github.com/repos/Haahiq1234/library-tests/contents/' + dir + '?ref=main');
 			const data = await response.json();
-			return data;
-		}
-		let data = getDirectoryFiles(getcurrentDirectory());
-		data.then(function (data) {
 			console.log(data);
+			if (data.message == "Not Found") {
+				console.log("Page not Found. retaking to old one");
+				getDirectoryFiles("");
+			}
 			let htmlString = '<ul>';
 
 			for (let file of data) {
-				htmlString += `<li><a href="${file.path}">${file.name}</a></li>`;
+				htmlString += `<li class="lst"><a href="${file.path}">${file.name}</a></li>`;
 			}
 
 			htmlString += '</ul>';
 			document.getElementsByTagName('body')[0].innerHTML = htmlString;
-		});
+		}
+		getDirectoryFiles(getcurrentDirectory());
 	</script>
 </body>
 
