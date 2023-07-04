@@ -6,9 +6,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>404</title>
 	<style>
-		body {}
+		/*body {}
 
-		/* * {
+		 * {
 			box-sizing: border-box;
 			padding: 0;
 			margin: 0;
@@ -57,6 +57,18 @@
 
 <body>
 	<script>
+		function loadFile(url, callback) {
+			let request = new XMLHttpRequest();
+			request.open("GET", url, true);
+			request.onload = function () {
+				if (request.status < 200 || request.status > 299) {
+					callback(null, true);
+				} else {
+					callback(request.responseText, false);
+				}
+			};
+			request.send();
+		}
 		function getcurrentDirectory() {
 			let url = location.href.replace("404.html", "");
 			if (url.includes("library-tests/")) {
@@ -78,7 +90,10 @@
 			}
 			let htmlString = '<ul>';
 			for (let file of data) {
-				htmlString += `<li class="lst"><a href="${url + file.path}">${file.path}</a></li>`;
+				if (file.path.includes(".html") || file.path.includes(".js")) {
+					htmlString += `<li class="lst"><a href="${url + file.path}">${file.path}</a></li>`;
+
+				}
 			}
 
 			htmlString += '</ul>';

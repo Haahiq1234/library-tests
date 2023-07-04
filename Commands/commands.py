@@ -1,4 +1,5 @@
 import sys
+import json
 
 sys.path.append("E:/Python")
 import command_line
@@ -271,6 +272,20 @@ def git(args, clr):
         os.system("git add --all")
         os.system('git commit -m "' + message + '"')
         os.system("git push")
+        return
+    elif "pull" in args:
+        os.system("git fetch")
+        os.system("git pull")
+
+
+def index(args, clr):
+    os.chdir("../")
+    files = os.listdir(os.getcwd())
+    with open("index.json", "w") as file:
+        json.dump(files, file)
+    os.chdir(cwd)
+    print("Indexed")
+    print(files)
     pass
 
 
@@ -280,6 +295,7 @@ commands = {
     "build": build_project,
     "git": git,
     "copy": copy,
+    "index": index,
 }
 
 
