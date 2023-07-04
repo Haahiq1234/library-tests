@@ -211,7 +211,7 @@ def create(args, clr):
         return
     name = args[0]
 
-    with open("index.html", "r") as file:
+    with open("index_template.html", "r") as file:
         index_text = file.read().replace("projectName", name)
 
     with open("script.js", "r") as file:
