@@ -1,0 +1,44 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let curve;
+        let arr = [];
+        function setUp() {
+            createCanvas(800, 400, "white");
+            lineWidth(0.5);
+            frameRate(1000);
+            stroke(0);
+            for (let i = 0; i < CanvasWidth; i++) {
+                arr.push(map(i, 0, CanvasWidth, 0, CanvasHeight));
+            }
+            arr.sort(() => (Math.random() > .5) ? 1 : -1);
+            for (var i = 0; i < arr.length; i++) {
+                line(i, CanvasHeight, i, CanvasHeight - arr[i]);
+            }
+        }
+        function draw() {
+            clear();
+            let longest = false;
+            for (var i = 0; i < arr.length; i++) {
+                if (longest) {
+                    if (longest > arr[i]) {
+                        let temp = arr[i];
+                        arr[i] = longest;
+                        arr[i - 1] = temp;
+                        break;
+                    }
+                }
+                longest = arr[i];
+            }
+            for (var i = 0; i < arr.length; i++) {
+                line(i, CanvasHeight, i, CanvasHeight - arr[i]);
+            }
+        }
+    </script>
+
+</body>
+</html>

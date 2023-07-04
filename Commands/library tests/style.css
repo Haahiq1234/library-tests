@@ -1,0 +1,15 @@
+* {
+    box-sizing: border-box;
+    padding: 0;
+    outline: 0;
+    border: 0;
+    overflow: hidden;
+    margin: 0;
+    user-select: none; 
+    touch-action: none;
+}
+
+canvas {
+    border: solid 1px black;
+}
+

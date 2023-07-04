@@ -1,0 +1,67 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        //var v = new Vector2(50, 0);
+        let a = new Gizmo(100, 200);
+        //a.setShape(UI.CIRCLE, 20);
+        let b = new Gizmo(300, 200);
+        let c = new Gizmo(200, 200);
+
+        c.setShape(UI.CIRCLE, 50);
+        c.setColor(color(255));
+        c.hoveredColor = [240, 240, 240, 255];
+        c.clickedColor = [225, 225, 225, 255];
+
+        a.drawing = false;
+        b.drawing = false;
+        c.drawing = false;
+
+        //b.setShape(UI.CIRCLE, 30);
+        //a.setColor(color(255));
+        //b.setColor(color(255));
+
+        function setUp() {
+            createCanvas(400, 400);
+            lineWidth(2);
+        }
+        function draw() {
+            clear();
+            nofill();
+            circle(c.localPosition.x, c.localPosition.y, 50);
+            c.drawUI();
+
+            line(a.localPosition.x, a.localPosition.y, b.localPosition.x, b.localPosition.y);
+
+            let intersection = Intersection.CTL(
+                a.localPosition.x, a.localPosition.y,
+                b.localPosition.x, b.localPosition.y,
+                c.localPosition.x, c.localPosition.y, 50
+            );
+            for (var i = 0; i < intersection.length; i++) {
+                circle(intersection[i].x, intersection[i].y, 5);
+            }
+            a.drawUI();
+            b.drawUI();
+        }
+        //function lateDraw() {
+        //    //v.rotate(1);
+        //    //line(200, 200, 200 + v.x, 200 + v.y);
+        //    let ap = a.localPosition;
+        //    let bp = b.localPosition;
+        //    nofill();
+        //    circle(ap.x, ap.y, 20);
+        //    circle(bp.x, bp.y, 30);
+        //    let intersection = Intersection.CTC(ap.x, ap.y, 20, bp.x, bp.y, 30);
+        //    fill(0);
+        //    for (var i = 0; i < intersection.length; i++) {
+        //        circle(intersection[i].x, intersection[i].y, 5);
+        //    }
+        //}
+    </script>
+
+</body>
+</html>

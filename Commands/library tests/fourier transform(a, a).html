@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let wave = [];
+        let time = 0;
+        let inc;
+        let radius = 75;
+        let fourierY = [];
+        let fourierX = [];
+        let x = [];
+        let y = [];
+        let pts = [];
+        //let x = [];
+        //for (var i = -150; i < 150; i += 5) {
+        //    x.push(i);
+        //}
+        function setUp() {
+            createCanvas(600, 600);
+            frameRate(30);
+            AngleMode(RADIANS);
+            //for (var ang = 0; ang < PI * 2; ang += 0.1) {
+            //    //console.log(ang);
+            //    let nx = 100 * cos(ang);
+            //    let ny = 100 * sin(ang);
+            //    pts.push(new Vector2(nx, ny));
+            //}
+            pts.push(...Shapes.rect.vertices.path(-50, -50, 100, 100, 2));
+            //for (var i = 0; i < 5; i++) {
+            //    fourierY[i] = new Epicycle(radius * (4 / ((i * 2 + 1) * PI)), 0, i * 2 + 1);
+            //}
+            fourier = dft(pts);
+            fourier.sort((a, b) => b.amp - a.amp);
+
+            inc = 2 * PI / (fourier.length * 1);
+            nofill();
+        }
+        function draw() {
+            clear();
+            let p = recurse(300, 300, fourier, PI / 2);
+            beginShape();
+            while (wave.length > pts.length + 1) {
+                //console.log("ok");
+                wave = [];
+            }
+            wave.unshift(p);
+            for (var i = 0; i < wave.length; i++) {
+                vertex(wave[i].x, wave[i].y);
+            }
+            endShape(OPEN);
+            time += inc;
+        }
+        function recurse(trw, trh, fourier, offset) {
+            translate(trw, trh);
+            let lx = 0;
+            let ly = 0;
+            let ax = 0;
+            let ay = 0;
+            for (var n = 0; n < fourier.length; n++) {
+                push();
+                translate(lx + ax, ly + ay);
+                let rad = fourier[n].amp;
+                let freq = fourier[n].freq;
+                let ang = time * freq + fourier[n].start + offset;// + PI / 2;
+                circle(0, 0, rad);
+                let x = rad * cos(ang);
+                let y = rad * sin(ang);
+                line(0, 0, x, y);
+                lx += ax;
+                ax = x;
+                ly += ay;
+                ay = y;
+                pop();
+            }
+            let x = lx + ax;
+            let y = ly + ay;
+            circle(x, y, 8);
+            translate(-trw, -trh);
+            return new Vector2(trw + x, trh + y);
+        }
+        function key_Press() {
+
+        }
+        function dft(x) {
+            const N = x.length;
+            let X = [];
+            for (var k = 0; k < N; k++) {
+                let c = new Complex();
+                for (var n = 0; n < N; n++) {
+                    let ang = (PI * 2 * k * n) / N;
+                    let pt = Complex.FromVector(x[n]);
+                    let com = new Complex(cos(ang), -sin(ang));
+                    //console.log(pt);
+                    let cy = Complex.mult(pt, com);
+                    c.add(cy);
+                }
+                //console.log(c);
+                c.div(N);
+                X[k] = new Epicycle(c.re, c.im, k);
+            }
+            return X;
+        }
+        class Epicycle {
+
+            constructor(re, im, k) {
+                //console.log(re, im);
+                this.freq = k;
+                this.p = new Vector2(re, im);
+                this.amp = this.p.mag();
+                this.start = this.p.heading();
+            }
+        }
+        class Complex {
+            static FromVector(v) {
+                return new Complex(v.x, v.y);
+            }
+            constructor(a = 0, b = 0) {
+                this.re = a;
+                this.im = b;
+            }
+            div(no) {
+                this.re /= no;
+                this.im /= no;
+            }
+            add(com) {
+                this.re += com.re;
+                this.im += com.im;
+            }
+            static mult(com, ths) {
+                let re = ths.re * com.re - ths.im * com.im;
+                let im = ths.im * com.re + ths.re * com.im;
+                return new Complex(re, im);
+            }
+        }
+    </script>    
+</body>
+</html>

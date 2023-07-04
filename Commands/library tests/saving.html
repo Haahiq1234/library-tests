@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+        }
+        function draw() {
+            clear();
+        }
+        function key_Press() {
+
+        }
+        function doUpload(url, text) {
+            var xhr = new XMLHttpRequest();
+            var file = files;
+            xhr.open("POST", url);
+            //Set a few headers so we know the file name in the server
+            xhr.setRequestHeader("Cache-Control", "no-cache");
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xhr.setRequestHeader("X-File-Name", url);
+
+            //Initiate upload
+            xhr.send(file);
+
+            stopProp(e);
+        }
+    </script>    
+</body>
+</html>

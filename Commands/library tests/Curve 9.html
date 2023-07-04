@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let a = createVector(300, 100);
+            let b = createVector(100, 300);
+            let gizmo = new Gizmo(200, 200);
+            let gizmoA = new Gizmo(a.x, a.y, color(255, 255, 0));;
+            let gizmoB = new Gizmo(b.x, b.y, color(255, 255, 0));
+            let times = 30;
+            let r = Vector.dist(a, b) / times;
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                frameRate(60);
+            }
+            function draw() {
+                clear();
+                a = gizmoA.position;
+                b = gizmoB.position;
+                line(a.x, a.y, b.x, b.y);
+                for (var i = 0; i <= times; i++) {
+                    let pos = curve(i / times, a, b, gizmo.position.copy());
+                    circle(pos.x, pos.y, 5);
+                }
+            }
+            function curve(t, a, b, con) {
+                let pt = Vector.interpolate(a, b, t);
+                let d = distance.Vector.Infiniteline(a, b, con).point;
+                let it = inverseInterpolate(a, b, d);
+                let ft = abs(normalize(t, 0, it));
+                if (ft > 1) {
+                    ft = 2 - ft;
+                }
+                let off = Vector.sub(con, d).mult(ft ** 0.25);
+                return Vector.add(pt, off);
+            }
+            function inverseInterpolate(a, b, p) {
+                if (a.x == b.x) {
+                    return normalize(p.y, a.y, b.y);
+                } else {
+                    return normalize(p.x, a.x, b.x);
+                }
+            }
+            function ln(A, B) {
+                line(A.x, A.y, B.x, B.y);
+            }
+            function pt(P) {
+                circle(P.x, P.y, 2);
+            }
+            // first exponential
+        </script>
+    </body>
+</html>

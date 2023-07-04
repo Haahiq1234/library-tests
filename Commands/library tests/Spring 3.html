@@ -1,0 +1,57 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <script>
+        var FramesPerSecond = 100;
+        let anchor;
+        let bob;
+        let restLength = 24;
+        let k = 0.01
+        let velocity;
+        let velocity1;
+        var gravity;
+        function setUp() {
+            createCanvas(600, 400, "purple");
+            frameRate(FramesPerSecond);
+            bob = new Vector2(CanvasWidth / 2 + 100, CanvasHeight / 2);
+            anchor = new Vector2(CanvasWidth / 2 - 100, CanvasHeight / 2);
+            velocity = new Vector2(0, 0);
+            velocity1 = new Vector2(0, 0);
+            gravity = new Vector2(0, 0.1);
+        }
+        function draw() {
+            clear();
+
+            if (mousePressed) {
+                bob = mouse.copy();
+                velocity.reset();
+            }
+
+            fill("cyan");
+            stroke("white");
+            lineWidth(4);
+            line(anchor.x, anchor.y, bob.x, bob.y);
+            circle(anchor.x, anchor.y, 24);
+            circle(bob.x, bob.y, 24);
+
+            let force = Vector.sub(bob, anchor);
+            force.mult(0.5);
+            let x = force.mag() - restLength;
+            force.normalize();
+            force.mult(-k * x);
+            velocity.add(force);
+            bob.add(velocity);
+
+            force.mult(-1);
+            velocity1.add(force);
+            anchor.add(velocity1);
+
+            velocity.mult(0.99);
+            velocity1.mult(0.99);
+        }
+    </script>
+    <script src="Canvas.js"></script>
+
+</body>
+</html>

@@ -16,14 +16,14 @@ class SoftBody {
         this.physics.addBounds(this.bounds);
         for (var j = 0; j < height; j++) {
             for (var i = 0; i < width; i++) {
-               this.physics.addPoint(new Physics2DMassPoint(this.x + distanceBetweenPoints * i, this.y + distanceBetweenPoints * j));
+                this.physics.addPoint(new Physics2DMassPoint(this.x + distanceBetweenPoints * i, this.y + distanceBetweenPoints * j));
             }
         }
         for (var i = 0; i < this.physics.points.length; i++) {
             let x = i % width;
             let y = (i - x) / width;
             this.addSpring(i, x + 1, y, true);
-            this.addSpring(i, x,     y + 1, true);
+            this.addSpring(i, x, y + 1, true);
             this.addSpring(i, x + 1, y + 1, true);
             this.addSpring(i, x - 1, y + 1, true);
         }
@@ -32,7 +32,7 @@ class SoftBody {
             //let my = floorDiv(this.height, 2);
 
             this.addSpring(0, this.width - 1, this.height - 1, true);
-            this.addSpring(this.index(0, this.height - 1), this.width - 1, 0, true);
+            this.addSpring((this.height - 1) * this.height, this.width - 1, 0, true);
 
             //this.addSpring(this.index(mx, 0), mx, this.height - 1, false);
             //this.addSpring(this.index(0, my), this.width - 1, my, false);
@@ -41,16 +41,16 @@ class SoftBody {
     addSpring(i, x, y, show) {
         //console.log(x, y);
         if (this.inBounds(x, y)) {
-          let j = this.index(x, y);
-          this.physics.addSpring(
-            new Physics2DSpring(
-              this.physics.points[i],
-              this.physics.points[j],
-              this.ks,
-              this.kd
-            )
-          );
-          this.springdata.push(show);
+            let j = this.index(x, y);
+            this.physics.addSpring(
+                new Physics2DSpring(
+                    this.physics.points[i],
+                    this.physics.points[j],
+                    this.ks,
+                    this.kd
+                )
+            );
+            this.springdata.push(show);
         }
     }
     addForce(f) {
@@ -68,8 +68,7 @@ class SoftBody {
     }
     update() {
         this.physics.update();
-        for (var i = 0; i < this.physics.springs.length; i++) 
-        {
+        for (var i = 0; i < this.physics.springs.length; i++) {
             if (!this.springdata[i]) continue;
             let spring = this.physics.springs[i];
             line(spring.a.pos.x, spring.a.pos.y, spring.b.pos.x, spring.b.pos.y);

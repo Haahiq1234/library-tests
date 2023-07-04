@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script src="vec3.js"></script>
+    <script>
+        Camera.position.z = -2;
+        var points = [
+            new Vector3(-0.5, -0.5, 0.5),
+            new Vector3(0.5, -0.5, 0.5),
+            new Vector3(0.5, 0.5, 0.5),
+            new Vector3(-0.5, 0.5, 0.5),
+            new Vector3(-0.5, -0.5, -0.5),
+            new Vector3(0.5, -0.5, -0.5),
+            new Vector3(0.5, 0.5, -0.5),
+            new Vector3(-0.5, 0.5, -0.5)
+        ]
+        let slider;
+        let ang = 0;
+        let speed = 0.1;
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            Camera.setSpeed(speed, speed, speed)
+            Camera2D.translate(CanvasWidth / 2, CanvasHeight / 2);
+        }
+        function draw() {
+            clear();
+            //Camera.resetWorldRotation();
+            //Camera.rotationy = slider.value;
+            //Camera.projectionMatrix = Matrices.lookAt();
+            let pts = [];
+            for (var pt of points) {
+                let pt1 = pt.rotated(0, ang, 0);
+                let pt2 = pt1.persp().mult(200);
+                circle(pt2.x, pt2.y, 3);
+                pts.push(pt2);
+            }
+            projected = pts;
+            let a = new Vector3(0, 1, 0);
+            let b = new Vector3(0, 0, 1);
+            let c = Vector3D.crossProduct(a, b).normalize();
+            //console.log(c);
+            let o = new Vector3(0, 0, 0);
+            let ap = a.persp().mult(200);
+            let bp = b.persp().mult(200);
+            let cp = c.persp().mult(200);
+            let op = o.persp().mult(200);
+            line(op.x, op.y, ap.x, ap.y);
+            line(op.x, op.y, bp.x, bp.y);
+            line(op.x, op.y, cp.x, cp.y);
+            for (var i = 0; i < 4; i++) {
+                connect(0, i, (i + 1) % 4);
+                connect(0, i, i + 4);
+                connect(0, i + 4, 4 + (i + 1) % 4);
+            }
+            ang += 1;
+        }
+        function connect(off, a, b) {
+            let av = projected[a];
+            let bv = projected[b];
+            line(av.x, av.y, bv.x, bv.y);
+        }
+    </script>
+
+</body>
+</html>

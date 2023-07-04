@@ -1,0 +1,47 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let p = new Gizmo(200, 200);
+        let a = new Gizmo(100, 300, color());
+        let b = new Gizmo(300, 100);
+        function setUp() {
+            createCanvas(400, 400);
+            //console.log(dotProduct([1, 2], [3, 4]));
+            frameRate(60);
+        }
+        function draw() {
+            clear();
+            line(b.x, b.y, a.x, a.y);
+            //let prod = constraint(dotProduct(a.position, p.position) / a.position.mag(), 0, a.position.mag());
+            //let vec = a.position.copy();
+            //vec.setMag(prod);
+            //circle(vec.x, vec.y, 5);
+            //line(vec.x, vec.y, p.x, p.y);
+
+            let pt = distance.Vector.line2(a.position, b.position, p.position);
+            circle(pt.x, pt.y, 5);
+            pt = distance.Vector.line(a.position, b.position, p.position);
+            circle(pt.x, pt.y, 5);
+        }
+        function side(a, b, p) {
+            let mid = Vector.mid(a, b);
+            let b2 = Vector.sub(b, mid);
+            b2.rotate(90);
+            let po = Vector.sub(p, mid);
+
+            let prod = Vector.dotProduct(po, bo2) / b2.mag();
+            if (prod >= 0) {
+                return 90;
+            } else {
+                return -90;
+            }
+
+        }
+    </script>
+
+</body>
+</html>

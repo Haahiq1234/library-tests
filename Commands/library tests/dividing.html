@@ -1,0 +1,43 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let curve;
+        function setUp() {
+            createCanvas(800, 400, "black");
+            console.log(divide(22, 7, 2000));
+        }
+        function divide(dividend, divisor, presicion = 200) {
+            let remainder = dividend % divisor;
+            let qoutient = (dividend - remainder) / divisor;
+            let factor = 1;
+            if (remainder != 0 && presicion > 0) {
+                qoutient += ".";
+                for (var i = 0; i < presicion; i++) {
+                    remainder = remainder * 10;
+                    factor *= 10;
+                    let r = remainder % divisor;
+                    let q = remainder - r;
+                    remainder = r;
+                    if (q == 0) {
+                        qoutient += "0";
+                        continue;
+                    }
+                    q /= divisor;
+                    //console.log(q * factor);
+                    qoutient += Math.floor(q);
+                    if (r == 0) {
+                        break;
+                    }
+                }
+            }
+            console.log(qoutient, remainder);
+            return qoutient;
+        }
+    </script>
+
+</body>
+</html>

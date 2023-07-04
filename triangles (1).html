@@ -1,7 +1,9 @@
 <html>
+
 <head>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
@@ -43,12 +45,12 @@
             dpc = mx - dpc;
 
             mx = dpa + dpb + dpc;
-            dpa = dpa / mx;
-            dpb = dpb / mx;
-            dpc = dpc / mx;
+            dpa /= mx;
+            dpb /= mx;
+            dpc /= mx;
 
-            let col = Colors.weighted(ac, dpa, bc, dpb, cc, dpc);
-            col = Color.mult(col, 2);
+            let col = Rgb.weighted(ac, dpa, bc, dpb, cc, dpc);
+            col = Rgb.mult(col, 2);
             //console.log(p.x, p.y, re, re);
             noStroke();
             fill(col);
@@ -57,7 +59,7 @@
         function p(x, y) {
             let pt = new Vector2(x, y);
             let ws = CartesianToBarycentric(pt, a, b, c);
-            let col = Colors.weighted(ac, ws[0], bc, ws[1], cc, ws[2]);
+            let col = Rgb.weighted(ac, ws[0], bc, ws[1], cc, ws[2]);
             fill(col);
             noStroke();
             rect(x, y, slider.value, slider.value);
@@ -65,4 +67,5 @@
     </script>
 
 </body>
+
 </html>

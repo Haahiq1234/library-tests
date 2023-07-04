@@ -1,0 +1,44 @@
+﻿
+<html>
+<head>
+</head>
+<body>
+    <div></div>
+    <script src="Canvas.js"></script>
+    <script>
+        var characterTable = "a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 1 2 3 4 5 6 7 8 9 0".split(" ");
+        characterTable.push(" ");
+        let characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ";
+        console.table(characterTable);
+        function setUp() {
+
+        }
+        function encrypt(message) {
+            var encrypted = "";
+            for (var i = 0; i < message.length; i++) {
+                let ind = toInt(message[i]);
+                let en = (ind ** 5) % 65;
+                encrypted += "-" + en;
+            }
+            encrypted = encrypted.substring(1);
+            console.log(encrypted);
+            return encrypted;
+        }
+        function decrypt(message) {
+            let mess = message.split("-");
+            let decrypted = "";
+            for (let char of mess) {
+                let ind = parseInt(char);
+                decrypted += toString((ind ** 29) % 65);
+            }
+            return decrypted;
+        }
+        function toInt(ch) {
+            return characterTable.indexOf(ch);
+        }
+        function toString(ind) {
+            return characterTable[ind];
+        }
+    </script>
+</body>
+</html>

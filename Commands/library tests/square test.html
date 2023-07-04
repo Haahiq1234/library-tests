@@ -1,0 +1,35 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 100;
+        let r = 60;
+        let pos = createVector(200, 200);
+        function setUp() {
+            createCanvas(400, 400, "black");
+            frameRate(FramesPerSecond);
+        }
+        function draw() {
+            clear();
+            nofill();
+            stroke(255);
+            pos = mouse.copy();
+            pos.x = constraint(pos.x, 0, CanvasWidth);
+            pos.y = constraint(pos.y, 0, CanvasHeight);
+            let coll = collision.circleToRect(50, 100, 300, 100, pos.x, pos.y, r);
+            if (coll.collided) {
+                lineWidth(5);
+                line(pos.x, pos.y, coll.position.x, coll.position.y);
+                pos = coll.position;
+            }
+            rect(50, 100, 300, 100);
+            fill(255, 0, 0);
+            circle(pos.x, pos.y, r);
+        }
+    </script>
+
+</body>
+</html>

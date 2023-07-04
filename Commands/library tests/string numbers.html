@@ -1,0 +1,21 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let curve;
+        function setUp() {
+            //createCanvas(800, 400, "black");
+            console.log(root(2));
+        }
+        function root(number, presicion = 15) {
+            let no = BigInt(number * (10 ** (presicion * 2)));
+            let no2 = BigInt(no ** 0.5);
+            return no2;
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,178 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script src="vec3.js"></script>
+    <script>
+        Camera.position.z = -2;
+        var points = [
+            new Vector3(-0.5, -0.5, 0.5),
+            new Vector3(0.5, -0.5, 0.5),
+            new Vector3(0.5, 0.5, 0.5),
+            new Vector3(-0.5, 0.5, 0.5),
+            new Vector3(-0.5, -0.5, -0.5),
+            new Vector3(0.5, -0.5, -0.5),
+            new Vector3(0.5, 0.5, -0.5),
+            new Vector3(-0.5, 0.5, -0.5)
+        ]
+        let slider;
+        let ang = 0;
+        let speed = 0.1;
+        let vertices = [
+            new Vector3(0.5, 0.5, 0.5),  // 0 1
+            new Vector3(-0.5, 0.5, 0.5), // 3 2
+            new Vector3(-0.5, -0.5, 0.5),
+            new Vector3(0.5, -0.5, 0.5),
+
+            new Vector3(0.5, 0.5, -0.5), //  4 5
+            new Vector3(-0.5, 0.5, -0.5), // 7 6
+            new Vector3(-0.5, -0.5, -0.5),
+            new Vector3(0.5, -0.5, -0.5),
+
+            new Vector3(-0.5, -0.5, 0.5),
+            new Vector3(.5, -0.5, 0.5),
+            new Vector3(.5, -0.5, -0.5),
+            new Vector3(-.5, -0.5, -0.5),
+
+            new Vector3(-0.5, 0.5, 0.5),
+            new Vector3(.5, 0.5, 0.5),
+            new Vector3(.5, 0.5, -0.5),
+            new Vector3(-.5, 0.5, -0.5),
+
+            new Vector3(-.5, -.5, .5),
+            new Vector3(-.5, -.5, -.5),
+            new Vector3(-.5, .5, -.5),
+            new Vector3(-.5, .5, .5),
+
+            new Vector3(.5, -.5, .5),
+            new Vector3(.5, -.5, -.5),
+            new Vector3(.5, .5, -.5),
+            new Vector3(.5, .5, .5)
+        ];
+        let indices = [
+            0, 1, 2, //3, // f * 3 + 0 ,1 , 2
+            0, 2, 3,  // f * 3 + 0, 2, 3
+
+            4, 5, 6, //7,
+            4, 6, 7,
+
+            8, 9, 10, //11,
+            8, 10, 11,
+
+            12, 13, 14,// 15,
+            12, 14, 15,
+
+            16, 17, 18,// 19,
+            16, 18, 19,
+
+            20, 21, 22,// 23
+            20, 22, 23
+        ];
+        let cols = [
+            255, 0, 0,
+            255, 0, 0,
+
+            0, 255, 0,
+            0, 255, 0,
+
+            255, 255, 0,
+            255, 255, 0,
+
+            0, 0, 255,
+            0, 0, 255,
+
+            0, 255, 255,
+            0, 255, 255,
+
+            255, 0, 255,
+            255, 0, 255
+        ];
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            //noLoop();
+            Camera.setSpeed(speed, speed, speed)
+            Camera2D.translate(CanvasWidth / 2, CanvasHeight / 2);
+            setAxis("rot", "g", "h");
+            slider = createSlider(2, 20, 1, 10, "resolution");
+        }
+        function draw() {
+            clear();
+            //Camera.resetWorldRotation();
+            Camera.rotationy += GetAxis("rot");
+            let pts = [];
+            fill(0);
+            for (var pt of points) {
+                let pt1 = pt.rotated(0, 0, 0);
+                let pt2 = pt1.persp().mult(200);
+                circle(pt2.x, pt2.y, 3);
+                pts.push(pt2);
+            }
+            projected = pts;
+            for (var i = 0; i < 4; i++) {
+                connect(0, i, (i + 1) % 4);
+                connect(0, i, i + 4);
+                connect(0, i + 4, 4 + (i + 1) % 4);
+            }
+            //clear();
+            depth = new Array2D(CanvasWidth / slider.value, CanvasHeight / slider.value);
+            depth.array = depth.array.fill(Infinity);
+            drawMesh(vertices, indices, cols);
+            ang += 1;
+            rotateY(1);
+            //noLoop();
+        }
+        let zs = [];
+        function drawMesh(verts, indis, cols, vertsPerFace = 3) {
+            let faces = [];
+            for (var i = 0; i < indis.length; i += vertsPerFace) {
+                let face = [];
+                //console.log(floor(i, 3) / vertsPerFace)
+                faceC = color(cols[floor(i, 3) / vertsPerFace], cols[floor(i, 3) / vertsPerFace + 1], cols[floor(i, 3) / vertsPerFace + 2]);
+                //console.log();
+                zs = [];
+                for (var j = 0; j < vertsPerFace; j++) {
+                    let v = verts[indis[(i + j)]];
+                    zs.push(v.z);
+                    face.push(v.persp().mult(200));
+                }
+                fac = face;
+                fill(faceC);
+                //triangle(face[0].x, face[0].y, face[1].x, face[1].y, face[2].x, face[2].y);
+                Shapes.shape.forPixel(p, slider.value, ...face);
+            }
+
+        }
+        let faceC;
+        let fac;
+        function connect(off, a, b) {
+            let av = projected[a];
+            let bv = projected[b];
+            line(av.x, av.y, bv.x, bv.y);
+        }
+        var depth;
+        function p(x, y) {
+            let a = fac[0];
+            let b = fac[1];
+            let c = fac[2];
+            let p = createVector(x, y);
+            let dab = distance.Vector.line(a, b, p);
+            let dbc = distance.Vector.line(b, c, p);
+            let dca = distance.Vector.line(c, a, p);
+            let az = zs[2] * dca.t + zs[0] * (1 - dca.t);
+            let bz = zs[1] * dbc.t + zs[2] * (1 - dbc.t);
+            let cz = zs[0] * dab.t + zs[1] * (1 - dab.t);
+            let z = (az + bz + cz) / 3;
+            let lz = depth.get(x, y);
+            if (z < lz && z >= 0) {
+                //depth.set(x, y, z);
+                noStroke();
+                rect(p.x, p.y, slider.value, slider.value);
+            }
+        }
+    </script>
+
+</body>
+</html>

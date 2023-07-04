@@ -1,56 +1,73 @@
+const colors = [
+    "rgb(218, 195, 177)",
+    "rgb(238, 228, 218)",
+    "rgb(237, 224, 200)",
+    "rgb(242, 177, 121)",
+    "rgb(245, 149, 99)",
+    "rgb(246, 124, 96)",
+    "rgb(246, 94, 59)",
+    "rgb(237, 207, 115)",
+    "rgb(237, 204, 98)",
+    "rgb(237, 200, 80)",
+    "rgb(237, 197, 63)",
+    "rgb(237, 194, 45)"
+];
 class Grid extends Array2D {
     padding = 5;
     backGroundColor = "rgb(189, 177, 165)";
     choices = [
         1, 2, 3
     ];
-    colors = [
-        "rgb(218, 195, 177)",
-        "rgb(238, 228, 218)",
-        "rgb(237, 224, 200)",
-        "rgb(242, 177, 121)",
-        "rgb(245, 149, 99)",
-        "rgb(246, 124, 96)",
-        "rgb(246, 94, 59)",
-        "rgb(237, 207, 115)",
-        "rgb(237, 204, 98)",
-        "rgb(237, 200, 80)",
-        "rgb(237, 197, 63)",
-        "rgb(237, 194, 45)"
-    ];
     constructor(width, height) {
         super(width, height);
-        this.positions = new Array2D(width, height);
         this.addRandom();
         let graph = this;
         on.start.bind(() => graph.init());
     }
-    resetPosition(i, j) {
-        this.positions.set(i, j, new Vector2(i * this.cellwidth, j * this.cellheight));
-    }
     init() {
         this.cellwidth = CanvasWidth / this.width;
         this.cellheight = CanvasHeight / this.height;
-        for (var i = 0; i < this.width; i++) {
-            for (var j = 0; j < this.height; j++) {
-                this.resetPosition(i, j);
-            }
-        }
         noStroke();
     }
     addRandom(possibilities = this.getPossibilities()) {
         let choice = Random.element(this.choices);
+        if (possibilities.length == 0) {
+            this.checkGameState();
+            return;
+        }
         let pos = Random.element(possibilities);
         this.set(pos.x, pos.y, choice);
     }
-    operate(dimension, f) {
-        let len = this.getDimensionSize(1 - dimension);
-        console.log(len);
+    operate(dimension, f, start) {
+        this.slide(dimension, f, start);
+        //this.combine(dimension, f);
+        //this.slide(dimension, f);
+        //this.addRandom();
+    }
+    slide(dimension, f, start) {
+        let len = this.getDimensionSize(dimension);
         for (var i = 0; i < len; i++) {
-            this.setDimensionArr(dimension, i, f(operate(f(this.getDimensionArr(dimension, i)))));
+            let parr = f(this.getDimensionArr(dimension, i));
+            let arr = new Array(parr.length).fill(0);
+            let order = getSortingOrder(parr, slidingZero);
+            for (var j = 0; j < order.length; j++) {
+                if (order[j] == j) {
+                    arr[j] = parr[j];
+                } else {
+                    console.log(order[j], parr[order[j]]);
+                }
+            }
+            console.log(order, parr);
+            arr.sort(slidingZero);
+            this.setDimensionArr(dimension, i, f(arr));
         }
-        let possibilities = this.getPossibilities();
-        this.addRandom(possibilities);
+    }
+    combine(dimension, f) {
+        let len = this.getDimensionSize(1 - dimension);
+        for (var i = 0; i < len; i++) {
+            let toGet = this.getDimensionArr(dimension, i);
+            this.setDimensionArr(dimension, i, f(combine(f(toGet))));
+        }
     }
     getPossibilities() {
         let possibilities = [];
@@ -67,50 +84,48 @@ class Grid extends Array2D {
         backGround(this.backGroundColor);
         for (let i = 0; i < this.width; i++) {
             for (let j = 0; j < this.height; j++) {
-                //console.log(i, j);
+                let value = this.get(i, j);
                 let x = i * this.cellwidth;
                 let y = j * this.cellheight;
-                let value = this.get(i, j);
-                fill(this.colors[value]);
+                fill(colors[0]);
                 rect(x + this.padding, y + this.padding, this.cellwidth - this.padding * 2, this.cellheight - this.padding * 2);
-                if (value > 0) {
-                    let str = (2 ** value).toString();
-                    let digits = str.length - 1;
-                    fill(0);
-                    textSize(45 - digits * 5);
-                    text(str, x + this.cellwidth / 2, y + this.cellheight / 2);
-                }
+                this.cell(x, y, value);
             }
         }
     }
+    cell(x, y, val) {
+        if (val == 0) return;
+        fill(colors[val]);
+        rect(x + this.padding, y + this.padding, this.cellwidth - this.padding * 2, this.cellheight - this.padding * 2);
+        let str = (2 ** val).toString();
+        fill(0);
+        textSize(35);
+        text(str, x + this.cellwidth / 2, y + this.cellheight / 2);
+    }
     checkGameState() {
+        for (var i = 0; i < this.width - 1; i++) {
+            for (var j = 0; j < this.height - 1; j++) {
+                let val = this.get(i, j);
+                if (val == this.get(i, j + 1) || val == this.get(i + 1, j)) return;
+            }
+        }
         alert("game Ended");
+        noLoop();
     }
 }
-function operate(arr) {
-    slide(arr);
-    combine(arr);
-    slide(arr);
-    return arr;
-}
-function slide(arr) {
-    let order = getSortingOrder(arr, sortingFunction);
-    arr.sort(sortingFunction);
-    //console.log(arr);
-    return order;
-}
-function sortingFunction(a, b) {
+function slidingZero(a, b) {
     let condition = (b == 0);
     if (condition && a == 0) return 0;
-    return condition ? -1 : 1;
+    return condition ? -1 : 0;
 }
 function combine(arr) {
-    for (var i = 0; i < arr.length - 1; i++) {
-        if (arr[i] == arr[i + 1] && arr[i] > 0) {
+    for (var i = arr.length - 1; i > 0; i--) {
+        if (arr[i] == arr[i - 1] && arr[i] > 0) {
             arr[i]++;
-            arr[i + 1] = 0;
+            arr[i - 1] = 0;
         }
     }
+    return arr;
 }
 function getSortingOrder(arr, f) {
     let order = [];
@@ -119,4 +134,11 @@ function getSortingOrder(arr, f) {
     }
     order.sort((a, b) => f(arr[a], arr[b]));
     return order;
+}
+function orderUsingDimension(d, x, y) {
+    if (d == 0) {
+        return [x, y];
+    } else {
+        return [y, x];
+    }
 }

@@ -1,0 +1,58 @@
+﻿<html>
+<head>
+</head>
+<body>
+    <script>
+        var FramesPerSecond = 100;
+        var tentacle;
+        var segmentLength = 50;
+        var tentacle1;
+        function setUp() {
+            createCanvas(500, 500, "black");
+            frameRate(FramesPerSecond);
+            tentacle = new segment(200, 200, segmentLength);
+            for (var i = -90; i < 90; i++) {
+                console.log(i, Vector.AngleToVector(i, 1));
+            }
+        }
+        function draw() {
+            clear();
+            tentacle.follow(mousePos);
+            tentacle.show();
+        }
+        function segment(x, y, len) {
+            this.a = new Vector2(x, y);
+            this.len = len;
+            this.angle = 0;
+            this.b = Vector.AngleToVector(this.angle, this.len);
+            this.calB = function () {
+                this.b = Vector.add(Vector.AngleToVector(this.angle, this.len), this.a);
+            }
+            this.follow = function (ve) {
+                var vec = Vector.sub(ve, this.a);
+                let ang = vec.heading() - 90 - this.angle;
+
+                this.angle += ang / 20;
+                this.calB();
+
+                let vec1 = Vector.sub(ve, this.b);
+                if (vec.mag() > 1) {
+                    let vec2 = Vector.AngleToVector(this.angle, 1);
+                    vec1.limit(1);
+                    this.a.add(vec2);
+                }
+            }
+            this.show = function () {
+                stroke("white");
+                lineWidth(2);
+                this.calB();
+                line(this.a.x, this.a.y, this.b.x, this.b.y);
+            }
+        }
+    </script>
+    <script src="Canvas.js">
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let par;
+            let arr = [
+                createVector(0, 0),
+                createVector(5, 4)
+            ]
+            function setUp() {
+                createCanvas(1350, 600, color(255));
+                frameRate(60);
+                par = new GameObject(
+                    new Vector2(100, 200),
+                    20
+                );
+                par.setSuperParent();
+                new GameObject(new Vector2(200, 200), 100).setParent(par);
+                new GameObject(new Vector2(300, 200), 100).setParent(par.children[0]);
+                new GameObject(new Vector2(200, 200), 100).setParent(par);
+                new GameObject(new Vector2(300, 200), 100).setParent(par.children[1]);
+
+            }
+            function draw() {
+                clear();
+                par.update();
+            }
+            class GameObject  {
+                parent;
+                lastPosition;
+                setSuperParent() {
+                    this.gizmo.setColor(color(255, 122, 0));
+                }
+                constructor(position, length) {
+                    var ths = this;
+                    this.rotated = false;
+                    this.lastPosition = position;
+                    this.width = 10;
+                    this.size = 10;
+                    this.length = length;
+                    this.gizmo = new Gizmo(position, color(0, 255, 0));
+                    this.gizmo.setPos = function (pos) { ths.position(pos, true); };
+                    this.gizmo.constraintedA = this.gizmo.constraintedB.neg();
+                    this.gizmo.constraintedB.mult(2);
+                    this.gizmo.selfUpdate = false;
+                    this.gizmo.radius = 7;
+                    this.children = [];
+                }
+                position(pos, setRot) {
+                    if (pos != this.gizmo.position && pos != undefined) {
+                        if (this.parent && setRot) {
+                            let lastRot = Vector.sub(this.gizmo.position, this.parent.position()).heading();
+                            let newRot = Vector.sub(pos, this.parent.position()).heading();
+                            let deltaRot = newRot - lastRot;
+
+                        }
+                        for (var child of this.children) {
+                            child.updatePosition();
+                        }
+                        this.lastPosition = pos;
+                        if (this.parent) {
+                            this.gizmo.position = Vector.setDist(this.a(), pos, this.length);
+                        } else {
+                            this.gizmo.position = pos;
+                        }
+                    }
+                    return this.gizmo.position;
+                }
+                rotate(rot) {
+                    let a = this.a1();
+                    let b = this.b();
+                    let c = Vector.sub(b, a);
+                }
+                a() {
+                    return this.parent.gizmo.position;
+                }
+                b() {
+                    return this.gizmo.position;
+                }
+                a1() {
+                    return this.parent.lastPosition;
+                }
+                b1() {
+                    return this.lastPosition;
+                }
+                update() {
+                    this.gizmo.update();
+                    let b = this.position();
+                    if (this.parent) {
+                        let a = this.parent.position();
+                        //this.position(Vector.limitDistance(a, b, this.length));
+                        //if (Vector.sub(b, a).mag() < this.length - 2) {
+                        //    this.position(Vector.add(a, Vector.sub(b, a).setMag(this.length)));
+                        //}
+                        //this.position(Vector.add(Vector.sub(b, a).setMag(this.length), a));
+                        b = this.position();
+                        lineWidth(this.width * 2);
+                        line(a.x, a.y, b.x, b.y);
+                    }
+                    noStroke();
+                    circle(b.x, b.y, this.size);
+                    for (var child of this.children) {
+                        child.update();
+                    }
+                }
+                updatePosition() {
+                    let a = this.a1();
+                    let b = this.b();
+                    let offset = Vector.sub(b, a);
+                    this.gizmo.position = Vector.add(this.a(), offset);
+                    for (var child of this.children) {
+                        child.updatePosition();
+                    }
+                    this.lastPosition = this.position();
+                }
+                setParent(par) {
+                    this.parent = par;
+                    par.children.push(this);
+                    return this;
+                }
+                setChild(child) {
+                    this.children.push(child);
+                    child.parent = this;
+                }
+            }
+        </script>
+    </body>
+</html>

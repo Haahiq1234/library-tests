@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let mesh;
+            let arr = [
+                createVector(0, 0),
+                createVector(5, 4)
+            ]
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                frameRate(60);
+                mesh = new Mesh(
+                    new Vector2(100, 200),
+                    [
+                        new Vector2(0, -10),
+                        new Vector2(10, -10),
+                        new Vector2(10, 10),
+                        new Vector2(0, 10)
+                    ],
+                    color(255, 0, 0)
+                );
+
+            }
+            function draw() {
+                mesh.draw();
+            }
+            class Mesh  {
+                constructor(position, verticesOffsets, color_) {
+                    this.position = position;
+                    this.vertices = verticesOffsets;
+                    this.color = color_;
+                    this.rotation = 90;
+                }
+                draw() {
+                    push();
+                    translate(this.position.x, this.position.y);
+                    rotate(this.rotation);
+                    let vertices = [];
+                    for (var i = 0; i < this.vertices.length; i++) {
+                        vertices.push(...this.vertices[i].array());
+                    }
+                    fill(this.color);
+                    shape.draw(...vertices);
+                    pop();
+                }
+            }
+        </script>
+    </body>
+</html>

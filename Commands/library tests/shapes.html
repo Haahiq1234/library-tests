@@ -1,0 +1,83 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var verts = [100, 100, 200, 75, 300, 100, 325, 200, 300, 300, 200, 325, 100, 300, 75, 200];
+        let tt = 0;
+        let inc = 0.001;
+        let slider;
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            slider = createSlider(1, 20, 1, 20, "Resolution");
+        }
+        function draw() {
+            clear();
+            nofill();
+
+            let vts = Shapes.shape.vertices.rotate(200, 200, tt * 360, verts);
+            shape.draw(...vts);
+
+            rect(100, 100, 200, 200)
+            tt += inc;
+            let vss = Shapes.rect.vertices.rotate(200, 200, tt * 360, 100, 100, 200, 200);
+
+            let pt = Shapes.rect.perimeter.interpolate(tt, 100, 100, 200, 200);
+            shape.draw(...vss);
+            circle(pt.x, pt.y, 5);
+            line(pt.x, pt.y, 200, 200);
+            line(pt.x, pt.y, vss[0], vss[1]);
+
+            let pt2 = Shapes.rect.perimeter.interpolate(tt + 0.25, 100, 100, 200, 200);
+            circle(pt2.x, pt2.y, 5);
+            line(pt2.x, pt2.y, 200, 200);
+            line(pt2.x, pt2.y, vss[2], vss[3]);
+
+            pt2 = Shapes.rect.perimeter.interpolate(tt + 0.5, 100, 100, 200, 200);
+            circle(pt2.x, pt2.y, 5);
+            line(pt2.x, pt2.y, 200, 200);
+            line(pt2.x, pt2.y, vss[4], vss[5]);
+
+            pt2 = Shapes.rect.perimeter.interpolate(tt + 0.75, 100, 100, 200, 200);
+            circle(pt2.x, pt2.y, 5);
+            line(pt2.x, pt2.y, 200, 200);
+            line(pt2.x, pt2.y, vss[6], vss[7]);
+
+            pt2 = Shapes.rect.perimeter.interpolate(tt + 0.125, 100, 100, 200, 200);
+            circle(pt2.x, pt2.y, 5);
+            line(pt2.x, pt2.y, 200, 200);
+            line(pt2.x, pt2.y, vts[2], vts[3]);
+
+            pt2 = Shapes.rect.perimeter.interpolate(tt + 0.375, 100, 100, 200, 200);
+            circle(pt2.x, pt2.y, 5);
+            line(pt2.x, pt2.y, 200, 200);
+            line(pt2.x, pt2.y, vts[6], vts[7]);
+
+            pt2 = Shapes.rect.perimeter.interpolate(tt + 0.625, 100, 100, 200, 200);
+            circle(pt2.x, pt2.y, 5);
+            line(pt2.x, pt2.y, 200, 200);
+            line(pt2.x, pt2.y, vts[10], vts[11]);
+
+            pt2 = Shapes.rect.perimeter.interpolate(tt + 0.875, 100, 100, 200, 200);
+            circle(pt2.x, pt2.y, 5);
+            line(pt2.x, pt2.y, 200, 200);
+            line(pt2.x, pt2.y, vts[vts.length - 2], vts[vts.length - 1]);
+
+
+            let vs = Shapes.shape.vertices.points([50, 50, 350, 50, 350, 350, 50, 350], slider.value);
+            for (var v of vs) {
+                circle(v.x, v.y, 2);
+            }
+
+            vs = Shapes.line.vertices.points(100, 200, 300, 200, slider.value);
+            for (var v of vs) {
+                circle(v.x, v.y, 2);
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,81 @@
+﻿<html>
+<head>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 100;
+        var tentacle;
+        var segmentLength = 50;
+        var tentacle1;
+        function setUp() {
+            createCanvas(500, 500);
+            frameRate(FramesPerSecond); //
+            //Canvas.flipY();
+            tentacle = new Tentacle(CanvasWidth / 2, CanvasHeight, 50, 30);
+            tentacle1 = new Tentacle(CanvasWidth / 2, 0, 5, 150);
+
+            lineWidth(2);
+        }
+        function draw() {
+            clear();
+            //Canvas.flipY();
+            tentacle.follow(mouse2);
+            tentacle.show();
+            tentacle1.follow(mouse2);
+            tentacle1.show();
+            line(100, screen.availHeight, 0, screen.availHeight);
+        }
+        function segment(x, y, len) {
+            this.a = new Vector2(x, y);
+            this.len = len;
+            this.angle = 0;
+            this.b = Vector.AngleToVector(this.angle, this.len);
+            this.calB = function () {
+                this.b = Vector.add(Vector.AngleToVector(this.angle, this.len), this.a);
+            }
+            this.follow = function (ve) {
+                var vec = Vector.sub(ve, this.a);
+                this.angle = vec.heading();// - 90;
+                this.calB();
+
+                let vec1 = Vector.sub(ve, this.b);
+                this.a.add(vec1);
+            }
+            this.show = function () {
+                this.calB();
+                line(this.a.x, this.a.y, this.b.x, this.b.y);
+            }
+        }
+        function Tentacle(x, y, len, size) {
+            this.pos = new Vector2(x, y);
+            this.segs = [];
+            this.size = size;
+            this.len = len;
+            for (var i = 0; i < this.size; i++) {
+                this.segs.push(new segment(x, y + this.len * i, this.len));
+            }
+            this.follow = function (obj) {
+                this.segs[this.size - 1].follow(obj);
+                for (var i = this.size - 2; i >= 0; i--) {
+                    this.segs[i].follow(this.segs[i + 1].a);
+                }
+                this.segs[0].a = this.pos.copy();
+                this.segs[0].calB();
+                for (var i = 1; i < this.size; i++) {
+                    this.segs[i].a = this.segs[i - 1].b.copy();
+                    this.segs[i].calB();
+                }
+            }
+            this.show = function () {
+                for (var i = 0; i < this.size; i++) {
+                    this.segs[i].show();
+
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Balls</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var FramesPerSecond = 50;
+        var col;
+        var pos;
+        function setUp() {
+            createCanvas(400, 400);
+            pos = new Vector2(0, 0);
+            frameRate(FramesPerSecond);
+        }
+        function draw() {
+            backGround(255, 50);
+            //console.log(color(255, 10));
+            //stroke(100);
+            //noStroke();
+            fill(0);
+            circle(pos.x, pos.y, 10);
+            pos.x += 2;
+            pos.y += 2;
+        }
+    </script>
+</body>
+</html>

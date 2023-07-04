@@ -1,0 +1,568 @@
+
+var colliders = [];
+var ctx, CanvasWidth, CanvasHeight, CanvasColor, mouseOverCanvas, drawEnabled, floor, CanvasOffset;
+var fl = true;
+var PI = Math.PI;
+var drawEnabled = true;
+const Canvas = {
+    lineWidth: undefined,
+    strokeStyle: undefined,
+    fillStyle: undefined
+}
+var translated = new Vector2(0, 0);
+var angle = 0;
+const Vector = {
+    multiply: function (vec) {
+        for (var i = 1; i < arguments.length; i++)
+            vec.mult(arguments[i]);
+        return vec;
+    },
+    add: function () {
+        var vec = arguments[0].copy();
+        for (var i = 1; i < arguments.length; i++)
+            vec.add(arguments[i].copy());
+        return vec;
+    },
+    subtract: function (vec, vec1) {
+        vec = vec.copy();
+        vec1 = vec1.copy();
+        return vec.sub(vec1);
+    },
+    VectorToAngle: function (vec) {
+        var ang = Math.atan2(vec.x, vec.y);
+        ang = 180 - degrees(ang);
+        return ang;
+    },
+    AngleToVector: function (ang, rad) {
+        let x = rad * Math.cos(radians(ang));
+        let y = rad * Math.sin(radians(ang));
+        return new Vector2(x, y);
+    },
+    div: function (vec, no) {
+        vec = vec.copy();
+        vec.div(no);
+        return vec;
+    }
+
+}
+var frameNo = 0;
+var pressedKeys = {
+    a: false,
+    b: false,
+    c: false,
+    d: false,
+    e: false,
+    f: false,
+    g: false,
+    h: false,
+    i: false,
+    j: false,
+    k: false,
+    l: false,
+    m: false,
+    n: false,
+    o: false,
+    p: false,
+    q: false,
+    r: false,
+    s: false,
+    t: false,
+    u: false,
+    v: false,
+    w: false,
+    x: false,
+    y: false,
+    z: false,
+    1: false,
+    2: false,
+    3: false,
+    4: false,
+    5: false,
+    6: false,
+    7: false,
+    8: false,
+    9: false,
+    0: false,
+    " ": false
+};
+function randomChoice(arr) {
+    let r = Math.floor(Math.random() * arr.length);
+    return arr[r];
+}
+function textAlign(al) {
+    ctx.textAlign = al;
+}
+function textSize(size) {
+    ctx.font = size + 'px Arial';
+}
+function text(txt, x, y) {
+    if (!fl) {
+        ctx.strokeText(txt, x, y);
+    } else {
+        ctx.fillText(txt, x, y);
+    }
+}
+function sign(no) {
+    if (no < 0)
+        return -1
+    else if (no > 0)
+        return 1
+    else
+        return 0;
+}
+function downloadImage() {
+    var link = document.createElement('a');
+    link.download = 'Canvas_Image.png';
+    link.href = ctx.canvas.toDataURL()
+    link.click();
+}
+function min(no, no1) {
+    if (no1 < no)
+        return no1;
+    else
+        return no;
+}
+function max(no, no1) {
+    if (no1 > no)
+        return no1;
+    else
+        return no;
+}
+var scaled = new Vector2(1, 1);
+function scale(x, y) {
+    if (y != undefined) {
+        ctx.scale(x, y);
+        scaled.x *= x;
+        scaled.y *= y;
+    } else {
+        ctx.scale(x, x);
+        scaled.mult(x);
+    }
+}
+function constraint(num, min, max) {
+    if (num < min)
+        return min;
+    else if (num > max)
+        return max;
+    else
+        return num;
+}
+function constraintedAxis(num, min, max) {
+    if (num < min)
+        return -1;
+    else if (num > max)
+        return -1;
+    else
+        return 0;
+}
+function constrainted(num, min, max) {
+    if (num < min || num > max)
+        return true;
+    else
+        return false;
+}
+function map(no, min, max, minr, maxr) {
+    return minr + ((maxr - minr) * normalize(no, min, max));
+}
+function normalize(no, min, max) {
+    return (no - min) / (max - min);
+}
+console.log(map(3, 2, 4, 5, 10));
+function canvasButton(x, y, width, height, col) {
+    this.element = document.createElement("button");
+    document.body.appendChild(this.element);
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.color = col;
+    this.bind = function (func) {
+        this.element.onclick = func;
+    }
+    this.addClass = function (cl) {
+        this.element.classList.add(cl);
+    }
+    this.text = function (tex) {
+        this.element.innerHTML = tex;
+    }
+    this.element.style.position = "absolute";
+    this.update = function () {
+        this.element.style.top = this.y + CanvasOffset.y;
+        this.element.style.left = this.x + CanvasOffset.x;
+        this.element.style.width = this.width;
+        this.element.style.height = this.height;
+        this.element.style.color = this.color;
+        this.element.style.backgroundColor = this.color;
+    }
+}
+function radians(deg) {
+    return deg * PI / 180;
+}
+function degrees(rad) {
+    return 180 * rad / PI;
+}
+document.onmousemove = handleMouseMove;
+var mousePos = new Vector2(0, 0);
+var saveMouse = mousePos.copy();
+function handleMouseMove(event) {
+    //mousePos = new Vector2(event.pageX - CanvasOffset.x, event.pageY - CanvasOffset.y);
+    saveMouse = mousePos.copy();
+}
+function GetAxis(TAxis, TKey) {
+    if (TAxis = "h") {
+        let xAxis = 0
+        if (TKey == "k") {
+            if (pressedKeys["a"])
+                xAxis--;
+            else if (pressedKeys["d"])
+                xAxis++;
+        }
+        if (TKey == "a") {
+            if (pressedKeys[left])
+                xAxis--;
+            else if (pressedKeys[right])
+                xAxis++;
+        }
+        return xAxis;
+    }
+    if (TAxis = "v") {
+        let yAxis = 0;
+        if (TKey == "k") {
+            if (pressedKeys["w"])
+                yAxis--;
+            else if (pressedKeys["s"])
+                yAxis++;
+        }
+        if (TKey == "a") {
+            if (pressedKeys[up])
+                yAxis--;
+            else if (pressedKeys[down])
+                yAxis++;
+        }
+        return yAxis;
+    }
+    return 0;
+}
+function GetKey(keyCode) {
+    if (keyCode in pressedKeys) {
+        return pressedKeys[keyCode];
+    } else {
+        return false;
+    }
+}
+function alpha(al) {
+    return alphaValues[al];
+}
+function Collider(x, y, width, height, dirs) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.directions = dirs;
+    this.colliderId = colliders.length;
+    colliders.push(this);
+    this.Update = function (newX, newY, newWidth, newHeight) {
+        this.x = newX;
+        this.y = newY;
+        this.width = newWidth;
+        this.height = newHeight;
+    }
+}
+function lineWidth(w) {
+    ctx.lineWidth = w;
+    Canvas.lineWidth = w;
+}
+function triangle(x, y, x1, y1, x2, y2) {
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.lineTo(x, y);
+    ctx.closePath();
+    ctx.stroke();
+    if (fl) {
+        ctx.fill();
+    }
+}
+var alphaValues = [];
+for (var i = 0; i < 255; i++) {
+    i = Math.round(i * 100) / 100;
+    var alpha = Math.round(i * 255);
+    var hex = (alpha + 0x10000).toString(16).substr(-2).toUpperCase();
+    alphaValues.unshift(hex);
+}
+if (window.mouse_Click) {
+    document.onclick = mouse_Click;
+}
+function shape(xPositions, yPositions) {
+    ctx.beginPath();
+    ctx.moveTo(xPositions[0], yPositions[0]);
+    for (i = 1; i < xPositions.length; i++) {
+        ctx.lineTo(xPositions[i], yPositions[i]);
+    }
+    ctx.lineTo([yPositions], yPositions[0]);
+    ctx.closePath();
+    ctx.stroke();
+    if (fl) {
+        ctx.fill();
+    }
+}
+function circle(x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.stroke();
+    if (fl) {
+        ctx.fill();
+    }
+}
+function ellipse(x, y, r) {
+    r -= ctx.lineWidth / 2;
+    var c = ctx.strokeStyle;
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
+}
+function fillRect(x, y, width, height) {
+    ctx.fillRect(x, y, width, height);
+}
+function create(elem, id, cl) {
+    var e = document.createElement(elem);
+    e.setAttribute("id", id);
+    e.setAttribute("class", cl);
+    document.body.appendChild(e);
+    return e;
+}
+function createSlider(min, max, step) {
+    let slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = min;
+    slider.max = max;
+    slider.step = step;
+    document.body.appendChild(slider);
+    return slider;
+}
+function createCanvas(w, h, colour, al) {
+    if (al) {
+        colour += alpha(al);
+    }
+    var canvas = document.createElement("canvas");
+    canvas.width = w;
+    CanvasWidth = w;
+    CanvasHeight = h;
+    canvas.height = h;
+    canvas.style.backgroundColor = colour;
+    document.body.appendChild(canvas);
+    ctx = canvas.getContext("2d");
+    ctx.textAlign = "center";
+    Canvas.lineWidth = ctx.lineWidth;
+    Canvas.fillStyle = ctx.fillStyle;
+    Canvas.strokeStyle = ctx.strokeStyle;
+    canvas.style.border = "1px solid black"
+    CanvasColor = colour;
+    canvas.addEventListener("mouseover", function () { mouseOverCanvas = true; });
+    canvas.addEventListener("mouseout", function () { mouseOverCanvas = false; });
+    let el = canvas;
+    var _x = 0;
+    var _y = 0;
+    while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
+        _x += el.offsetLeft - el.scrollLeft;
+        _y += el.offsetTop - el.scrollTop;
+        el = el.offsetParent;
+    }
+    CanvasOffset = new Vector2(_x, _y);
+    return canvas;
+}
+function clear() {
+    let c = ctx.fillStyle;
+    ctx.fillStyle = CanvasColor;
+    ctx.fillRect(-CanvasWidth * 5, -CanvasHeight * 5, CanvasWidth * 10, CanvasHeight * 10);
+    ctx.fillStyle = c;
+}
+function point(x, y, cl) {
+    var cl1 = ctx.fillStyle;
+    var cl2 = ctx.strokeStyle;
+    ctx.fillStyle = cl;
+    ctx.strokeStyle = cl;
+    circle(x, y, ctx.lineWidth / 2);
+    ctx.fillStyle = cl1;
+    ctx.strokeStyle = cl2;
+}
+function rect(x, y, w, h) {
+    ctx.beginPath();
+    ctx.strokeRect(x, y, w, h);
+    ctx.closePath();
+    if (fl) {
+        ctx.fillRect(x, y, w, h);
+    }
+}
+var key = {}
+key.up = "ArrowUp";
+key.down = "ArrowDown";
+key.right = "ArrowRight";
+key.left = "ArrowLeft";
+key.space = " ";
+key.enter = "Enter";
+key.backSpace = "Backspace";
+var keyCode;
+if (window.setUp) {
+    setUp();
+}
+function save() {
+    ctx.save();
+}
+function restore() {
+    ctx.restore();
+}
+var lastKey = 1;
+document.addEventListener("keydown", function (event) {
+    keyCode = event.key;
+    if (!keyCode in pressedKeys || !pressedKeys[keyCode]) {
+        if (window.key_Press) {
+            key_Press();
+        }
+    }
+    pressedKeys[keyCode] = true;
+    if (window.key_Down) {
+        key_Down();
+    }
+});
+document.addEventListener("keyup", function (event) {
+    keyCode = event.key;
+    pressedKeys[keyCode] = false;
+    if (window.key_Up) {
+        key_Up();
+    }
+});
+function backGround(col, al) {
+    var cl = ctx.fillStyle;
+    if (al) {
+        if ("#" in col)
+            col += alphaValues[al];
+    }
+    ctx.fillStyle = col;
+    ctx.fillRect(-CanvasWidth * 5, -CanvasHeight * 5, CanvasWidth * 10, CanvasHeight * 10);
+    ctx.fillStyle = cl;
+}
+
+function frameRate(fps) {
+    clearInterval(0);
+    drawEnabled = true;
+    drawInterval = setInterval(redraw, 1000 / fps);
+}
+function redraw() {
+    mousePos = saveMouse.copy();
+    translate(-translated.x, -translated.y);
+    scale(1 / scaled.x, 1 / scaled.y);
+    if (drawEnabled)
+        draw();
+    frameNo += 1;
+}
+function line(x, y, x1, y1) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x1, y1);
+    ctx.closePath();
+    ctx.stroke();
+}
+function stroke(col) {
+    ctx.strokeStyle = col;
+    Canvas.strokeStyle = col;
+}
+function nofill() {
+    fl = false;
+}
+function fill(col) {
+    fl = true;
+    ctx.fillStyle = col;
+    Canvas.fillStyle = col;
+}
+
+function rotate(deg) {
+    ctx.rotate(deg * Math.PI / 180);
+    angle = angle + parseInt(deg);
+    //console.log(angle);
+}
+function translate(x, y) {
+    ctx.translate(x, y);
+    translated.x += x;
+    translated.y += y;
+}
+function Vector2(x, y) {
+    this.x = x;
+    this.y = y;
+    this.add = function (addition) {
+        this.x += addition.x;
+        this.y += addition.y;
+        return this;
+    }
+    this.mult = function (pow) {
+        this.x *= pow;
+        this.y *= pow;
+        return this;
+    }
+    this.reset = function () {
+        this.x = 0;
+        this.y = y;
+    }
+    this.sub = function (vec) {
+        this.x -= vec.x;
+        this.y -= vec.y;
+        return this;
+    }
+    this.set = function (nx, ny) {
+        this.x = nx;
+        this.y = ny;
+    }
+    this.setMag = function (len) {
+        let Mag = Math.sqrt(this.x ** 2 + this.y ** 2);
+        this.x *= len / Mag;
+        this.y *= len / Mag;
+    }
+    this.mag = function () {
+        return Math.sqrt(this.x ** 2 + this.y ** 2);
+    }
+    this.copy = function () {
+        return new Vector2(this.x, this.y);
+    }
+    this.normalize = function () {
+        this.setMag(1);
+    }
+    this.div = function (no) {
+        this.x /= no;
+        this.y /= no;
+        return this;
+    }
+    this.limit = function (no) {
+        if (this.mag() > no)
+            this.set
+    }
+}
+function RandomInt() {
+    args = arguments;
+    let r = 0;
+    let a = 0;
+    if (args.length > 1) {
+        r = args[0];
+        a = 1;
+        args[1] -= args[0];
+    }
+    r += Math.round(Math.random() * args[a]);
+    return r;
+}
+function Random() {
+    args = arguments;
+    let r = 0;
+    let a = 0;
+    if (args.length > 1) {
+        r = args[0];
+        a = 1;
+        args[1] -= args[0];
+    }
+    r += Math.random() * args[a];
+    return r;
+}

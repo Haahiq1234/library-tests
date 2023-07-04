@@ -1,0 +1,197 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soft Body</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        var pts = [];
+        let xw = 4;
+        let yh = 2;
+        let xwi = 200;
+        let yhi = 200;
+        var springs1 = [];
+        var springs = [];
+        let g = new Gizmo(200, 200);
+        function setUp() {
+            createCanvas(400, 400);
+            frameRate(60);
+            //pts[0] = new Point(200, 0);
+            for (var ym = 0; ym < yh; ym++) {
+                for (var xm = 0; xm < xw; xm++) {
+                    let x = (CanvasWidth - xwi) / 2 + (xm / xw * xwi);
+                    let y = (CanvasHeight - yhi) / 2 + (ym / yh * yhi);
+                    new Point(x, y);
+                }
+            }
+            //colorMode(HSL);
+            for (var x = 0; x < xw; x++) {
+                for (var y = 0; y < yh; y++) {
+                    let xg = (x < xw - 1);
+                    let yg = (y < yh - 1);
+                    if (xg) {
+                        let ai = x + y * xw;
+                        let bi = (x + 1) + y * xw;
+                        springs1.push(new Spring(ai, bi));
+                    }
+                    if (yg) {
+                        let ai = x + y * xw;
+                        let bi = x + (y + 1) * xw;
+                        springs1.push(new Spring(ai, bi));
+                    }
+                    if (yg && xg) {
+                        let ai = x + y * xw;
+                        let bi = (x + 1) + (y + 1) * xw;
+                        springs1.push(new Spring(ai, bi));
+                    }
+                    if (x > 0 && yg) {                        
+                        let ai = x + y * xw;
+                        let bi = (x - 1) + (y + 1) * xw;
+                        springs1.push(new Spring(ai, bi));
+                    }
+                }
+            }
+            let l = 0;
+            //springs.splice(16, 1);
+            springs = springs1//.slice(l, l + 1);
+        } // ps (0, 0) (0, 1) (1, 0) (1, 1) () () () ()
+        var li = 1;
+        function set() {
+            springs = springs1.slice(li, li + 1);
+            li++;
+        }
+        function key_Press() {
+            //set();
+        }
+        function draw() {
+            clear();
+            for (var spr of springs) {
+                spr.update();
+            }
+            for (var pt of pts) {
+                pt.update();
+            }
+            for (var spr of springs) {
+                spr.show();
+            }
+            for (var pt of pts) {
+                pt.show();
+            }
+            //console.log(pts[0].vel);
+        }
+        let gravity = createVector(0, 1);
+        class Point {
+            constructor(x, y) {
+                this.pos = createVector(x, y);
+                this.vel = createVector();
+                this.mass = 5;
+                this.radius = 7;
+                this.force = createVector();
+                this.id = pts.length;
+                pts.push(this);
+            }
+            addForce(f) {
+                this.force.add(Vector.div(f, this.mass));
+            }
+            get x() {
+                return this.pos.x;
+            }
+            get y() {
+                return this.pos.y;
+            }
+            set x(x) {
+                this.pos.x = x;
+            }
+            set y(y) {
+                this.pos.y = y;
+            }
+            update() {
+                this.addForce(Vector.mult(gravity, this.mass));
+                this.vel.add(Vector.div(this.force, this.mass));
+                this.pos.add(this.vel);
+                this.edges();
+                this.force.set(0, 0);
+            }
+            edges() {
+                if ((this.y + this.radius) > CanvasHeight) {
+                    this.y = CanvasHeight - this.radius;
+                    //this.reflect(new Vector2(0, -1));
+                    this.force.set(0, 0);
+                }
+                //for (var pt of pts) {
+                //    if (pt.id != this.id) {
+                //        let d = Vector.dist(pt.pos, this.pos) - this.radius - pt.radius;
+                //        if (d < 0) {
+                //            let v = Vector.sub(pt.pos, this.pos).setMag(-d);
+                //            //let v1 = v.copy().mult(-0.75);
+                //            let v2 = v.copy().mult(1);
+                            
+                //            //this.pos.add(v1);
+                //            //this.reflect(v1);
+                //            //pt.reflect(v2);
+                //            pt.pos.add(v2);
+                //        }
+                //    }
+                //}
+            }
+            reflect(n) {
+                this.vel = Vector.reflect(this.vel, n);
+            }
+            show() {
+                fill(255, 0, 0);
+                circle(this.x, this.y, this.radius);
+            }
+        }
+        class Spring {
+            constructor(ai, bi) {
+                this.ai = ai;
+                this.bi = bi;
+                this.length = Vector.dist(this.a.pos, this.b.pos);
+                this.ks = 0.8;
+                this.kd = 0.05;
+            }
+            get a() {
+                return pts[this.ai];
+            }
+            get b() {
+                return pts[this.bi];
+            }
+            update() {
+                let a = this.a;
+                let b = this.b;
+
+                let x = Vector.dist(a.pos, b.pos) - this.length;
+                if (this.ai == 0 && this.bi == 1) {
+                   //console.log(x);
+                }
+                let fs = x * this.ks;
+
+                let dv = Vector.DirectionVector(a.pos, b.pos).normalize();
+                let vv = Vector.sub(b.vel, a.vel);
+                let fd = Vector.dot(dv, vv) * this.kd;
+
+
+                let ft = fs + fd;
+
+                let fa = Vector.mult(Vector.DirectionVector(a, b), ft);
+                let fb = Vector.mult(Vector.DirectionVector(b, a), ft);
+
+                a.addForce(fa);
+                b.addForce(fb);
+            }
+            show() {
+                let a = this.a;
+                let b = this.b;
+                
+                stroke(255, 255, 50);
+                line(a.x, a.y, b.x, b.y);
+            }
+        }
+    </script>    
+</body>
+</html>

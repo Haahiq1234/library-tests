@@ -1,0 +1,81 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let brain;
+        let points = [];
+        function setUp() {
+            createCanvas(400, 400, "white");
+            brain = new Perceptron();
+
+            for (var i = 0; i < 25; i++) {
+                points[i] = new Point(Random.range(CanvasWidth), Random.range(CanvasHeight));
+            }
+        }
+        function draw() {
+            backGround(255);
+            line(0, 0, CanvasWidth, CanvasHeight);
+            for (pt of points) {
+                pt.show();
+                let out = brain.guess([pt.x, pt.y]);
+                if (out == pt.label) {
+                    fill(0, 255, 0);
+                } else {
+                    fill(255, 0, 0);
+                }
+                circle(pt.x, pt.y, 3);
+            }
+        }
+        function mouse_Click() {
+            console.log("ok");
+            for (pt of points) {
+                brain.train([pt.x, pt.y], pt.label);
+            }
+        }
+        class Perceptron {
+            constructor() {
+                this.weights = [];
+                for (var i = 0; i < 2; i++) {
+                    this.weights[i] = Random.range(-1, 1);
+                }
+                this.learningRate = 0.005;
+            }
+            guess(inputs) {
+                let sum = 0;
+                for (var i = 0; i < this.weights.length; i++) {
+                    sum += inputs[i] * this.weights[i] * this.learningRate;
+                }
+                let out = sign(sum);
+                if (out == 0)
+                    out = 1;
+                return out;
+            }
+            train(inputs, target) {
+                let guess = this.guess(inputs);
+                let error = target - guess;
+                for (var i = 0; i < this.weights.length; i++) {
+                    this.weights[i] += error * inputs[i] * this.learningRate;
+                }
+            }
+        }
+        class Point {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                if (this.x > this.y) {
+                    this.label = 1;
+                } else {
+                    this.label = -1;
+                }
+            }
+            show() {
+                fill(255 * this.label);
+                circle(this.x, this.y, 5);
+            } 
+        }
+    </script>
+</body>
+</html>

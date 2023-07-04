@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <script src="Canvas.js"></script>
+        <script>
+            let a = createVector(300, 100);
+            let b = createVector(100, 300);
+            let gizmo = new Gizmo(200, 200);
+            let gizmoA = new Gizmo(a.x, a.y, color(255, 255, 0));;
+            let gizmoB = new Gizmo(b.x, b.y, color(255, 255, 0));
+            let times = 30;
+            let r = Vector.dist(a, b) / times;
+            function setUp() {
+                createCanvas(400, 400, color(255));
+                frameRate(60);
+            }
+            function draw() {
+                clear();
+                a = gizmoA.position;
+                b = gizmoB.position;
+                line(a.x, a.y, b.x, b.y);
+
+                let aCon = Vector.sub(b, a);
+                aCon.rotate(90);
+                aCon.setMag(Vector.dist(a, gizmo.position) + Vector.dist(b, gizmo.position));
+                let bCon = aCon.neg();
+                aCon.add(Vector.mid(a, b));
+                bCon.add(Vector.mid(a, b));
+                //ln(aCon, bCon);
+                //gizmo.constraintToLine(aCon, bCon);
+                for (var i = 0; i <= times; i++) {
+                    let pos = curve(Vector.interpolate(a, b, i / times), a, b, gizmo.position.copy());
+                    circle(pos.x, pos.y, 5);
+                }
+            }
+            function curve(p, a, b, con) {
+                let c = distance.line(a.x, a.y, b.x, b.y, con.x, con.y);
+                let len = c.dist;
+                let cp = c.point;
+                let tan = Vector.sub(con, cp).normalize();
+                let ada = Vector.dist(a, cp);
+                let bda = Vector.dist(b, cp);
+                let adb = Vector.dist(cp, p);
+                let bdb = Vector.dist(cp, p);
+                let dista = bda;
+                let distb = bdb;
+                if (ada > Vector.dist(a, p)) {
+                    dista = ada;
+                    distb = adb;
+                }
+                tan.setMag(
+                    len - len ** (distb / dista)
+                );
+                p.add(tan);
+                return p;
+            }
+            function ln(A, B) {
+                line(A.x, A.y, B.x, B.y);
+            }
+            function pt(P) {
+                circle(P.x, P.y, 2);
+            }
+            // first exponential
+        </script>
+    </body>
+</html>

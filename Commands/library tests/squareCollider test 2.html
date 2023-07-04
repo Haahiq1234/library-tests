@@ -1,0 +1,58 @@
+<html>
+<head>
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let curve;
+        function setUp() {
+            createCanvas(800, 400, "white");
+            //frameRate(FramesPerSecond);
+        }
+        function draw() {
+            clear();
+            fill(0, 0, 255);
+            rect(150, 150, 100, 100);
+
+            let pos = mouse.copy();
+            pos.sub(50, 50);
+            fill(255, 255, 0);
+
+            let coll = RectToRect(pos.x, pos.y, 100, 100, 150, 150, 100, 100)
+            if (coll.collided) {
+                fill(255, 0, 0);
+                pos = coll.pos.copy();
+            }
+            rect(pos.x, pos.y, 100, 100);
+        }
+        function RectToRect(x, y, w, h, x1, y1, w1, h1) {
+            let collideds = 0;
+            let nx;
+            let ny;
+            if ((x + w) > x1 && x < (x1 + w1)) {
+                collideds++;
+                nx = x - ((x + w) - x1);
+            }
+            if ((y + h) > y1 && y < (y1 + h1)) {
+                collideds++;
+                ny = y - ((y + h) - y1);
+            }
+            let pos = createVector();
+            if (nx > ny) {
+                pos.y = ny;
+                pos.x = x;
+            } else {
+                pos.x = nx;
+                pos.y = y;
+            }
+            return {
+                collided: collideds == 2,
+                pos: pos
+            }
+
+        }
+    </script>
+
+</body>
+</html>

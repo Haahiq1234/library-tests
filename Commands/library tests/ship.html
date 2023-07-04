@@ -1,0 +1,304 @@
+<html>
+<head>
+</head>
+<body>
+    <script>
+        var ship, rows;
+        function setUp() {
+            createCanvas(700, 460, "black");
+            ship = new createShip(20, height / 2, 1, 4);
+            rows = 8;
+            frameRate(20);
+        }
+        function draw() {
+            clear();
+            for (var i = 0; i < ship.bullets.length; i++) {
+                ship.bullets[i].show();
+            }
+            if (ship.bullets.length > 0 && ship.bullets[0].x > width) {
+                ship.bullets.shift();
+            }
+            ship.show();
+            ship.bar.show();
+            if (ship.bar.energy < 100) {
+                ship.bar.energy++;
+            }
+        }
+        function key_Down() {
+            if (keyCode == down && ship.r < rows) {
+                ship.y += 40;
+                ship.r += 1;
+            } else if (keyCode == up && ship.r > 1) {
+                ship.y -= 40;
+                ship.r -= 1;
+            } else if (keyCode == "s") {
+                ship.shoot = !ship.shoot;
+            } else if (keyCode == space) {
+                if (ship.shoot && ship.bar.energy > 9) {
+                    let b = new createBullet(ship.x + 150 * ship.s, ship.y);
+                    ship.bullets.push(b);
+                    ship.bar.energy -= 10;
+                }
+            } else if (keyCode == "t") {
+                if (!drawEnabled) {
+                    startDraw();
+                    console.log("no");
+                } else if (drawEnabled) {
+                    endDraw();
+                    console.log("yes");
+                }
+                console.log("time");
+            }
+        }
+        function createShip(x, y, s, r) {
+            this.x = x;
+            this.y = y;
+            this.s = s;
+            this.r = r;
+            this.bullets = [];
+            this.shoot = false;
+            this.bar = new Bar(10, 10, 150, 20, "red", "white", "white");
+            this.show = function () {
+                stroke("white");
+                fill("red");
+                lineWidth(5);
+                triangle(this.x + 15, this.y - 35, this.x + 15, this.y + 35, this.x + 150, this.y);
+                triangle(this.x, this.y - 33, this.x, this.y + 33, this.x + 140, this.y);
+                if (this.shoot) {
+                    rect(this.x, this.y - 10, 160, 7);
+                    rect(this.x, this.y + 10, 160, -7);
+                    rect(this.x, this.y - 7, 150, 14);
+                    rect(this.x, this.y - 4, 145, 8);
+                }
+                rect(this.x, this.y - 20, 47, 40);
+                rect(this.x + 5, this.y - 15, 39, 30);
+                triangle(this.x, this.y - 20, this.x + 40, this.y - 23, this.x, this.y - 43);
+                triangle(this.x, this.y + 20, this.x + 40, this.y + 23, this.x, this.y + 43);
+                triangle(this.x + 5, this.y + 25, this.x + 25, this.y + 26, this.x + 5, this.y + 35);
+                triangle(this.x + 5, this.y - 25, this.x + 25, this.y - 26, this.x + 5, this.y - 35);
+                triangle(this.x + 50, this.y - 15, this.x + 50, this.y + 15, this.x + 110, this.y);
+                triangle(this.x + 55, this.y - 10, this.x + 55, this.y + 10, this.x + 95, this.y);
+                triangle(this.x + 8, this.y - 10, this.x + 8, this.y + 10, this.x + 39, this.y);
+            }
+        }
+        function Bar(x, y, width, height, color, border, background) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.color = color;
+            this.border = border;
+            this.background = background;
+            this.energy = 100;
+            this.show = function () {
+                stroke(this.background);
+                fill(this.background);
+                rect(this.x, this.y, this.width, this.height);
+                if (this.energy > 0) {
+                    stroke(this.color);
+                    fill(this.color);
+                    rect(this.x, this.y, this.width / 100 * this.energy, this.height);
+                }
+                
+                nofill();
+                stroke(this.border);
+                rect(this.x, this.y, this.width, this.height);
+            }
+        }
+        function createBullet(x, y) {
+            this.h = 12;
+            this.l = 20;
+            this.x = x - this.l;
+            this.y = y - this.h / 2;
+            this.show = function () {
+                this.x += 10;
+                stroke("white");
+                fill("red");
+                rect(this.x - this.l * 2, this.y + this.h / 4, this.l * 3, this.h / 2);
+                rect(this.x-this.l, this.y+2, this.l*2, 8)
+                rect(this.x, this.y, this.l, this.h);
+            }
+        }
+
+
+
+        var ctx, width, height, colour, mouseOverCanvas, drawEnabled;
+        var fl = true;
+        var translated = createVector(0, 0);
+        var angle = 0;
+        var space = " ";
+        var frameNo = 0;
+        function lineWidth(w) {
+            ctx.lineWidth = w;
+        }
+        function triangle(x, y, x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x, y);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function quad(x, y, x1, y1, x2, y2, x3, y3) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x3, y3);
+            ctx.lineTo(x, y);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function circle(x, y, r) {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.stroke();
+            if (fl) {
+                ctx.fill();
+            }
+        }
+        function create(elem, id, cl) {
+            var e = document.createElement(elem);
+            e.setAttribute("id", id);
+            e.setAttribute("class", cl);
+            document.body.appendChild(e);
+            return e;
+        }
+        function createSlider(min, max, step) {
+            let slider = document.createElement("input");
+            slider.type = "range";
+            slider.min = min;
+            slider.max = max;
+            slider.step = step;
+            document.body.appendChild(slider);
+            return slider;
+        }
+        function createCanvas(w, h, color) {
+            var canvas = document.createElement("canvas");
+            canvas.width = w;
+            width = w;
+            height = h;
+            canvas.height = h;
+            canvas.style.backgroundColor = color;
+            document.body.appendChild(canvas);
+            ctx = canvas.getContext("2d");
+            colour = color;
+            canvas.addEventListener("mouseover", function () { mouseOverCanvas = true; });
+            canvas.addEventListener("mouseout", function () { mouseOverCanvas = false; });
+        }
+        function clear() {
+            let ang = angle;
+            let x = translated.x;
+            let y = translated.y;
+            translate(-x, -y);
+            rotate(-angle);
+            ctx.clearRect(0, 0, width, height)
+            translate(x, y);
+            rotate(ang);
+        }
+        function rect(x, y, w, h) {
+            ctx.beginPath();
+            ctx.strokeRect(x, y, w, h);
+            ctx.closePath();
+            if (fl) {
+                ctx.fillRect(x, y, w, h);
+            }
+        }
+        var up = "ArrowUp";
+        var down = "ArrowDown";
+        var right = "ArrowRight";
+        var left = "ArrowLeft";
+        var keyCode;
+        if (window.setUp) {
+            setUp();
+        }
+        if (window.key_Down) {
+            document.addEventListener("keydown", function (event) {
+                keyCode = event.key;
+                key_Down();
+            });
+        }
+        if (window.key_Up) {
+            document.addEventListener("keyup", function (event) {
+                keyCode = event.key;
+                key_Up();
+            });
+        }
+        var FPS = 1;
+        if (window.draw) {
+            draw();
+            drawInterval = setInterval(function () {
+                draw();
+                frameNo += 1;
+                drawEnabled = true;
+            }, 1000 / FPS);
+        }
+        
+        function frameRate(fps) {
+            drawInterval = setInterval(function () {
+                draw();
+                frameNo += 1;
+            }, 1000 / fps);
+            FPS = fps;
+            drawEnabled = true;
+        }
+        function startDraw(){
+            drawInterval = setInterval(function () {
+                draw();
+                frameNo += 1;
+            }, 1000 / FPS);
+            drawEnabled = true;
+        }
+        function endDraw() {
+            clearInterval(drawInterval);
+            drawEnabled = false;
+            console.log("why");
+        }
+        function line(x, y, x1, y1) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x1, y1);
+            ctx.closePath();
+            ctx.stroke();
+        }
+        function stroke(col) {
+            ctx.strokeStyle = col;
+        }
+        function nofill() {
+            fl = false;
+        }
+        function fill(col) {
+            fl = true;
+            ctx.fillStyle = col;
+        }
+
+        function rotate(deg) {
+            ctx.rotate(deg * Math.PI / 180);
+            angle = angle + parseInt(deg);
+            //console.log(angle);
+        }
+
+        function translate(x, y) {
+            ctx.translate(x, y);
+            translated.x += x;
+            translated.y += y;
+        }
+        function createVector(x, y) {
+            let self = {};
+            self.x = x;
+            self.y = y;
+            return self;
+        }
+
+    </script>
+
+</body>
+</html>

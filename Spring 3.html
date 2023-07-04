@@ -1,6 +1,8 @@
 ﻿<html>
+
 <head>
 </head>
+
 <body>
     <script>
         var FramesPerSecond = 100;
@@ -12,7 +14,7 @@
         let velocity1;
         var gravity;
         function setUp() {
-            createCanvas(600, 400, "purple");
+            createCanvas(600, 400);
             frameRate(FramesPerSecond);
             bob = new Vector2(CanvasWidth / 2 + 100, CanvasHeight / 2);
             anchor = new Vector2(CanvasWidth / 2 - 100, CanvasHeight / 2);
@@ -21,7 +23,7 @@
             gravity = new Vector2(0, 0.1);
         }
         function draw() {
-            clear();
+            backGround("purple");
 
             if (mousePressed) {
                 bob = mouse.copy();
@@ -54,4 +56,5 @@
     <script src="Canvas.js"></script>
 
 </body>
+
 </html>

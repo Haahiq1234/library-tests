@@ -1,0 +1,81 @@
+﻿
+<html>
+<head>
+</head>
+<body>
+    <div></div>
+    <script src="Canvas.js"></script>
+    <script>
+        function setUp() {
+            console.log(arctan(16, 5) - arctan(4, 239));
+            console.log(16 * Math.atan(1 / 5) - 4 * Math.atan(1 / 239));
+        }
+        function arctan(num, den) {
+            let val = 0;
+            for (var i = 1; i < 81; i += 4) {
+                //console.log(val);
+                let an = (num / ((den ** i) * i));
+                let bn = (num / ((den ** (i + 2)) * (i + 2)))
+                val += an - bn;
+                //print(val);
+            }
+            return val;
+        }
+        function add(no1, no2) {
+            let decimal1;
+            let decimal2;
+            let no = "";
+            if (no1.includes(".")) {
+                decimal1 = no1.indexOf(".");
+            } else {
+                decimal1 = no1.length;
+            }
+            if (no2.includes(".")) {
+                decimal2 = no2.indexOf(".");
+            } else {
+                decimal2 = no2.length;
+            }
+            if (no2.length - decimal2 >= no1.length - decimal1) {
+                for (var i = no2.length; i > decimal2; i--) {
+                    let ind = decimal1 + (decimal2 - i);
+                    if (ind >= no1.length) {
+                        no = decimal2[i] + no;
+                    } else {
+                        no = (parseInt(no1[ind]) + parseInt(no2[i])).toString() + no;
+                    }
+                }
+                no = "." + no;
+            }
+            return no;
+        }
+        function divide(dividend, divisor, presicion = 200) {
+            let remainder = dividend % divisor;
+            let qoutient = (dividend - remainder) / divisor;
+            let factor = 1;
+            if (remainder != 0 && presicion > 0) {
+                qoutient += ".";
+                for (var i = 0; i < presicion; i++) {
+                    remainder = remainder * 10;
+                    factor *= 10;
+                    let r = remainder % divisor;
+                    let q = remainder - r;
+                    remainder = r;
+                    if (q == 0) {
+                        qoutient += "0";
+                        continue;
+                    }
+                    q /= divisor;
+                    //console.log(q * factor);
+                    qoutient += Math.floor(q);
+                    if (r == 0) {
+                        break;
+                    }
+                }
+            }
+            console.log(qoutient, remainder);
+            //qoutient = parseFloat(qoutient);
+            return qoutient;
+        }
+    </script>
+</body>
+</html>

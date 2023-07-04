@@ -2144,20 +2144,8 @@ function brightness(rgb) {
         return avg(mn, mx);
     }
 }
-function addAlpha(col, al, mode) {
-    if ("RGB" == mode) {
-        return col.replace("b(", "ba(").replace(")", ", " + al / 255 + ")");
-    }
-}
 function colorMode(mode) {
     Canvas.colorMode = mode;
-}
-var alphaValues = [];
-for (var i = 0; i < 255; i++) {
-    i = Math.round(i * 100) / 100;
-    var alpha = Math.round(i * 255);
-    var hex = (alpha + 0x10000).toString(16).substr(-2).toUpperCase();
-    alphaValues.unshift(hex);
 }
 function rgb(...args) {
     //console.log(args);
@@ -2170,44 +2158,17 @@ function rgb(...args) {
     if (args[0] instanceof Array) {
         args = args[0];
     }
+    for (var i in args) {
+        args[i] = constraint(args[i], 0, 255);
+    }
     if (args.length == 1) {
-        args[0] = constraint(args[0], 0, 255);
-        return "rgba(" + args[0] + ", " + args[0] + ", " + args[0] + ", 1)";
+        return `rgba(${args[0]}, ${args[0]}, ${args[0]}, 1)`;
     } else if (args.length == 2) {
-        args[0] = constraint(args[0], 0, 255);
-        args[1] = constraint(args[1], 0, 255);
-        return (
-            "rgba(" +
-            args[0] +
-            ", " +
-            args[0] +
-            ", " +
-            args[0] +
-            ", " +
-            args[1] / 255 +
-            ")"
-        );
+        return `rgba(${args[0]}, ${args[0]}, ${args[0]}, ${args[1] / 255})`;
     } else if (args.length == 3) {
-        args[0] = constraint(args[0], 0, 255);
-        args[1] = constraint(args[1], 0, 255);
-        args[2] = constraint(args[2], 0, 255);
-        return "rgba(" + args[0] + ", " + args[1] + ", " + args[2] + ", 1)";
+        return `rgba(${args[0]}, ${args[1]}, ${args[2]}, 1)`;
     } else if (args.length == 4) {
-        args[0] = constraint(args[0], 0, 255);
-        args[1] = constraint(args[1], 0, 255);
-        args[2] = constraint(args[2], 0, 255);
-        args[3] = constraint(args[3], 0, 255);
-        return (
-            "rgba(" +
-            args[0] +
-            ", " +
-            args[1] +
-            ", " +
-            args[2] +
-            ", " +
-            args[3] / 255 +
-            ")"
-        );
+        return `rgba(${args[0]}, ${args[1]}, ${args[2]}, ${args[3] / 255})`;
     }
 }
 function invertColor(col) {
@@ -2231,23 +2192,16 @@ function color() {
         if (args[0] instanceof Array) {
             return args[0];
         }
+        for (var i in args) {
+            args[i] = constraint(args[i], 0, 255);
+        }
         if (args.length == 1) {
-            args[0] = constraint(args[0], 0, 255);
             return [args[0], args[0], args[0], 255];
         } else if (args.length == 2) {
-            args[0] = constraint(args[0], 0, 255);
-            args[1] = constraint(args[1], 0, 255);
             return [args[0], args[0], args[0], args[1]];
         } else if (args.length == 3) {
-            args[0] = constraint(args[0], 0, 255);
-            args[1] = constraint(args[1], 0, 255);
-            args[2] = constraint(args[2], 0, 255);
             return [args[0], args[1], args[2], 255];
         } else if (args.length == 4) {
-            args[0] = constraint(args[0], 0, 255);
-            args[1] = constraint(args[1], 0, 255);
-            args[2] = constraint(args[2], 0, 255);
-            args[3] = constraint(args[3], 0, 255);
             return [args[0], args[1], args[2], args[3]];
         }
     } else if (Canvas.colorMode == HSL) {
@@ -2339,6 +2293,12 @@ const Rgb = {
                 Random.rangeInt(args[4], args[5])
             );
         }
+    },
+    weighted: function (...args) {
+        let col = 0;
+        for (var i = 0; i < args.length; i += 2) {
+
+        }
     }
 }
 function stroke() {
@@ -2398,12 +2358,14 @@ function fillArray(len, ...fls) {
 class Array2D {
     constructor(width, height, defaultVal = 0) {
         this.array = new Array(width * height);
+        let def;
+        if (typeof defaultVal != "function") {
+            def = () => defaultVal;
+        } else {
+            def = defaultVal;
+        }
         for (var i = 0; i < this.array.length; i++) {
-            if (typeof defaultVal == "function") {
-                this.array[i] = defaultVal();
-            } else {
-                this.array[i] = defaultVal;
-            }
+            this.array[i] = def();
         }
         this.width = width;
         this.height = height;
@@ -2484,43 +2446,23 @@ class Array2D {
             }
             return arr;
         };
-        this.transpose = function () {
-            let grid = this.grid();
-            let arr = [];
-            for (let y = 0; y < this.height; y++) {
-                arr.push([]);
-                for (let x = 0; x < this.width; x++) {
-                    arr[y].push(this.array[this.index(x, y)]);
+    }
+    forEach(f, set = true) {
+        if (set) {
+            for (var i = 0; i < this.width; i++) {
+                for (var j = 0; j < this.height; j++) {
+                    let ind = this.index(i, j);
+                    this.array[ind] = f(i, j, this.array[ind], ind);
                 }
             }
-            return arr;
-        };
-        //this.transpose2 = function () {
-        //    let grid = Object.assign({}, this);
-        //    //let i = 0;
-        //    console.table(grid.grid());
-        //    for (let y = 0; y < this.height; y++) {
-        //        for (let x = y; x < this.width; x++) {
-        //            grid.swap(x, y, y, x);
-        //            console.log(x, y);
-        //        }
-        //    }
-        //    console.table(grid.grid());
-        //    return grid;
-        //}
-        this.transpose2 = function () {
-            let grid = new Array2D(this.height, this.width);
-            console.table(this.grid());
-            let cols = [];
-            for (var i = 0; i < grid.width; i++) {
-                cols.push(this.getCol(i));
+        } else {
+            for (var i = 0; i < this.width; i++) {
+                for (var j = 0; j < this.height; j++) {
+                    let ind = this.index(i, j);
+                    f(i, j, this.array[ind], ind);
+                }
             }
-            for (var i = 0; i < cols.length; i++) {
-                grid.setRow(cols[i]);
-            }
-            console.table(grid.grid());
-            return grid;
-        };
+        }
     }
 }
 function shuffle(arr) {
