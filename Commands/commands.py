@@ -290,16 +290,24 @@ def git(args, clr):
 
 def index(args, clr):
     os.chdir("../")
-    files = os.listdir(os.getcwd())
-    nfiles = []
+    nfiles = os.listdir(os.getcwd())
+    files = []
+    folders = []
     i = 0
-    while i < len(files):
-        file = files[i]
+    while i < len(nfiles):
+        file = nfiles[i]
         if (not file[0] == ".") and (".html" in file or "." not in file):
-            nfiles.append(file)
+            if os.path.isfile(file):
+                files.append(file)
+            elif os.path.isdir(file) and os.path.exists(
+                os.path.join(file, "index.html")
+            ):
+                folders.append(file)
         i += 1
+
+    data = {"folders": folders, "files": files}
     with open("index.json", "w") as file:
-        json.dump(nfiles, file)
+        json.dump(data, file)
     os.chdir(cwd)
     print("Indexed")
     pass

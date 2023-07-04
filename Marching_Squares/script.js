@@ -33,7 +33,7 @@ class Grid {
     randomGenerate() {
         for (var i = 0; i < this.size; i++) {
             let p = this.pos(i);
-            this.array[i]  = noise(p[0] / SMOOTHNESS, p[1] / SMOOTHNESS) * (MAX_VALUE - MIN_VALUE) + MIN_VALUE;
+            this.array[i] = noise(p[0] / SMOOTHNESS, p[1] / SMOOTHNESS) * (MAX_VALUE - MIN_VALUE) + MIN_VALUE;
         }
     }
     draw(x = 0, y = 0, w = this.width, h = this.height) {
@@ -45,7 +45,7 @@ class Grid {
                     this.array[this.index(i + 1, j)],
                     this.array[this.index(i + 1, j + 1)],
                     this.array[this.index(i, j + 1)]
-                    );
+                );
             }
         }
     }
@@ -56,20 +56,20 @@ class Grid {
         let d_isGround = isGround(d_value);
 
 
-        let bin =  `${a_isGround}${b_isGround}${c_isGround}${d_isGround}`;
+        let bin = `${a_isGround}${b_isGround}${c_isGround}${d_isGround}`;
         let cas = base10(bin);
         //console.log(bin, cas);
         let arr = [];
 
-        let av = new Vector2(i * this.cellwidth,       j * this.cellheight);
-        let bv = new Vector2((i + 1) * this.cellwidth, j *   this.cellheight);
+        let av = new Vector2(i * this.cellwidth, j * this.cellheight);
+        let bv = new Vector2((i + 1) * this.cellwidth, j * this.cellheight);
         let cv = new Vector2((i + 1) * this.cellwidth, (j + 1) * this.cellheight);
-        let dv = new Vector2(i * this.cellwidth,       (j + 1) * this.cellheight);
+        let dv = new Vector2(i * this.cellwidth, (j + 1) * this.cellheight);
 
-        let at = constraint(normalize(a_value, b_value, GROUND), 0, 1);
-        let bt = constraint(normalize(b_value, c_value, GROUND), 0, 1);
-        let ct = constraint(normalize(c_value, d_value, GROUND), 0, 1);
-        let dt = constraint(normalize(d_value, a_value, GROUND), 0, 1);
+        let at = constraint(normalize(GROUND, a_value, b_value), 0, 1);
+        let bt = constraint(normalize(GROUND, b_value, c_value), 0, 1);
+        let ct = constraint(normalize(GROUND, c_value, d_value), 0, 1);
+        let dt = constraint(normalize(GROUND, d_value, a_value), 0, 1);
 
         let a = createVector((i + at) * this.cellwidth, j * this.cellheight);
         let b = createVector((i + 1) * this.cellwidth, (j + bt) * this.cellheight);
@@ -145,32 +145,32 @@ class Grid {
         }
     }
 }
-            let lines = [];
-            // function draw() {
-            //     //clear();
-            //     //drawLines(lines);
-            // }
-            function ln(A, B) {
-                line(A.x, A.y, B.x, B.y);
-                //lines.push(A.x, A.y, B.x, B.y);
-            }
-            function pt(P) {
-                circle(P.x, P.y, 2);
-            }
-            function isGround(v) {
-                return v > GROUND ? 1 : 0;
-            }
-            function base10(num, base = 2) {
-                let ans = 0;
-                let len = num.length;
-                for (var i = 0, j = num.length - 1; i < num.length; i++, j--) {
-                    let i2 = num.length - 1 - i;
-                    let i3 = parseInt(num[i]);
-                    //console.log(i3);
-                    ans += i3 * (base ** i2);
-                }
-                return ans;
-            }
+let lines = [];
+// function draw() {
+//     //clear();
+//     //drawLines(lines);
+// }
+function ln(A, B) {
+    line(A.x, A.y, B.x, B.y);
+    //lines.push(A.x, A.y, B.x, B.y);
+}
+function pt(P) {
+    circle(P.x, P.y, 2);
+}
+function isGround(v) {
+    return v > GROUND ? 1 : 0;
+}
+function base10(num, base = 2) {
+    let ans = 0;
+    let len = num.length;
+    for (var i = 0, j = num.length - 1; i < num.length; i++, j--) {
+        let i2 = num.length - 1 - i;
+        let i3 = parseInt(num[i]);
+        //console.log(i3);
+        ans += i3 * (base ** i2);
+    }
+    return ans;
+}
 class Painter {
     constructor(x, y, r) {
         this.x = x;

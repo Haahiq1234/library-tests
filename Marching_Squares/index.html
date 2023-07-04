@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="../Canvas.js"></script>
     <script src="../noise.js"></script>
@@ -47,10 +49,27 @@
                 }
                 grid.draw(x, y, mousewidth, mouseheight);
             }
+            if (mousePressed) {
+                if (mouse.x > CanvasWidth || mouse.y > CanvasHeight) return;
+                clear(mouse.x - radius, mouse.y - radius, radius * 2, radius * 2);
+                let x = floorDiv(mouse.x - radius, grid.cellwidth);
+                let y = floorDiv(mouse.y - radius, grid.cellwidth);
+                //console.log(x, y, mousewidth, mouseheight);
+                for (var i = x + innerRadius; i < x + mousewidth - innerRadius; i++) {
+                    for (var j = y + innerRadius; j < y + mouseheight - innerRadius; j++) {
+                        let k = grid.index(i, j);
+                        if (grid.array[k] < MAX_VALUE) {
+                            grid.array[k] += 0.2;
+                        }
+                    }
+                }
+                grid.draw(x, y, mousewidth, mouseheight);
+            }
         }
         function key_Press() {
 
         }
     </script>
 </body>
+
 </html>

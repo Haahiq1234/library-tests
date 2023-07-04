@@ -12,6 +12,21 @@
 			margin: 0;
 		}
 
+		.container {
+			padding-top: 5px;
+		}
+
+		.heading {
+			height: 50px;
+			margin: auto;
+			text-align: center;
+			font-size: 30px;
+			position: relative;
+			top: 10px;
+			/* font-family: Helvetica; */
+			font-family: Arial, Helvetica, sans-serif;
+		}
+
 		ul {
 			margin: auto;
 			list-style-type: none;
@@ -35,6 +50,12 @@
 </head>
 
 <body>
+	<div id="folders" class="container">
+		<div class="heading">FOLDERS</div>
+	</div>
+	<div id="files">
+		<div class="heading" class="container">FILES</div>
+	</div>
 	<script>
 		function loadFile(url, callback) {
 			let request = new XMLHttpRequest();
@@ -48,37 +69,23 @@
 			};
 			request.send();
 		}
-		function checkCurrentDirectory() {
-			let url = location.href.replace("404.html", "");
-			let toReturn = "";
-			if (url.includes("library-tests/")) {
-				return url.split("library-tests/")[1];
-			} else if (url.includes("library%20tests/")) {
-				return url.split("library%20tests/")[1];
-			}
-			if (!url.includes("library")) {
-				return url;
-			}
-		}
-
 		function getDirectoryFiles(url) {
-			if (checkCurrentDirectory().length > 0) {
-				location
-			}
 			loadFile("index.json", function (text) {
 				const data = JSON.parse(text);
 				console.log(data);
-				let htmlString = '<ul>';
-				for (let file of data) {
-					htmlString += `<li class="lst"><a href="${url + file}">${file}</a></li>`;
-				}
-
-				htmlString += '</ul>';
-				document.getElementsByTagName('body')[0].innerHTML = htmlString;
-
+				addFiles(data.folders, document.getElementById("folders"), url);
+				addFiles(data.files, document.getElementById("files"), url);
 			})
 		}
-		getDirectoryFiles(location.href.replace("404.html", ""));
+		function addFiles(files, element, url) {
+			let htmlString = '<ul>';
+			for (let file of files) {
+				htmlString += `<li class="lst"><a href="${url + file}">${file}</a></li>`;
+			}
+			htmlString += '</ul>';
+			element.innerHTML += htmlString;
+		}
+		getDirectoryFiles(location.href.replace("index.html", ""));
 	</script>
 </body>
 

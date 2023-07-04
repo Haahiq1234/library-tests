@@ -174,9 +174,11 @@ const on = {
             Time.time - startTime,
             event
         );
+        Mouse.pressed = 0;
     };
     document.onpointercancel = function (event) {
         event.preventDefault();
+        Mouse.pressed = 0;
         let x = event.clientX;
         let y = event.clientY;
         on.pointerup.Fire(
@@ -200,6 +202,7 @@ const on = {
         event.preventDefault();
         startTime = Time.time;
         startPosition = new Vector2(event.clientX, event.clientY);
+        Mouse.pressed = event.buttons;
         on.pointerdown.Fire(event.clientX, event.clientY, event);
     };
     document.onkeyup = function (event) {
@@ -628,6 +631,7 @@ const Input = {
     }
 }
 const Mouse = {
+    pressed: -1,
     position: new Vector2(0, 0),
     previous: new Vector2(0, 0),
     startPress: new Vector2(0, 0),
@@ -786,7 +790,7 @@ const Control = {
     STARTED: false,
     FIXED_FPS: false,
     RUNNING: false,
-    LOOP_ID: -1,
+    LOOP_ID: 0,
     FRAME_DRAWN: false,
     FRAME_NO: 0,
     loop: function () {
@@ -871,15 +875,15 @@ function redraw(timeStamp = Time.time + Time.deltaTime) {
     if (Canvas.enabled) {
         UI.Update();
         ctx.save();
+        push();
     }
     on.update.Fire();
-    push();
     if (window.draw) {
         draw();
     }
-    pop();
     on.draw.Fire();
     if (Canvas.enabled) {
+        pop();
         UI.Draw();
     }
     if (window.lateDraw) {

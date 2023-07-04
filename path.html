@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,6 +8,7 @@
     <title>Document</title>
     <link rel="stylesheet" href="../style.css" />
 </head>
+
 <body>
     <script src="../Canvas.js"></script>
     <script src="../noise.js"></script>
@@ -24,15 +26,10 @@
             h = CanvasHeight / res;
             grid = new Grid(res, res);
             ag = new Gizmo(0, 0);
-            ag.setShape(GizmoShapes.rect, grid.w, grid.h);
-            ag.setSnap(grid.w, grid.h);
+            ag.setShape(UI.RECT, grid.w, grid.h);
             bg = new Gizmo((res - 1) * grid.w, (res - 1) * grid.h);
-            bg.setShape(GizmoShapes.rect, grid.w, grid.h);
-            bg.offset = new Vector2(0, 0);
+            bg.setShape(UI.RECT, grid.w, grid.h);
             bg.setColor(color(255, 0, 0));
-            ag.offset = new Vector2(0, 0);
-            console.log(bg.offset);
-            bg.setSnap(grid.w, grid.h);
             fill(255);
         }
         function draw() {
@@ -82,4 +79,5 @@
         }
     </script>
 </body>
+
 </html>
