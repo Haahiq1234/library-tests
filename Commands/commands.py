@@ -281,11 +281,18 @@ def git(args, clr):
 def index(args, clr):
     os.chdir("../")
     files = os.listdir(os.getcwd())
+    nfiles = []
+    i = 0
+    while i < len(files):
+        file = files[i]
+        print(file[0])
+        if (not file[0] == ".") and (".html" in file or "." not in file):
+            nfiles.append(file)
+        i += 1
     with open("index.json", "w") as file:
-        json.dump(files, file)
+        json.dump(nfiles, file)
     os.chdir(cwd)
     print("Indexed")
-    print(files)
     pass
 
 

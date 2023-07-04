@@ -69,37 +69,34 @@
 			};
 			request.send();
 		}
-		function getcurrentDirectory() {
+		function checkCurrentDirectory() {
 			let url = location.href.replace("404.html", "");
+			let toReturn = "";
 			if (url.includes("library-tests/")) {
 				return url.split("library-tests/")[1];
+			} else {
+				return url.split("library%20tests/")[1];
 			}
-			return url.split("library%20tests/")[1];
 		}
 
-		async function getDirectoryFiles(dir, url) {
-			const response = await fetch('https://api.github.com/repos/Haahiq1234/library-tests/contents/' + dir + '?ref=main');
-			const data = await response.json();
-			console.log(data);
-			if (data.message == "Not Found") {
-				console.log("Page not Found. retaking to old one");
-				window.location.href.replace("Haahiq1234.github.io/library-tests/");
-				console.log("Taken");
-				getDirectoryFiles("", "");
-				return;
+		function getDirectoryFiles(url) {
+			if (checkCurrentDirectory().length > 0) {
+				location
 			}
-			let htmlString = '<ul>';
-			for (let file of data) {
-				if (file.path.includes(".html") || file.path.includes(".js")) {
+			loadFile("index.json", function (text) {
+				const data = JSON.parse(text);
+				console.log(data);
+				let htmlString = '<ul>';
+				for (let file of data) {
 					htmlString += `<li class="lst"><a href="${url + file.path}">${file.path}</a></li>`;
-
 				}
-			}
 
-			htmlString += '</ul>';
-			document.getElementsByTagName('body')[0].innerHTML = htmlString;
+				htmlString += '</ul>';
+				document.getElementsByTagName('body')[0].innerHTML = htmlString;
+
+			})
 		}
-		getDirectoryFiles(getcurrentDirectory(), location.href.replace("404.html", ""));
+		getDirectoryFiles(location.href.replace("404.html", ""));
 	</script>
 </body>
 
