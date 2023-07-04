@@ -278,13 +278,15 @@ def git(args, clr):
         os.system("git fetch")
         os.system("git pull")
 
+
 # def tree_printer(root):
 #     for root, dirs, files in os.walk(root):
 #         for d in dirs:
-#             print os.path.join(root, d)    
+#             print os.path.join(root, d)
 #         for f in files:
 #             print os.path.join(root, f)
 # tree_printer('.')
+
 
 def index(args, clr):
     os.chdir("../")
@@ -293,7 +295,6 @@ def index(args, clr):
     i = 0
     while i < len(files):
         file = files[i]
-        print(file[0])
         if (not file[0] == ".") and (".html" in file or "." not in file):
             nfiles.append(file)
         i += 1
