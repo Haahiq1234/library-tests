@@ -6,7 +6,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>404</title>
 	<style>
-		* {
+		body {}
+
+		/* * {
 			box-sizing: border-box;
 			padding: 0;
 			margin: 0;
@@ -18,15 +20,37 @@
 		}
 
 		ul {
-			list-style-position: relative 5px;
+			list-style-type: none;
 		}
 
 		.lst {
 			height: 50px;
-			position: relative;
-			margin-left: 35px;
-			/*left: 20px;*/
+			text-align: center;
 			border: solid 1px black
+		}
+
+		a {} */
+
+		ul {
+			align-items: center;
+			list-style-type: none;
+			margin: 0;
+			padding: 0;
+			width: 200px;
+			background-color: #f1f1f1;
+		}
+
+		li a {
+			display: block;
+			color: #000;
+			padding: 8px 16px;
+			text-decoration: none;
+		}
+
+		/* Change the link color on hover */
+		li a:hover {
+			background-color: #555;
+			color: white;
 		}
 	</style>
 </head>
@@ -47,7 +71,7 @@
 			console.log(data);
 			if (data.message == "Not Found") {
 				console.log("Page not Found. retaking to old one");
-				window.location.href = "Haahiq1234.github.io/library-tests";
+				window.location.href.replace("Haahiq1234.github.io/library-tests/");
 				console.log("Taken");
 				getDirectoryFiles("", "");
 				return;
