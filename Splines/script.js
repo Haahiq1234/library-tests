@@ -1,4 +1,4 @@
-Gizmo.DEFAULTRADIUS = 10;
+Gizmo.DEFAULTRADIUS = 20;
 const spline = new Spline();
 
 let r = new Vector2(100, 100).mag();
