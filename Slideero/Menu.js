@@ -23,13 +23,19 @@ class Game {
         } else {
             let size = this.size.value(1);
             this.grid.preview(size, size);
+            fill(255);
+            rect(
+                this.size.nameoffsetx + this.size.a.x - 30, 
+                this.size.nameoffsety + this.size.a.y - 20, 
+                60, 
+                40);
         }
     }
     init() {
         this.start.localPosition.set(50, CanvasWidth - 25);
 
         this.size = new Slider(CanvasWidth / 2, CanvasHeight / 4 * 3, CanvasWidth / 2, CanvasHeight / 4, 2, 6, 4, color(150));
-        this.size.name("Size", 20, 0, 30);
+        this.size.name("Size", 20, 0, 60);
         this.size.text((sld)=>sld.value(1), 30);
     }
     openMenu() {
