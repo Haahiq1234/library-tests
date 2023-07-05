@@ -1,4 +1,3 @@
-const grid = new Grid(2, 2, loadImage("../kitten.jpg"));
 const game = new Game();
 
 function setUp() {
@@ -11,6 +10,6 @@ function setUp() {
     noStroke();
 }
 function draw() {
-    backGround(189, 177, 165);
-    grid.draw();
+    clear();
+    game.update();
 }

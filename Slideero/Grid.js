@@ -14,6 +14,7 @@ class Grid extends Array2D {
     }
     preview(width, height) {
         this.resize(width, height);
+        this.draw();
     }
     set image(im) {
         if (!im) return;
@@ -29,10 +30,6 @@ class Grid extends Array2D {
         this.cellheight = CanvasHeight / this.height;
         this.recalculatePositions();
         this.forEach((i, j, val, ind)=>ind);
-    }
-    init(width, height) {
-        this.resize(width, height);    
-        this.begin();
     }
     shuffleGrid(n) {
         for (let i = 0; i < n; i++) {
@@ -140,7 +137,7 @@ class Grid extends Array2D {
     }
     drawImageCell(i, j, x, y) {
         let value = this.get(i, j);
-        if (value == -1) return true;
+        if (value == -1) return;
         let pos = this.pos(value);
         image(
             this._image,
@@ -153,15 +150,10 @@ class Grid extends Array2D {
             this.cellwidth - this.padding * 2,
             this.cellheight - this.padding * 2
         );
-        if (pos.x == i && pos.y == j) {
-            return true;
-        }
-        return false;
     }
     drawNumberCell(i, j, x, y) {
         let value = this.get(i, j);
         if (value == -1) return true;
-
         let index = (value + 1).toString();
         let pos = this.pos(value);
         let toReturn = false;
@@ -178,7 +170,7 @@ class Grid extends Array2D {
             this.cellheight - this.rectPadding * 2
         );
         fill(255, 255, 0);
-        textSize(40 - (index.length - 1) * 10);
+        textSize(55 - (index.length - 1) * 5 - this.width * 5);
         text(index, x + this.cellwidth / 2, y + this.cellheight / 2);
         return toReturn;
     }
