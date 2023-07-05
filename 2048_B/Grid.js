@@ -43,42 +43,72 @@ class Grid extends Array2D {
         let pos = Random.element(possibilities);
         this.set(pos.x, pos.y, choice);
     }
-    move(dimension, start) {
-        if (dimension == 0) {
-            let end = (this.height - 1) - start;
-            for (var j = 0; j < this.height; j++) {
-                this.operate(start, j, end, j);
-            }
-        } else if (dimension == 1) {
-            let end = (this.width - 1) - start;
-            for (var i = 0; i < this.width; i++) {
-                this.operate(i, start, i, end);
-            }
-        }
+    operate(dimension, f, start) {
+        this.added = false;
+        this.slide(dimension, f, start, true);
+        //this.combine(dimension, f);
+        //this.slide(dimension, f);
     }
-    operate(ax, ay, bx, by) {
-        let width = abs(bx - ax);
-        let height = abs(by - ay);
-
-        let dx = sign(bx - ax);
-        let dy = sign(by - ay);
-
-        //console.log(ax, ay, bx, by);
-        let positions = [];
-        let arr = [];
-        for (var i = 0; i <= width; i++) {
-            let x = ax + dx * i;
-            for (var j = 0; j <= height; j++) {
-                let y = ay + dy * j;
-                positions.push({x, y});
-                arr.push(this.get(x, y));
+    slide(dimension, f, start, first) {
+        let len = this.getDimensionSize(dimension);
+        let toAnimate = [];
+        for (var i = 0; i < len; i++) {
+            let parr = f(this.getDimensionArr(dimension, i));
+            let arr = new Array(parr.length).fill(0);
+            let order = getSortingOrder(parr, slidingZero);
+            for (var j = 0; j < order.length; j++) {
+                if (order[j] == j) {
+                    arr[j] = parr[j];
+                } else if (parr[order[j]] != 0) {
+                    let axp = i;
+                    let ayp = abs(start - order[j]);
+                    let bxp = i;
+                    let byp = abs(start - j)
+                    const [ax, ay] = [dimension == 0? axp: ayp, dimension == 0? ayp: axp]
+                    const [bx, by] = [dimension == 0? bxp: byp, dimension == 0? byp: bxp]
+                    
+                    console.log(ax, ay, bx, by);
+                    toAnimate.push([ax, ay, bx, by, parr[order[j]]]);
+                    arr[j] = parr[order[j]];
+                }
             }
+            arr.sort(slidingZero);
+            this.setDimensionArr(dimension, i, f(arr));
         }
-        this.slide(arr, positions);
-        console.log(arr);
+            const grid = this;
+            if (toAnimate.length > 0 && false) {
+                animate(0, MOVE_DURATION, function(t) {
+                    for (var animation of toAnimate) {
+                        grid.cell(
+                            (animation[0] * (1 - t) + animation[2] * t) * grid.cellwidth, 
+                            (animation[1] * (1 - t) + animation[3] * t) * grid.cellheight, 
+                            animation[4],
+                            );
+                    }
+                }, function() {
+                    for (var animation of toAnimate) {
+                        grid.set(animation[2], animation[3], animation[4]);
+                    }
+                    if (first) {
+                        grid.combine(dimension, f, start);
+                    } else {
+                        grid.addRandom();
+                    }
+                });
+            } else if (first) {
+                this.combine(dimension, f, start);
+            } else {
+                grid.addRandom();
+            }
     }
-    slide(arr, positions) {
-
+    combine(dimension, f, start) {
+        console.trace("combining");
+        let len = this.getDimensionSize(1 - dimension);
+        for (var i = 0; i < len; i++) {
+            let toGet = this.getDimensionArr(dimension, i);
+            this.setDimensionArr(dimension, i, f(combine(f(toGet))));
+        }
+        this.slide(dimension, f, start, false);
     }
     getPossibilities() {
         let possibilities = [];

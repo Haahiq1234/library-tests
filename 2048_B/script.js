@@ -16,16 +16,16 @@ function setUp() {
         if (abs(dx) > abs(dy)) {
             console.log("Horizontal move");
             if (dx > 0) {
-                grid.move(0, grid.width - 1);
+                grid.operate(1, arr => arr.reverse(), grid.width - 1);
             } else {
-                grid.move(0, 0);
+                grid.operate(1, arr => arr, 0);
             }
         } else {
             console.log("Vertical move");
             if (dy < 0) {
-                grid.move(1, 0);
+                grid.operate(0, arr => arr, 0);
             } else {
-                grid.move(1, grid.height - 1);
+                grid.operate(0, arr => arr.reverse(), grid.height - 1);
             }
         }
     }, length, true);
@@ -36,12 +36,12 @@ function draw() {
 }
 on.keydown.bind(function () {
     if (keyCode == key.down) {
-        grid.move(1, grid.height - 1);
+        grid.operate(0, arr => arr.reverse(), grid.height - 1);
     } else if (keyCode == key.up) {
-        grid.move(1, 0);
+        grid.operate(0, arr => arr, 0);
     } else if (keyCode == key.left) {
-        grid.move(0, 0);
+        grid.operate(1, (arr) => arr, 0);
     } else if (keyCode == key.right) {
-        grid.move(0, grid.width - 1);
+        grid.operate(1, arr => arr.reverse(), grid.width - 1);
     }
 });

@@ -28,7 +28,7 @@ class Animator {
         return (Control.FRAME_NO - this.startFrame) / this.duration;
     }
 }
-on.update.bind(function () {
+on.draw.bind(function () {
     for (var i = 0; i < Animator.animators.length; i++) {
         if (Animator.animators[i].ended()) {
             Animator.animators.splice(i, 1);
@@ -36,3 +36,6 @@ on.update.bind(function () {
         }
     }
 });
+function animate(...args) {
+    return new Animator(...args);
+}

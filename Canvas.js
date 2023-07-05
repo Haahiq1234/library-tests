@@ -2303,6 +2303,9 @@ const Rgb = {
         for (var i = 0; i < args.length; i += 2) {
 
         }
+    },
+    lerp: function(a, b, t) {
+        return a.map((v, i) => v * (1 - t) + b[i] * t);
     }
 }
 function stroke() {
@@ -2467,6 +2470,12 @@ class Array2D {
                 }
             }
         }
+    }
+    resize(width, height) {
+        this.width = width;
+        this.height = height;
+        this.array.length = width * height;
+
     }
 }
 function shuffle(arr) {
@@ -3391,12 +3400,11 @@ on.pointerdown.bind(function (button, x, y, event) {
         if (element.getHoveredInfo() && element.enabled) {
             UI.Click(element);
             mousePressed = false;
-            return;
+            return EVENT_PREVENT_DEFAULT;
         }
     }
 });
 on.pointerup.bind(function (x, y, dx, dy, event) {
-    //MobileDebug.Log("UI Unclicked", x, y, dx, y);
     UI.UnClick();
 });
 class UIElement {
@@ -3413,7 +3421,7 @@ class UIElement {
     outlineCol = color(0);
 
     baseColor;
-    color;
+    color = color(0, 255, 0);
 
     size;
     shape;
@@ -3518,7 +3526,8 @@ class UIElement {
                 this.size[1]
             );
         }
-        let textt = this._text(this);
+        let textt = "" + this._text(this);
+            //console.log(textt);
         if (textt.length > 0) {
             ctx.save();
             fill(this._textcolor(this.color));
@@ -3578,25 +3587,25 @@ class UIElement {
 }
 class Button extends UIElement {
     hoveredColor;
-    normalColor;
     clickedColor;
 
     constructor(x, y, w, h, col = color(0, 255, 0)) {
         super(x, y, UI.RECT, w, h);
         this.setColor(col);
     }
-    setColor(col2) {
-        this.baseColor = col2;
-        this.hoveredColor = col2.map((a, i) => (i == 3 ? a : a * 0.85));
-        this.clickedColor = col2.map((a, i) => (i == 3 ? a : a * 0.7));
+    setColor(col) {
+        this.baseColor = col;
+        this.hoveredColor = col.map((a, i) => (i == 3 ? a : a * 0.85));
+        this.clickedColor = col.map((a, i) => (i == 3 ? a : a * 0.7));
     }
-    update() {
-        super.update();
+    drawUI() {
+        this.color = this.baseColor;
         if (this.clicked) {
             this.color = this.clickedColor;
         } else if (this.hovered) {
             this.color = this.hoveredColor;
         }
+        super.drawUI();
     }
 }
 class Gizmo extends UIElement {
@@ -3830,7 +3839,7 @@ class Slider extends UIElement {
         let den = Vector.dist(this.a, this.b);
         let num = Vector.dist(this.localPosition, this.a);
         return (
-            Math.floor(
+            Math.round(
                 (this.min + (this.max - this.min) * (num / den)) * accuracy
             ) / accuracy
         );
@@ -3877,12 +3886,12 @@ const UI = {
             this.Elements[i].id = i;
         }
     },
-    Click: function (element) {
+    Click(element) {
         element.clicked = true;
         UIElement.Selected = element;
         element.onclick.Fire(element);
     },
-    UnClick: function (element) {
+    UnClick(element) {
         if (UIElement.Selected) {
             UIElement.Selected.clicked = false;
             UIElement.Selected = false;
@@ -3910,6 +3919,17 @@ const UI = {
             delete this.Elements[i];
         }
         this.Elements.length = 0;
+    },
+    Enable() {
+        this.enabled = true;
+    },
+    Disable() {
+        this.enabled = false;
+    },
+    set enabled(val) {
+        for (let elem of this.Elements) {
+            elem.enabled = val;
+        }
     },
     Selected: false,
     CIRCLE: 0,

@@ -1,5 +1,5 @@
-const grid = new Grid(5, 5, /*loadImage("../Diamond_Ore.png")*/);
-const menu = new Menu();
+const grid = new Grid(2, 2, loadImage("../kitten.jpg"));
+const game = new Game();
 
 function setUp() {
     if (IsMobile()) {
@@ -11,6 +11,6 @@ function setUp() {
     noStroke();
 }
 function draw() {
-    clear();
+    backGround(189, 177, 165);
     grid.draw();
 }
