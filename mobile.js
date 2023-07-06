@@ -1,7 +1,16 @@
+const SLIDE_DIRECTION = {
+    UP: 0,
+    RIGHT: 1,
+    DOWN: 2,
+    LEFT: 3,
+}
+
+
 class SlideEvent {
     static events = [];
     static pressedPosition = new Vector2(0, 0);
 
+	previous = -1;
     ready = false;
     constructor(f, l, oneTime) {
         this.length = l;
@@ -9,12 +18,34 @@ class SlideEvent {
         this.oneTime = oneTime;
         SlideEvent.events.push(this);
     }
-    Fire(dx, dy) {
+    Fire(x, y) {
+		let ax = SlideEvent.pressedPosition.x;
+		let ay = SlideEvent.pressedPosition.y;
+		let bx = x;
+		let by = y;
         if (this.oneTime) {
             this.ready = false;
         }
-        this.function(SlideEvent.pressedPosition.x, SlideEvent.pressedPosition.y, dx, dy);
-        SlideEvent.pressedPosition.set(dx, dy);
+		let dir = -1;
+        let dx = bx - ax;
+        let dy = by - ay;
+        if (abs(dx) > abs(dy)) {
+            if (dx > 0) {
+				dir = SLIDE_DIRECTION.RIGHT;
+            } else {
+				dir = SLIDE_DIRECTION.LEFT;
+            }
+        } else {
+            if (dy > 0) {
+				dir = SLIDE_DIRECTION.DOWN;
+            } else {
+				dir = SLIDE_DIRECTION.UP;
+            }
+        }
+		if (dir == this.previous) return;
+		this.previous = dir;
+        this.function(dir, ax, ay, bx, by);
+        SlideEvent.pressedPosition.set(x, y);
     }
 }
 function addSlideEvent(funct, length, oneTime) {
@@ -41,5 +72,6 @@ on.pointermove.bind(function (x, y) {
 on.pointerup.bind(function (x, y) {
     for (var event of SlideEvent.events) {
         event.ready = false;
+		event.previous = -1;
     }
 });

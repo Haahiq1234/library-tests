@@ -5,10 +5,9 @@ class Grid extends Array2D {
     padding = 0;
     rectPadding = 5;
     running = false;
-    constructor(width, height, image) {
+    constructor(width, height) {
         super(width, height);
         this.positions = new Array2D(width, height);
-        //this.image = image;
         var grid = this;
         on.pointerdown.bind((x, y) => grid.onpointerdown(x, y));
     }
@@ -17,8 +16,8 @@ class Grid extends Array2D {
         this.draw();
     }
     set image(im) {
-        if (!im) return;
         this._image = im;
+        if (!im) return;
         this.imagecellwidth = this._image.width / this.width;
         this.imagecellheight = this._image.height / this.height;
     }
