@@ -8,21 +8,19 @@ class Game {
         this.images = [undefined, loadImage("../kitten.jpg")];
         this.grid = new Grid(2, 2);
         on.start.bind(() => game.init());
-        this.start = new Button(0, 0, 100, 50, color(150));
+        this.start = new Button(0, 0, 70, 70, color(150));
         this.start.text("Start", 20);
         this.start.bind("click", () => game.closeMenu());
         on.keydown.bind((code) => game.keydown(code));
 
         addSlideEvent(function(dir) {
-            if (!game.running) {
-                switch (dir) {
-                    case SLIDE_DIRECTION.RIGHT:
-                        game.keydown(key.right);
-                        break;
-                    case SLIDE_DIRECTION.LEFT:
-                        game.keydown(key.left);
-                        break;
-                }
+            switch (dir) {
+              case SLIDE_DIRECTION.RIGHT:
+                game.keydown(key.right);
+                break;
+              case SLIDE_DIRECTION.LEFT:
+                game.keydown(key.left);
+                break;
             }
         }, 100);
 
@@ -48,10 +46,12 @@ class Game {
         }
     }
     init() {
-        this.start.localPosition.set(50, CanvasWidth - 25);
+        this.start.localPosition.set(35, CanvasWidth - 35);
 
-        this.size = new Slider(CanvasWidth / 2, CanvasHeight / 4 * 3, CanvasWidth / 2, CanvasHeight / 4, 2, 6, 4, color(150));
-        this.size.name("Size", 20, 0, 60);
+        this.size = new Slider(35, CanvasHeight / 4 * 3 - 50, 35, CanvasHeight / 4 - 50, 2, 6, 4, color(150));
+        //this.size = new Slider(150, CanvasHeight - 35, CanvasWidth - 50, CanvasHeight - 35, 2, 6, 4, color(150));
+        //this.size.name("Size", 20, -40, 0);
+        this.size.name("Size", 20, 0, 40);
         this.size.text((sld)=>sld.value(1), 30);
     }
     keydown(keyCode) {

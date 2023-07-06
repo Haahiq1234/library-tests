@@ -109,7 +109,7 @@ class Grid extends Array2D {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 let pos = this.positions.get(i, j);
-                this.cell(i, j, pos.x, pos.y)
+                this.cell(i, j, i * this.cellwidth, j * this.cellheight)
             }
         }
         if (this.hasEnded() && this.running) {
