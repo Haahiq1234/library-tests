@@ -15,14 +15,21 @@ class Animator {
     }
     cancel() {
         this.isCancelled = true;
+        this.onend();
     }
     ended() {
-        if (Control.FRAME_NO > this.startFrame + this.duration || this.isCancelled) {
+        if (this.isCancelled) {
+            return true;
+        }
+        if (Control.FRAME_NO > this.startFrame + this.duration) {
             this.onend();
             return true;
         }
-        this.onupdate(this.t());
+        this.draw();
         return false;
+    }
+    draw() {
+        this.onupdate(this.t());
     }
     t() {
         return (Control.FRAME_NO - this.startFrame) / this.duration;

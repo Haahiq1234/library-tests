@@ -55,6 +55,7 @@ class Game {
         this.size.text((sld)=>sld.value(1), 30);
     }
     keydown(keyCode) {
+        if (this.running) return;
         if (keyCode == key.right && this.current > 0) {
             this.current--;
         }else if (keyCode == key.left && this.current < this.images.length - 1) {

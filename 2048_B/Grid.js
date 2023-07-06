@@ -13,7 +13,7 @@ const colors = [
     "rgb(237, 194, 45)"
 ];
 
-const MOVE_DURATION = 5;
+const MOVE_DURATION = 60;
 
 class Grid extends Array2D {
     padding = 5;
@@ -69,14 +69,14 @@ class Grid extends Array2D {
                     
                     console.log(ax, ay, bx, by);
                     toAnimate.push([ax, ay, bx, by, parr[order[j]]]);
-                    arr[j] = parr[order[j]];
+                    //arr[j] = parr[order[j]];
                 }
             }
             arr.sort(slidingZero);
             this.setDimensionArr(dimension, i, f(arr));
         }
             const grid = this;
-            if (toAnimate.length > 0 && false) {
+            if (toAnimate.length > 0) {
                 animate(0, MOVE_DURATION, function(t) {
                     for (var animation of toAnimate) {
                         grid.cell(
@@ -86,6 +86,9 @@ class Grid extends Array2D {
                             );
                     }
                 }, function() {
+                    for (var animation of toAnimate) {
+                        grid.cell(animation[2]* grid.cellwidth, animation[3] * grid.cellheight, animation[4]);
+                    }
                     for (var animation of toAnimate) {
                         grid.set(animation[2], animation[3], animation[4]);
                     }
