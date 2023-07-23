@@ -223,7 +223,7 @@
                 return coll;
             }
             update() {
-                if (Control.FRAME_NO % 6 == 0) {
+                if (Control.FRAME_NO % 2 == 0) {
                     this.sortTargets();
                     this.follow(0);
                     if (this.collided(Snake.saved)) {
@@ -263,7 +263,7 @@
                 for (var i = 0; i < this.saved.length; i++) {
                     let p = this.saved[i];
                     let t = i / (this.saved.length - 1);
-                    fill(Colors.interpolate(this.ac, this.bc, t));
+                    fill(Rgb.lerp(this.ac, this.bc, t));
                     rect(p.x * w, p.y * w, w, h);
                 }
             }

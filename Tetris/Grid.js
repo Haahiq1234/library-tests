@@ -4,7 +4,7 @@ class Grid extends Array2D {
     border_radius = 4;
     constructor(w, h) {
         super(w, h);
-        this.start = new Vector2(floor(w / 2), 0);
+        this.start = new Vector2(floor(w / 2), 1);
         Grid.Instance = this;
         this.gravity = new Vector2(0, 1);
 

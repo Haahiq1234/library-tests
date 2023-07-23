@@ -1,0 +1,88 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css" />
+</head>
+
+<body>
+    <script src="../Canvas.js"></script>
+    <script>
+        function setUp() {
+            createCanvas(400, 400);
+            start();
+        }
+        function start() {
+            let arr = new SortedList();
+            for (var i = 0; i < 5000; i++) {
+                arr.add(Random.range(0, 10000));
+            }
+            arr.array = arr.array.map(function (x, i, arr) {
+                if (i > 0) {
+                    x.push(arr[i - 1][1] < arr[i][1]);
+                } else {
+                    x.push(true);
+                }
+                return x;
+            });
+            console.log(arr.array);
+
+        }
+        on.keydown.bind(start);
+        class SortedList {
+            constructor(f = x => x) {
+                this.f = f;
+                this.array = [];
+            }
+            push(...vs) {
+                for (let v of vs) {
+                    //this.array.push([v, this.f(v)]);
+                    this.add(v);
+                }
+            }
+            add(num) {
+                let val = this.f(num);
+                if (this.array.length == 0) {
+                    this.array.push([num, val]);
+                    return;
+                }
+                if (this.array.length > 0) {
+                    if (this.array[this.array.length - 1][1] < val) {
+                        this.array.push([num, val]);
+                        return;
+                    } else if (this.array[0][1] > val) {
+                        this.array.unshift([num, val]);
+                        return;
+                    }
+                }
+                let ai = 0;
+                let bi = this.array.length;
+                let maxx = 0;
+                while (abs(ai - bi) != 1 && maxx < this.array.length) {
+                    let i = floor((ai + bi) / 2);
+                    let vi = this.array[i][1];
+                    //console.log(vi, val, i);
+                    if (vi < val) {
+                        ai = i;
+                    } else if (vi > val) {
+                        bi = i;
+                    } else if (vi == val) {
+                        this.array.splice(i, 0, [num, val]);
+                        return;
+                    }
+                    //console.log(ai, bi);
+                    maxx++;
+                }
+                //console.log("Final", ai, bi);
+                this.array.splice(ai + 1, 0, [num, val]);
+            }
+        }
+        const MAXIMUM = 100;
+    </script>
+</body>
+
+</html>

@@ -133,11 +133,14 @@ class EventHandler {
 }
 const on = {
     click: new EventHandler(),
+    mousemove: new EventHandler(),
     pointermove: new EventHandler(),
     start: new EventHandler(),
     update: new EventHandler(),
     draw: new EventHandler(),
+    mousedown: new EventHandler(),
     pointerdown: new EventHandler(),
+    mouseup: new EventHandler(),
     pointerup: new EventHandler(),
     key: new EventHandler(),
     keydown: new EventHandler(),
@@ -150,15 +153,21 @@ const on = {
     document.onpointermove = function (event) {
         event.preventDefault();
         on.pointermove.Fire(event.clientX, event.clientY, event);
+        on.mousemove.Fire(event.clientX, event.clientY, event);
     };
-    // document.oncontextmenu = function(event) {
-    //   event.preventDefault();
-    // }
     document.onpointerup = function (event) {
         event.preventDefault();
         let x = event.clientX;
         let y = event.clientY;
         on.pointerup.Fire(
+            x,
+            y,
+            startPosition.x,
+            startPosition.y,
+            Time.time - startTime,
+            event
+        );
+        on.mouseup.Fire(
             x,
             y,
             startPosition.x,
@@ -189,6 +198,14 @@ const on = {
             Time.time - startTime,
             event
         );
+        on.mouseup.Fire(
+            x,
+            y,
+            startPosition.x,
+            startPosition.y,
+            Time.time - startTime,
+            event
+        );
         on.click.Fire(
             x,
             y,
@@ -204,6 +221,7 @@ const on = {
         startPosition = new Vector2(event.clientX, event.clientY);
         Mouse.pressed = event.buttons;
         on.pointerdown.Fire(event.clientX, event.clientY, event);
+        on.mousedown.Fire(event.clientX, event.clientY, event.buttons, event);
     };
     document.onkeyup = function (event) {
         keyCode = event.key;
@@ -296,7 +314,18 @@ const vec2 = {
 function createVector(x = 0, y = 0) {
     return new Vector2(x, y);
 }
-const Vector = {};
+const Vector = {
+    dist2: function (a, b) {
+        let dx = abs(a.x - b.x);
+        let dy = abs(a.y - b.y);
+        return max(dx, dy) + min(dx, dy) * (Math.SQRT2 - 1);
+    },
+    distM: function (a, b) {
+        let dx = abs(a.x - b.x);
+        let dy = abs(a.y - b.y);
+        return dx + dy;
+    },
+};
 Vector.InFov = function (p, o, d, fov) {
     let dot = Vector.dot(d.copy().normalize(), Vector.sub(p, o).normalize());
     if (dot >= cos(fov / 2)) {
@@ -628,6 +657,13 @@ function Vector2(x = 0, y = x) {
 const Input = {
     pressed: {
 
+    }
+}
+function disableContextMenu() {
+    document.oncontextmenu = function (event) {
+        if (Canvas.enabled && event.clientX >= 0 && event.clientY >= 0 && event.clientX <= CanvasWidth && event.clientY <= CanvasHeight) {
+            event.preventDefault();
+        }
     }
 }
 const Mouse = {
@@ -2137,8 +2173,8 @@ function HSLToRGB(h, s, l, a = 255) {
 function setAlpha(alpha) {
     ctx.globalAlpha = constraint(alpha, 0, 255) / 255;
 }
-var fl = true;
-var st = true;
+var CANVAS_FILL_MODE_ENABLED = true;
+var CANVAS_STROKE_MODE_ENABLED = true;
 function brightness(rgb) {
     if (typeof rgb == "object") {
         rgb = rgb.slice(0, 3);
@@ -2304,7 +2340,7 @@ const Rgb = {
 
         }
     },
-    lerp: function(a, b, t) {
+    lerp: function (a, b, t) {
         return a.map((v, i) => v * (1 - t) + b[i] * t);
     }
 }
@@ -2319,8 +2355,8 @@ function stroke() {
     Canvas.strokeStyle = col;
 }
 function nofill() {
-    fl = false;
-    st = true;
+    CANVAS_FILL_MODE_ENABLED = false;
+    CANVAS_STROKE_MODE_ENABLED = true;
 }
 function fill() {
     var col = color(arguments[0], arguments[1], arguments[2], arguments[3]);
@@ -2330,13 +2366,13 @@ function fill() {
             col = rgb(...col);
         }
     }
-    fl = true;
+    CANVAS_FILL_MODE_ENABLED = true;
     ctx.fillStyle = col;
     Canvas.fillStyle = col;
 }
 function noStroke() {
-    st = false;
-    fl = true;
+    CANVAS_STROKE_MODE_ENABLED = false;
+    CANVAS_FILL_MODE_ENABLED = true;
 }
 // #endregion
 
@@ -2374,8 +2410,7 @@ class Array2D {
         for (var i = 0; i < this.array.length; i++) {
             this.array[i] = def();
         }
-        this.width = width;
-        this.height = height;
+        this.resize(width, height);
         this.getCol = function (col) {
             let cl = [];
             for (var i = 0; i < this.height; i++) {
@@ -2455,18 +2490,19 @@ class Array2D {
         };
     }
     forEach(f, set = true) {
+        this.f = f;
         if (set) {
             for (var i = 0; i < this.width; i++) {
                 for (var j = 0; j < this.height; j++) {
                     let ind = this.index(i, j);
-                    this.array[ind] = f(i, j, this.array[ind], ind);
+                    this.array[ind] = this.f(i, j, this.array[ind], ind);
                 }
             }
         } else {
             for (var i = 0; i < this.width; i++) {
                 for (var j = 0; j < this.height; j++) {
                     let ind = this.index(i, j);
-                    f(i, j, this.array[ind], ind);
+                    this.f(i, j, this.array[ind], ind);
                 }
             }
         }
@@ -2475,7 +2511,9 @@ class Array2D {
         this.width = width;
         this.height = height;
         this.array.length = width * height;
-
+    }
+    get length() {
+        return this.array.length;
     }
 }
 function shuffle(arr) {
@@ -2607,10 +2645,10 @@ function squircle(x, y, w, h, r) {
     ctx.arc(x + w - r, y + h - r, r, 0, PI / 2);
     ctx.arc(x + r, y + h - r, r, PI / 2, PI);
     ctx.closePath();
-    if (st) {
+    if (CANVAS_STROKE_MODE_ENABLED) {
         ctx.stroke();
     }
-    if (fl) {
+    if (CANVAS_FILL_MODE_ENABLED) {
         ctx.fill();
     }
 }
@@ -2632,15 +2670,15 @@ function downloadCanvasImage(name = "Canvas_Image.png") {
     function saveColor() {
         savedColor = ctx.fillStyle;
         savedColor2 = ctx.strokeStyle;
-        sls = st;
-        fls = fl;
+        sls = CANVAS_STROKE_MODE_ENABLED;
+        fls = CANVAS_FILL_MODE_ENABLED;
     }
     function loadColor() {
         if (savedColor && savedColor2) {
             ctx.fillStyle = savedColor;
             ctx.strokeStyle = savedColor2;
-            st = sls;
-            fl = fls;
+            CANVAS_STROKE_MODE_ENABLED = sls;
+            CANVAS_FILL_MODE_ENABLED = fls;
         }
     }
     let savedLineCap;
@@ -2650,14 +2688,14 @@ function downloadCanvasImage(name = "Canvas_Image.png") {
         savedLineWidth = ctx.lineWidth;
         savedLineCap = ctx.lineCap;
         savedLineColor = ctx.strokeStyle;
-        savedStroke = st;
+        savedStroke = CANVAS_STROKE_MODE_ENABLED;
     }
     function loadLineState() {
         if (savedLineWidth) {
             ctx.lineWidth = savedLineWidth;
             ctx.lineCap = savedLineCap;
             ctx.strokeStyle = savedLineColor;
-            st = savedStroke;
+            CANVAS_STROKE_MODE_ENABLED = savedStroke;
         }
     }
     class TextMeasure {
@@ -2701,10 +2739,10 @@ const CLOSE = 1;
             ctx.lineTo(vertices[0], vertices[1]);
             ctx.closePath();
         }
-        if (fl && close == CLOSE) {
+        if (CANVAS_FILL_MODE_ENABLED && close == CLOSE) {
             ctx.fill();
         }
-        if (st) {
+        if (CANVAS_STROKE_MODE_ENABLED) {
             ctx.stroke();
         }
         vertices = [];
@@ -2728,11 +2766,11 @@ function triangle(x, y, x1, y1, x2, y2) {
     ctx.lineTo(x2, y2);
     ctx.lineTo(x, y);
     ctx.closePath();
-    if (st) {
-        ctx.stroke();
-    }
-    if (fl) {
+    if (CANVAS_FILL_MODE_ENABLED) {
         ctx.fill();
+    }
+    if (CANVAS_STROKE_MODE_ENABLED) {
+        ctx.stroke();
     }
 }
 function circle(x, y, r, arca = 0, arcb = 360) {
@@ -2747,11 +2785,11 @@ function circle(x, y, r, arca = 0, arcb = 360) {
         Angle.angleModeToRadians(arcb)
     );
     ctx.closePath();
-    if (st) {
-        ctx.stroke();
-    }
-    if (fl) {
+    if (CANVAS_FILL_MODE_ENABLED) {
         ctx.fill();
+    }
+    if (CANVAS_STROKE_MODE_ENABLED) {
+        ctx.stroke();
     }
 }
 function ellipse(x, y, a, b, arca = 0, arcb = 360) {
@@ -2769,10 +2807,10 @@ function ellipse(x, y, a, b, arca = 0, arcb = 360) {
         Angle.angleModeToRadians(arcb)
     );
     ctx.closePath();
-    if (fl) {
+    if (CANVAS_FILL_MODE_ENABLED) {
         ctx.fill();
     }
-    if (st) {
+    if (CANVAS_STROKE_MODE_ENABLED) {
         ctx.stroke();
     }
 }
@@ -2783,13 +2821,13 @@ function point(x, y) {
 }
 function rect(x, y, w, h, rotat) {
     [x, y, w, h] = Camera2D.getRect(x, y, w, h);
-    if (st) {
+    if (CANVAS_FILL_MODE_ENABLED) {
+        ctx.fillRect(x, y, w, h);
+    }
+    if (CANVAS_STROKE_MODE_ENABLED) {
         ctx.beginPath();
         ctx.strokeRect(x, y, w, h);
         ctx.closePath();
-    }
-    if (fl) {
-        ctx.fillRect(x, y, w, h);
     }
 }
 const Canvas = {
@@ -2830,9 +2868,10 @@ function textSize(size) {
 }
 function text(txt, x, y) {
     [x, y] = Camera2D.convertPos(x, y);
-    if (!fl) {
+    if (CANVAS_STROKE_MODE_ENABLED) {
         ctx.strokeText(txt, x, y);
-    } else {
+    }
+    if (CANVAS_FILL_MODE_ENABLED) {
         ctx.fillText(txt, x, y);
     }
 }
@@ -3527,7 +3566,7 @@ class UIElement {
             );
         }
         let textt = "" + this._text(this);
-            //console.log(textt);
+        //console.log(textt);
         if (textt.length > 0) {
             ctx.save();
             fill(this._textcolor(this.color));

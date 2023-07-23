@@ -1,11 +1,9 @@
 class upperName {
-    static Instance;
     constructor() {
-        upperName.Instance = this;
         var lowerName = this;
-        on.start.bind(() => lowerName.start());
+        on.start.bind(() => lowerName.init());
     }
-    start() {
+    init() {
 
     }
 }

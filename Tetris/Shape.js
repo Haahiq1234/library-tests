@@ -96,13 +96,16 @@ class Shape {
         }
         this.draw();
     }
-    draw() {
-        let pts = this.moveWhilePossible(this.grid.gravity);       
-        setAlpha(122); 
-        for (var p of pts) {
-            this.grid.cell(p.x, p.y, this.color);
+    draw(shouldNotPreview = false) {
+        if (!shouldNotPreview) {
+            let pts = this.moveWhilePossible(this.grid.gravity);
+            setAlpha(122);
+            for (var p of pts) {
+                this.grid.cell(p.x, p.y, this.color);
+            }
+            setAlpha(255);
+
         }
-        setAlpha(255);
         for (var p of this.points) {
             this.grid.cell(p.x, p.y, this.color);
         }
@@ -128,13 +131,20 @@ class Shape {
         }
         return pPoints;
     }
-    moveWhilePossible(dir) {
+    moveWhilePossible(dir, draw) {
+        let stp = this.points;
         let pts = this.points;
         let pPoints = pts;
+        setAlpha(122);
         while (this.grid.possible(pts)) {
+            if (draw) {
+                this.draw(true);
+            }
             pPoints = pts;
             pts = pts.map((p) => Vector.add(p, dir));
         }
+        this.points = stp;
+        setAlpha(255);
         return pPoints;
     }
     tryMove(dir) {
@@ -157,7 +167,7 @@ class Shape {
         this.grid.reselect();
     }
     forceFinish() {
-        let pts = this.moveWhilePossible(this.grid.gravity);
+        let pts = this.moveWhilePossible(this.grid.gravity, true);
         fill(this.color);
         noStroke();
         setAlpha(255);

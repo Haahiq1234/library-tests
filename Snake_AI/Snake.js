@@ -1,113 +1,182 @@
+const MAX_STEPS = 1600;
+const MAX_PATH_LENGTH = 5;
+
 class Snake {
     constructor(x, y, colA, colB) {
         this.colA = colA;
         this.colB = colB;
         this.foodcolor = color(255, 0, 0);
         this.body = [new Vector2(x, y)];
-        this.velx = 0;
-        this.vely = 0;
 
-        this.previous = this.body[0];
         this.food = [];
-
+        this.previous = this.body[0];
+        this.tail = this.body[0];
+        this.grid = new Grid(40, 40, this);
+        this.sorted = false;
     }
-    init(grid) {
-        this.grid = grid;
+    init() {
         this.grid.set(this.body[0].x, this.body[0].y, 1);
 
-        for (var i = 0; i < 4; i++) {
+        for (var i = 0; i < 50; i++) {
             this.addFood();
         }
+        this.sortFood();
+        lineWidth(2);
     }
-    update() {
-        this.updategriddata();
-        this.target = this.calculateClosestFood();
-        this.vel = this.calculateVel();
-        if (!this.vel) {
-            return;
-        }
-        let previoushead = this.body[this.body.length - 1];
-        let nPos = new Vector2(
-            constraint(previoushead.x + this.vel.x, 0, this.grid.width - 1),
-            constraint(previoushead.y + this.vel.y, 0, this.grid.height - 1)
-        );
-        let gridVal = this.grid.get(nPos.x, nPos.y);
-        if (gridVal > 1) {
-            this.grid.end();
-            return;
-        }
-        this.prevtail = this.body.shift();
-        for (var i = 0; i < this.food.length; i++) {
-            if (this.food[i].x == nPos.x && this.food[i].y == nPos.y) {
-                this.food.splice(i, 1);
-                this.body.unshift(this.prevtail);
-                this.addFood();
-                break;
+    neighbours(i, j, len, tar) {
+        //console.log(len);
+        let sn = this;
+        let ns = this.grid.neighbours(i, j, len);
+        ns = ns.map((val) => [val, Vector.dist(val, tar), sn.grid.get(val.x, val.y)]);
+        ns = ns.filter((val) => val[2] - len < 1 || val[2] == -1);
+        ns.sort((a, b) => a[1] - b[1]);
+        //console.log(ns);
+        return ns.map(val => val[0]);
+        //console.log(ns);
+    }
+    next() {
+        let start = this.head;
+        let end = 0;
+        let path = [start];
+        let pns = [];
+        for (var i = 0; i < MAX_STEPS && path.length < MAX_PATH_LENGTH && end < this.food.length; i++) {
+            let head = path[path.length - 1];
+            let ns = this.neighbours(head.x, head.y, max(0, path.length - 1 - end), this.food[end]);
+            //console.log(ns);
+            if (ns.length == 0) {
+                let popped = path.pop();
+                this.grid.set(popped.x, popped.y, -1);
+                //console.log("Popped:", popped);
+            } else {
+                let pushed = ns[0];
+                let val = this.grid.get(pushed.x, pushed.y);
+                if (val - max(0, path.length - 1 - end) > 0) {
+                    console.log("SHIT NO WORK. Btw invalid grid val is:", val - max(0, path.length - 1 - end));
+                    if (ns.length == 1) {
+                        let popped = path.pop();
+                        this.grid.set(popped.x, popped.y, -1);
+                        break;
+                    } else {
+                        pushed = ns[1];
+                    }
+                }
+                if (Vector.Equal(this.food[end], pushed)) {
+                    end++;
+                }
+                this.grid.set(pushed.x, pushed.y, path.length - 1 + this.body.length);
+                path.push(pushed);
+            }
+            pns.push(ns);
+            if (path.length == 0) {
+                console.log("Path length:", path.length);
+                this.grid.end();
+                //console.log(pns);
+                return this.head;
             }
         }
-        this.body.push(nPos);
+        //console.log(path.length);
+        if (path.length == 1) {
+            //console.log("No path");
+            this.grid.end();
+            return path[0];
+        }
+        if (path.length == 0) {
+            return this.head;
+        }
+        return path[1];
+    }
+    update() {
+        this.updategrid();
+        this.previous = this.head;
+        let next = this.next();
+        if (!this.IsValid(next)) {
+            console.log(next, this.body);
+            //this.grid.end();
+            noLoop();
+            return;
+        }
+        this.tail = this.body.shift();
+        if (this.food[0].x == next.x && this.food[0].y == next.y) {
+            this.food.splice(0, 1);
+            this.body.unshift(this.tail);
+            this.addFood();
+        }
+        this.body.push(next);
+        //this.sortFood();
+    }
+    IsValid(pos) {
+        let i = pos.x;
+        let j = pos.y;
+        if (i < 0 || j < 0 || i >= this.grid.width || j >= this.grid.height) {
+            return false;
+        }
+        for (var bod of this.body) {
+            if (i == bod.x && j == bod.y) {
+                return false;
+            }
+        }
+        return true;
+    }
+    sortFood() {
+        //if (this.sorted) return;
+        this.sorted = true;
+        // let food = this.food;
+        // this.food = [];
+        // let head = this.head;
+        // while (food.length > 0) {
+        //     let len = Infinity;
+        //     let n = 0;
+        //     for (var i = 0; i < food.length; i++) {
+        //         let nLen = Vector.dist(food[i], head);
+        //         if (nLen < len) {
+        //             len = nLen;
+        //             n = i;
+        //         }
+        //     }
+        //     let prev = food.splice(n, 1)[0];
+        //     this.food.push(prev);
+        //     head = prev;
+        // }
+        this.food = this.food.map((p) => [p, Vector.dist(p, this.head)]);
+        this.food.sort((a, b) => a[1] - b[1]);
+        this.food = this.food.map((v) => v[0]);
     }
     get head() {
         return this.body[this.body.length - 1];
-    }
-    calculateClosestFood() {
-        return Vector.fromOrigin.nearest(this.body[this.body.length - 1], this.food)[0];
-    }
-    calculateVel() {
-        let head = this.head;
-        let vel = follow(head, this.target);
-        let nPos = Vector.add(vel, head);
-        let neighbours = this.getNeighbours(head);
-        if (neighbours.length == 0) {
-            this.grid.end();
-            return;
-        }
-        let nearest = Vector.fromOrigin.nearest(nPos, neighbours)[0];
-        //console.log(nearest, head);
-        return Vector.sub(nearest, head);
-    }
-    getNeighbours(pos) {
-        let neighbours = [];
-        if (this.grid.IsValid(pos.x - 1, pos.y)) {
-            neighbours.push(new Vector2(pos.x - 1, pos.y));
-        }
-        if (this.grid.IsValid(pos.x + 1, pos.y)) {
-            neighbours.push(new Vector2(pos.x + 1, pos.y));
-        }
-        if (this.grid.IsValid(pos.x, pos.y - 1)) {
-            neighbours.push(new Vector2(pos.x, pos.y - 1));
-        }
-        if (this.grid.IsValid(pos.x, pos.y + 1)) {
-            neighbours.push(new Vector2(pos.x, pos.y + 1));
-        }
-        return neighbours;
     }
     addFood() {
         let pos = new Vector2(Random.rangeInt(this.grid.width), Random.rangeInt(this.grid.height));
         if (this.grid.get(pos.x, pos.y) == 0) {
             this.food.push(pos);
+            this.sorted = false;
             return pos;
         }
+        //console.log("Invalid position");
         return this.addFood();
     }
     draw() {
         for (var i = 0; i < this.body.length; i++) {
             let t = normalize(i, 0, max(this.body.length - 1, 1));
             let col = this.colA.map((a, j) => a * (1 - t) + this.colB[j] * t);
+            if (i == 0 || i == this.body.length - 1) {
+                stroke(0);
+            } else {
+                noStroke();
+            }
             fill(col);
-            rect(this.body[i].x * this.grid.cellwidth, this.body[i].y * this.grid.cellheight, this.grid.cellwidth, this.grid.cellheight);
+            this.grid.rect(this.body[i].x, this.body[i].y, col);
+            //rect(this.body[i].x * this.grid.cellwidth, this.body[i].y * this.grid.cellheight, this.grid.cellwidth, this.grid.cellheight);
         }
         fill(this.foodcolor);
         for (var i = 0; i < this.food.length; i++) {
             rect(this.food[i].x * this.grid.cellwidth, this.food[i].y * this.grid.cellheight, this.grid.cellwidth, this.grid.cellheight);
         }
+        this.grid.draw();
     }
-    updategriddata() {
+    updategrid() {
+        this.grid.array.fill(0);
         for (var i = 0; i < this.body.length; i++) {
-            this.grid.set(this.body[i].x, this.body[i].y, i + 1);
-        }
-        for (var i = 0; i < this.food.length; i++) {
-            this.grid.set(this.food[i].x, this.food[i].y, -1);
+            this.grid.set(this.body[i].x, this.body[i].y, i + 3);
         }
     }
 }

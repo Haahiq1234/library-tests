@@ -7,29 +7,35 @@ class Animator {
         this.data = data;
         this.duration = frames;
         this.startFrame = Control.FRAME_NO;
-        this.onend = onend;
-        this.onupdate = onupdate;
+        this.animationEndCallback = onend;
+        this.animationUpdateCallback = onupdate;
         this.isCancelled = false;
+        this.hasEnded = false;
 
         Animator.animators.push(this);
     }
     cancel() {
+        if (this.hasEnded || this.isCancelled) return;
         this.isCancelled = true;
-        this.onend();
+        this.end();
     }
     ended() {
         if (this.isCancelled) {
             return true;
         }
         if (Control.FRAME_NO > this.startFrame + this.duration) {
-            this.onend();
+            this.hasEnded = true;
+            this.end();
             return true;
         }
         this.draw();
         return false;
     }
+    end() {
+        this.animationEndCallback(min(this.t(), 1));
+    }
     draw() {
-        this.onupdate(this.t());
+        this.animationUpdateCallback(this.t());
     }
     t() {
         return (Control.FRAME_NO - this.startFrame) / this.duration;

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+
+<body>
+	<script src="Canvas.js"></script>
+	<script>
+		var cols, rows, grid, cw, ch, current, next, visited;
+		function setUp() {
+			createCanvas(500, 500);
+			frameRate(5);
+			cols = 10;
+			rows = 10;
+			grid = [];
+			visited = [];
+			cw = CanvasWidth / cols;
+			ch = CanvasHeight / rows;
+			for (var i = 0; i < rows; i++) {
+				for (var j = 0; j < cols; j++) {
+					let newCell = new cell(i, j, grid.length);
+					grid.push(newCell);
+				}
+			}
+			current = grid[0];
+			current.visited = true;
+			visited.push();
+		}
+		function draw() {
+			backGround("black");
+			current.visited = true;
+			for (var i = 0; i < grid.length; i++) {
+				grid[i].show();
+			}
+			next = current.checkNeighbours();
+			if (Boolean(next)) {
+				current.removeWalls(next);
+				next.removeWalls(current);
+				current.visited = true;
+				//console.log([current, next]);
+				current = next;
+			}
+		}
+		function index(r, c) {
+			if (r > 0, c > 0, c < cols, r < rows) {
+				return (c + r * rows);
+			} else {
+				return -1;
+			}
+		}
+		function cell(row, col, i) {
+			this.row = row;
+			this.col = col;
+			this.i = i;
+			this.visited = false;
+			this.walls = [true, true, true, true];
+			this.removeWalls = function (next) {
+				let x = this.col - next.col;
+				console.log(x);
+				if (x == -1) {
+					this.walls[1] = false;
+				} else if (x == 1) {
+					this.walls[3] = false;
+				}
+				let y = this.row - next.row;
+				if (y == -1) {
+					this.walls[2] = false;
+				} else if (y == 1) {
+					this.walls[0] = false;
+				}
+			}
+			this.checkNeighbours = function () {
+				var neighbours = [];
+				var top = grid[index(row - 1, col)];
+				var right = grid[index(row, col + 1)];
+				var bottom = grid[index(row + 1, col)];
+				var left = grid[index(row, col - 1)];
+				if (Boolean(top)) {
+					if (!top.visited) {
+						neighbours.push(top);
+					}
+				}
+				if (Boolean(right)) {
+					if (!right.visited) {
+						neighbours.push(right);
+					}
+				}
+				if (Boolean(bottom)) {
+					if (!bottom.visited) {
+						neighbours.push(bottom);
+					}
+				}
+				if (Boolean(left)) {
+					if (!left.visited) {
+						neighbours.push(left);
+					}
+				}
+				if (neighbours.length > 0) {
+					var r = Math.floor(Math.random() * neighbours.length);
+					return neighbours[r];
+				}
+			}
+			this.show = function () {
+				var x = row * ch;
+				var y = col * cw;
+				stroke("white");
+				if (this.walls[0]) { line(x, y, x + cw, y); }
+				if (this.walls[1]) { line(x + cw, y, x + cw, y + ch); }
+				if (this.walls[2]) { line(x, y, x, y + ch); }
+				if (this.walls[3]) { line(x, y + ch, x + cw, y + ch); }
+				if (this.visited) {
+					fill("rgb(255,0,255)");
+					rect(x, y, cw, ch);
+					nofill();
+				}
+			}
+		}
+
+	</script>
+
+</body>
+
+</html>

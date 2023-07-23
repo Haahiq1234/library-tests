@@ -1,159 +1,135 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
+
 <body>
+    <script src="../Canvas.js"></script>
     <script>
-        var FramesPerSecond = 100;
+        const UP = 0;
+        const RIGHT = 1;
+        const LEFT = 2;
+        const DOWN = 3;
+
+        var FramesPerSecond = 60;
         padding = [0];
         floorHeight = 0;
-        var cellSize = 20;
+        var cellSize = 50;
         var cellsDone = 1;
-        var grid = [];
-        var stack = [];
-        var columns;
-        var currentPosition;
-        var rows;
+        var grid;
+        var path;
+        var width;
+        var height;
         var cells = 0;
         var done = false;
-        createCanvas(500, 500, "#f1f1f1");
+        createCanvas(500, 500);
         function setUp() {
             cellsDone = 1;
             done = false;
             cells = 0;
             frameRate(FramesPerSecond);
             lineWidth(1);
-            currentPosition = new vector(0, 0);
-            stack = [];
-            grid = [];
+            noStroke();
 
-            columns = CanvasWidth / cellSize;
-            rows = CanvasHeight / cellSize;
+            width = CanvasWidth / cellSize;
+            height = CanvasHeight / cellSize;
             drawEnabled = true;
+            grid = [];
+            path = [new Vector2(0, 0)];
 
-            for (var c = 0; c < columns; c++) {
+            for (var c = 0; c < width; c++) {
                 grid.push([]);
-                for (var r = 0; r < rows; r++) {
-                    grid[c].push(new cell(c * cellSize, r * cellSize));
-                    cells++;
+                for (var r = 0; r < height; r++) {
+                    grid[c].push(new Cell(c, r));
                 }
             }
+            cells = width * height;
             grid[0][0].visited = true;
-            console.log(grid);
         }
         function draw() {
             clear();
-            if (!done) {
-
-                var next = chooseNeighbour(currentPosition.x, currentPosition.y);
-
-                if (next.size > 1) {
-                    stack.push(next.chosen);
+            for (var x in grid) {
+                for (var y in grid[x]) {
+                    grid[x][y].draw();
                 }
-
-                if (next.chosen != undefined) {
-                    removeWalls(currentPosition, next.chosen);
-
-                    currentPosition = next.chosen;
+            }
+            if (!done) {
+                let current = path[path.length - 1];
+                //console.log(current);
+                let currentC = grid[current.x][current.y];
+                if (!currentC.visited) {
                     cellsDone++;
                     if (cellsDone >= cells) {
                         done = true;
                     }
-                    grid[currentPosition.x][currentPosition.y].visited = true;
-                } else {
-                    currentPosition = stack.pop();
+                    currentC.visited = true;
                 }
-                for (var x in grid) {
-                    for (var y in grid[x]) {
-                        grid[x][y].draw();
-                    }
+                var neighbours = chooseNeighbour(current.x, current.y);
+                //console.log(neighbours.length);
+                if (neighbours.length == 0) {
+                    path.pop();
+                    return;
                 }
-            } else {
-                for (var x in grid) {
-                    for (var y in grid[x]) {
-                        grid[x][y].draw();
-                    }
-                }
-                console.log(grid);
-                drawEnabled = false;
-            }
-        }
-        function removeWalls(currentPos, nextPosition) {
-            let current = grid[currentPos.x][currentPos.y];
-            let next = grid[nextPosition.x][nextPosition.y];
+                let next = Random.element(neighbours);
+                let nextC = grid[next[0].x][next[0].y];
+                currentC.walls[next[1]] = false;
+                nextC.walls[3 - next[1]] = false;
+                path.push(next[0]);
 
-            let xDir = current.x - next.x;
-            if (xDir < 0) {
-                grid[currentPos.x][currentPos.y].right = false;
-                grid[nextPosition.x][nextPosition.y].left = false;
-            } else if (xDir > 0) {
-                grid[currentPos.x][currentPos.y].left = false;
-                grid[nextPosition.x][nextPosition.y].right = false;
-            }
-            let yDir = current.y - next.y;
-            if (yDir < 0) {
-                grid[currentPos.x][currentPos.y].bottom = false;
-                grid[nextPosition.x][nextPosition.y].top = false;
-            } else if (yDir > 0) {
-                grid[currentPos.x][currentPos.y].top = false;
-                grid[nextPosition.x][nextPosition.y].bottom = false;
+                current = next;
             }
         }
         function chooseNeighbour(x, y) {
             let neighbours = [];
-            if (grid[x][y - 1] != undefined) {
-                let top1 = grid[x][y - 1];
-                if (!top1.visited) {
-                    neighbours.push(new vector(x, y-1));
-                }
+            if (y > 0 && !grid[x][y - 1].visited) {
+                neighbours.push([new Vector2(x, y - 1), UP]);
             }
-            if (grid[x + 1] != undefined) {
-                let right1 = grid[x + 1][y];
-                if (!right1.visited) {
-                    neighbours.push(new vector(x + 1, y));
-                }
+            if (x < width - 1 && !grid[x + 1][y].visited) {
+                neighbours.push([new Vector2(x + 1, y), RIGHT]);
             }
-            if (grid[x][y + 1] != undefined) {
-                let bottom1 = grid[x][y + 1];
-                if (!bottom1.visited) {
-                    neighbours.push(new vector(x, y + 1));
-                }
+            if (y < height - 1 && !grid[x][y + 1].visited) {
+                neighbours.push([new Vector2(x, y + 1), DOWN]);
             }
-            if (grid[x - 1] != undefined) {
-                let left1 = grid[x - 1][y];
-                if (!left1.visited) {
-                    neighbours.push(new vector(x - 1, y));
-                }
+            if (x > 0 && !grid[x - 1][y].visited) {
+                neighbours.push([new Vector2(x - 1, y), LEFT]);
             }
-            var rand = Math.floor(Math.random() * neighbours.length);
-            return { chosen: neighbours[rand], size: neighbours.length};
+            return neighbours;
         }
-        function cell(x, y) {
-            this.x = x;
-            this.y = y;
+        function Cell(i, j) {
+            this.i = i;
+            this.j = j;
+            this.x = i * cellSize;
+            this.y = j * cellSize;
             this.visited = false;
-            this.top = true;
-            this.right = true;
-            this.bottom = true;
-            this.left = true;
+            this.walls = new Array(4).fill(true);
             this.draw = function () {
-                stroke("black");
                 fill("red");
-                if (this.top)
+                if (this.walls[UP])
                     line(this.x, this.y, this.x + cellSize, this.y);
-                if (this.right)
+                if (this.walls[LEFT])
                     line(this.x, this.y, this.x, this.y + cellSize);
-                if (this.bottom)
+                if (this.walls[DOWN])
                     line(this.x, this.y + cellSize, this.x + cellSize, this.y + cellSize);
-                if (this.left)
+                if (this.walls[RIGHT])
                     line(this.x + cellSize, this.y, this.x + cellSize, this.y + cellSize);
                 if (this.visited)
-                    fillRect(this.x, this.y, cellSize, cellSize);
+                    rect(this.x, this.y, cellSize, cellSize);
             }
         }
         function key_Press() {
             if (keyCode == space)
                 setUp();
         }
+        function getIndex() {
+
+        }
+    </script>
+    <!-- <script>
         var colliders = [];
         var ctx, CanvasWidth, CanvasHeight, CanvasColor, mouseOverCanvas, drawEnabled, floor;
         var fl = true;
@@ -452,7 +428,8 @@
             this.x = x;
             this.y = y;
         }
-    </script>
+    </script> -->
 
 </body>
+
 </html>
