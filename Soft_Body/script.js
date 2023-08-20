@@ -8,6 +8,7 @@ function setUp() {
     } else {
         createCanvas(500, 500);
     }
+    frameRate(60);
     menu.init();
 
     menu.ca

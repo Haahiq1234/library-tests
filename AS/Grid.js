@@ -19,7 +19,6 @@ class Grid extends Array2D {
         this.targetPos = new Vector2(w - 1, h - 1);
 
         this.path = [this.startPos.copy()];
-        lineCap("round");
     }
     cost(i, j) {
         let val = this.get(i, j);

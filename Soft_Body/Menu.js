@@ -10,7 +10,7 @@ class Menu {
         this.closeButton.text("Start", 20);
         var menu = this;
         this.closeButton.bind("click", () => menu.close());
-        
+
         this.extra = new CheckBox(CanvasWidth / 2, CanvasHeight * 4 / 5);
         this.extra.text("Add Extra Support", 15);
         this.extra.setShape(UI.RECT, 150, 30);
@@ -40,32 +40,23 @@ class Menu {
         this.distanceBetweenPoints.text(slider => "" + slider.value(1), 18);
         this.distanceBetweenPoints.name("Distance", 15, 0, 20);
 
-        this.width = new Slider(x + xwidth * 4, 300, x + xwidth * 4, 100, 0, 1.01, 1, color(255, 0, 0));
-        this.width.text(slider => "" + floor(menu.currentMaximumWidth * slider.value() + 1), 18);
+        this.width = new Slider(x + xwidth * 4, 300, x + xwidth * 4, 100, 0, 10, 7, color(255, 0, 0));
+        this.width.text(slider => "" + floor(slider.value() + 1), 18);
         this.width.name("Width", 10, 0, 20);
 
-        this.height = new Slider(x + xwidth * 5, 300, x + xwidth * 5, 100, 0, 1.01, 0.7, color(255, 0, 0));
-        this.height.text(slider => "" + floor(menu.currentMaximumHeight * slider.value() + 1), 18);
+        this.height = new Slider(x + xwidth * 5, 300, x + xwidth * 5, 100, 0, 10, 5, color(255, 0, 0));
+        this.height.text(slider => "" + floor(slider.value() + 1), 18);
         this.height.name("Height", 10, 0, 20);
     }
-    getMaximumSize() {
-        let distanceBetweenPoints = this.distanceBetweenPoints.value(1);
-        let radius = this.radius.value(1);
-        let width = floorDiv(CanvasWidth - radius * 2 - softBody.x, distanceBetweenPoints);
-        let height = floorDiv(CanvasHeight - radius * 2 - softBody.y, distanceBetweenPoints);
-        this.currentMaximumWidth = width;
-        this.currentMaximumHeight = height;
-    }
     update() {
-        this.getMaximumSize();
     }
     close() {
-        this.enabled = false;       
+        this.enabled = false;
         fill(255, 0, 0);
-        let width = floor(this.currentMaximumWidth * this.width.value() + 1)
-        let height = floor(this.currentMaximumHeight * this.height.value() + 1)
+        let width = floor(this.width.value() + 1)
+        let height = floor(this.height.value() + 1)
 
-        softBody.generate(width, height, this.distanceBetweenPoints.value(1), this.ks.value(100), this.kd.value(100), new Vector2(0, 2), this.radius.value(1), this.extra.checked); 
+        softBody.generate(width, height, this.distanceBetweenPoints.value(1), this.ks.value(100), this.kd.value(100), new Vector2(0, 2), this.radius.value(1), this.extra.checked);
         UI.Clear();
     }
 }

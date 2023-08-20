@@ -15,28 +15,75 @@
         function setUp() {
             createCanvas(400, 400);
             frameRate(60);
-            console.log(hash("Hello Goodbye"));
             let c = new Vector2(CanvasWidth / 2, CanvasHeight / 2);
             let r = 30;
             let dist = 50;
             circle(c.x, c.y, r);
             circle(c.x, c.y - r * 2 - dist, r);
             circle(c.x, c.y + r * 2 + dist, r);
-        }
-        function draw() {
 
+            console.log(hash2("1234"));
+            console.log(crackPassword(hash1("12345")));
         }
         function rand() {
 
         }
         function hash(str) {
             let hash = "";
-            for (var i = 0; i < str.length; i++) {
-                let code = str.charCodeAt(i) * i;
-                hash += (Math.abs((code << 2 + 1) * (code >> 5 - 3) * (code >> 10 - 4) * i << 4));
+            for (var i = 0; i < str.length - 1; i++) {
+                let code = (str.charCodeAt(i) + (str.charCodeAt(i + 1) * (i + 20))) * (i + 5);
+                hash += (Math.abs((code << 2 + 1) * (code >> 5 - 3) * (code >> 10 - 4) * (i + 5) << 4));
             }
-            console.log(str);
+
             return hash;
+        }
+        function hash1(str) {
+            let hash = "";
+            for (var i = 0; i < str.length; i++) {
+                let code = (str.charCodeAt(i)) * (i + 5);
+                hash += (Math.abs((code << 2 + 1) * (code >> 5 - 3) * (code >> 10 - 4) * (i + 5) << 4));
+            }
+            return hash;
+        }
+        function hash2(str) {
+            let hashed = "";
+            let hashCodes = str.split("").map((v, i) => v.charCodeAt(0) * (i + 50));
+            for (var i = 0; i < hashCodes.length; i++) {
+                let code = 0;
+                for (var j = 0; j < hashCodes.length; j++) {
+                    let hashCode = hashCodes[j];
+                    code += (Math.abs((hashCode << 2 + 1) * (hashCode >> 5 - 3) * (hashCode * (j - i) >> 10 - 4) * (i + 5) << 4));
+                }
+                hashed += code;
+            }
+            return hashed.split("").map((x) => String.fromCharCode(parseInt(x) + 65)).join("");
+        }
+        function crackPassword(pwd) {
+            let cpwd = "";
+            for (var i = 0; i < 16; i++) {
+                let hashed = "";
+                for (var j = 0; j < 128; j++) {
+                    let pd = cpwd + String.fromCharCode(j);
+                    hashed = hash1(pd);
+                    if (IsSimiliar(pwd, hashed)) {
+                        cpwd = pd;
+                        console.log(pd);
+                        break;
+                    }
+                }
+                if (pwd == hashed) {
+                    return cpwd;
+                }
+            }
+            return cpwd;
+        }
+        function IsSimiliar(str, sub_str) {
+            for (var i = 0; i < sub_str.length; i++) {
+                if (str[i] != sub_str[i]) {
+                    return false;
+                }
+            }
+            return true;
         }
     </script>
 </body>

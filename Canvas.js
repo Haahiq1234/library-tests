@@ -58,7 +58,7 @@ function print(...messages) {
     setStorageItemType("Vector2", Vector2);
 }
 function loadFile(url, callback, id = 0) {
-    Control.LOADING++;
+    Main.LOADING++;
     let request = new XMLHttpRequest();
     //console.log(request);
     request.open("GET", url, true);
@@ -68,8 +68,8 @@ function loadFile(url, callback, id = 0) {
         } else {
             callback(request.responseText, false, id);
         }
-        Control.LOADING--;
-        Control.startIfLoaded();
+        Main.LOADING--;
+        Main.startIfLoaded();
     };
     request.send();
 }
@@ -325,6 +325,13 @@ const Vector = {
         let dy = abs(a.y - b.y);
         return dx + dy;
     },
+    derp: function (a, b, dist) {
+        let ab_dist = Vector.dist(a, b);
+        if (ab_dist < dist) {
+            return b.copy();
+        }
+        return this.lerp(a, b, dist / ab_dist);
+    }
 };
 Vector.InFov = function (p, o, d, fov) {
     let dot = Vector.dot(d.copy().normalize(), Vector.sub(p, o).normalize());
@@ -820,7 +827,7 @@ const Time = {
     frameRate: 0,
     time: 0,
 };
-const Control = {
+const Main = {
     LOADED: false,
     LOADING: 0,
     STARTED: false,
@@ -844,15 +851,16 @@ const Control = {
         if (this.FIXED_FPS) {
             clearInterval(this.LOOP_ID);
         } else {
+            // console.log(this.LOOP_ID);
             cancelAnimationFrame(this.LOOP_ID);
         }
     },
     callRedraw: function (timeStamp) {
         redraw(timeStamp);
-        if (!Control.FIXED_FPS) {
-            Control.LOOP_ID = requestAnimationFrame(Control.callRedraw);
+        if (!Main.FIXED_FPS) {
+            Main.LOOP_ID = requestAnimationFrame(Main.callRedraw);
         }
-        Control.FRAME_DRAWN = false;
+        Main.FRAME_DRAWN = false;
     },
     startIfLoaded: function () {
         //console.log(this.LOADED && this.LOADING == 0 && !this.STARTED);
@@ -867,8 +875,8 @@ const Control = {
     },
 };
 document.body.onload = function () {
-    Control.LOADED = true;
-    Control.startIfLoaded();
+    Main.LOADED = true;
+    Main.startIfLoaded();
 };
 on.start.bind(function () {
     for (var i = 0; i < UI.Elements.length; i++) {
@@ -880,25 +888,26 @@ on.start.bind(function () {
     }
 });
 function frameRate(rate) {
-    Control.noLoop();
-    Control.FIXED_FPS = true;
+    Main.noLoop();
+    Main.FIXED_FPS = true;
     Time.frameRate = rate;
     Time.deltaTime = 1000 / rate;
     Time.time = 0;
-    Control.loop();
+    Main.loop();
 }
 let loopGoing = true;
 function noLoop() {
-    Control.noLoop();
+    Main.noLoop();
 }
 function loop() {
-    Control.loop();
+    Main.loop();
 }
 function redraw(timeStamp = Time.time + Time.deltaTime) {
-    if (Control.FRAME_DRAWN) {
+    if (Main.FRAME_DRAWN) {
         return;
     }
-    if (!Control.FIXED_FPS) {
+    Main.FRAME_DRAWN = true;
+    if (!Main.FIXED_FPS) {
         Time.deltaTime = timeStamp - Time.time;
         Time.frameRate = 1000 / Time.deltaTime;
         Time.time = timeStamp;
@@ -907,7 +916,7 @@ function redraw(timeStamp = Time.time + Time.deltaTime) {
     }
     Mouse.previous.set(Mouse.x, Mouse.y);
     Mouse.position.set(mouse2.x, mouse2.y);
-    Control.FRAME_NO++;
+    Main.FRAME_NO++;
     if (Canvas.enabled) {
         UI.Update();
         ctx.save();
@@ -2599,6 +2608,13 @@ const Camera2D = {
     invertPos: function (_x, _y) {
         return [(_x - this.x) / this.scaleX, (_y - this.y) / this.scaleY];
     },
+    enablePanning() {
+        on.update.bind(function () {
+            if (mousePressed) {
+                Camera2D.translate(Mouse.dx, Mouse.dy);
+            }
+        });
+    },
     getRect: function (_x, _y, _w, _h) {
         [_x, _y] = this.convertPos(_x, _y);
         // if (_w < 0) {
@@ -3393,7 +3409,7 @@ class CImage {
         ctx.drawImage(pushedImages.pop());
     }
     function loadImage(name, width, height, cb) {
-        Control.LOADING++;
+        Main.LOADING++;
         var myImage = new Image();
         myImage.src = name;
         let im = new CImage(myImage);
@@ -3410,8 +3426,8 @@ class CImage {
             } else if (!height && width) {
                 width(im);
             }
-            Control.LOADING--;
-            Control.startIfLoaded();
+            Main.LOADING--;
+            Main.startIfLoaded();
         };
         return im;
     }
@@ -3478,7 +3494,7 @@ class UIElement {
         //console.log(shapeArgs);
         this.setShape(...shapeArgs);
 
-        if (Control.STARTED) {
+        if (Main.STARTED) {
             this.a = new Vector2(0, 0);
             this.b = new Vector2(CanvasWidth, CanvasHeight);
         }

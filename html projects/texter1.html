@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>CSS Template</title>
     <meta charset="utf-8">
@@ -23,7 +24,7 @@
         .error {
             position: fixed;
             height: 6%;
-            border: 1px solid rgb(150,150,150);
+            border: 1px solid rgb(150, 150, 150);
             width: 20%;
             text-align: center;
             color: red;
@@ -103,10 +104,11 @@
             font-size: 15px;
         }
 
-            .si:hover, .su:hover {
-                background-color: rgb(225, 225, 225);
-                cursor: pointer;
-            }
+        .si:hover,
+        .su:hover {
+            background-color: rgb(225, 225, 225);
+            cursor: pointer;
+        }
 
         .suit2 {
             border: 1px solid rgb(150, 150, 150);
@@ -164,11 +166,11 @@
             background: #ccc;
         }
 
-            .cont:hover {
-                background-color: #555;
-                color: white;
-                cursor: pointer;
-            }
+        .cont:hover {
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+        }
 
         .adconh {
             height: 10%;
@@ -196,10 +198,10 @@
             background-color: #ccc;
         }
 
-            .addcon:hover {
-                background-color: rgb(125,125,125);
-                color: white;
-            }
+        .addcon:hover {
+            background-color: rgb(125, 125, 125);
+            color: white;
+        }
 
         .ahead {
             border: 1px black;
@@ -294,10 +296,10 @@
             background-color: #ccc;
         }
 
-            .fixed:hover {
-                background-color: rgb(125,125,125);
-                color: white;
-            }
+        .fixed:hover {
+            background-color: rgb(125, 125, 125);
+            color: white;
+        }
 
         .article1 {
             position: fixed;
@@ -363,17 +365,22 @@
             border-bottom-left-radius: 10px;
         }
 
-            .option:hover, .options:hover, .optionf:hover {
-                background-color: rgb(200,200,200);
-                cursor: pointer;
-            }
+        .option:hover,
+        .options:hover,
+        .optionf:hover {
+            background-color: rgb(200, 200, 200);
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
     <div id="area">
     </div>
     <div id="signin" style="display:none;">
-        <h1 style="font-family:verdana;" class="sih"><center>SIGN IN</center></h1>
+        <h1 style="font-family:verdana;" class="sih">
+            <center>SIGN IN</center>
+        </h1>
         <div class="suit">
             <div class="suit2"></div>
             <input id="username" type="text" placeholder="Enter Username." class="un"><br>
@@ -383,7 +390,9 @@
         </div>
     </div>
     <div id="signup" style="display:none">
-        <h1 style="font-family:verdana;" class="sih"><center>SIGN UP</center></h1>
+        <h1 style="font-family:verdana;" class="sih">
+            <center>SIGN UP</center>
+        </h1>
         <div class="suit">
             <div class="suit2"></div>
             <input id='newusername' type="text" placeholder="New Username." class="un"><br>
@@ -486,7 +495,7 @@
     <script id="accholders">
         var accno = [];
         var accounts = {};
-        function cracco(name, passss) {
+        function Acc(name, passss) {
             this.name = name;
             this.top =
                 "<div class='back'></div><article id='mtab' class='article1'></article>"
@@ -501,14 +510,14 @@
             this.contacts = "";
             this.end = "</div>";
             this.password = passss;
-            this.messagess = new Object();
+            this.messagess = {};
             this.contactts = [];
             accno.push(this.name);
 
         }
-        accounts["Haahiq1234"] = new cracco('Haahiq1234', 1234);
-        accounts["Haahiq2020"] = new cracco('Haahiq2020', 1234);
-        accounts["Hamzaahsan12"] = new cracco('Hamzaahsan12', 4321);
+        accounts["Haahiq1234"] = new Acc('Haahiq1234', 1234);
+        accounts["Haahiq2020"] = new Acc('Haahiq2020', 1234);
+        accounts["Hamzaahsan12"] = new Acc('Hamzaahsan12', 4321);
     </script>
     <script>
         var signupp = document.getElementById("signup").innerHTML
@@ -560,7 +569,7 @@
                 if (un2.value.length >= 8 && pwd2.value.length >= 4) {
                     username2 = un2.value;
                     password2 = pwd2.value;
-                    accounts[username2] = new cracco(username2, password2);
+                    accounts[username2] = new Acc(username2, password2);
                     username2 = accounts[username2];
                     asi.innerHTML = username2.top + username2.contacts + username2.end;
                     active = accounts[username2.name];
@@ -590,4 +599,5 @@
         }
     </script>
 </body>
+
 </html>

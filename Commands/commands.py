@@ -165,7 +165,9 @@ def find_all_instances(string: str, sub_string: str):
 
 
 def open_project_in_vscode(args, clr):
-    os.system("code .")
+    args_str = "".join([" " + elem for elem in args])
+    print("opening ." + args_str)
+    os.system("code ." + args_str)
     pass
 
 

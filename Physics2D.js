@@ -1,5 +1,7 @@
+/// <reference path="Canvas.js"/>
+
 class Physics2DMassPoint {
-    constructor(x, y, m=1) {
+    constructor(x, y, m = 1) {
         this.pos = new Vector2(x, y);
         this.mass = m;
         this.vel = new Vector2(0, 0);
@@ -7,49 +9,54 @@ class Physics2DMassPoint {
         this.acc = new Vector2(0, 0);
 
         this.bounce = 0;
-        this.dampening = 0.99;
+        this.dampening = 0.98;
     }
-    update() {
-        this.vel.add(Vector.mult(this.acc, Time.deltaTime / 100));
-        this.pos.add(Vector.mult(this.vel, Time.deltaTime / 100));
+    lock() {
+        this.locked = true;
+    }
+    unlock() {
+        this.locked = false;
+    }
+    update(dt) {
+        if (!this.locked) {
+            this.vel.x += this.acc.x * dt;
+            this.vel.y += this.acc.y * dt;
+
+            this.vel.mult(this.dampening);
+
+            this.pos.x += this.vel.x * dt;
+            this.pos.y += this.vel.y * dt;
+        }
         //console.log(this.pos);
         this.acc.reset();
     }
     bindToBounds(bounds) {
         //console.log(this.pos);
-        if (this.pos.x < bounds.x) {
-            this.pos.x = bounds.x;
-            this.vel.x *= this.bounce;
-        } 
-        if (this.pos.y < bounds.y) {
-            this.pos.y = bounds.y;
-            this.vel.y *= this.bounce;
-        }
-        if (this.pos.x > (bounds.x + bounds.w)) {
-            this.pos.x = bounds.x + bounds.w;
+        let pos = bounds.constraint(this.pos.x, this.pos.y);
+        if (pos.x != this.pos.x) {
             this.vel.x *= this.bounce;
         }
-        if (this.pos.y > (bounds.y + bounds.h)) {
-            this.pos.y = bounds.y + bounds.h;
+        if (pos.y != this.pos.y) {
             this.vel.y *= this.bounce;
         }
+        this.pos.set(pos.x, pos.y);
     }
     addForce(f) {
         this.acc.add(Vector.div(f, this.mass));
     }
 }
 class Physics2DSpring {
-    constructor(a, b, k, kd) {
+    constructor(a, b, k, kd, dist = Vector.dist(a.pos, b.pos)) {
         this.a = a;
         this.b = b;
-        this.rest = Vector.dist(a.pos, b.pos);
+        this.rest = dist;
         this.ks = k;
         this.kd = kd;
     }
     update() {
         let dir = Vector.sub(this.b.pos, this.a.pos);
         if (dir.mag() > 0) {
-            let x = ((dir.mag() - this.rest) * this.ks);
+            let x = (dir.mag() - this.rest) * this.ks;
             let f = dir.setMag(x + this.calculateDampening());
             this.apply(f);
         }
@@ -71,11 +78,19 @@ class Physics2DSystem {
         this.springs = [];
         this._gravity = [0, 0];
         this.bounds = [];
+        this.timeDependent = true;
+    }
+    SetTimeDependency(bool) {
+        this.timeDependent = bool;
+    }
+    dt() {
+        return this.timeDependent ? (Time.deltaTime / 100) : 1;
     }
     update() {
+        let dt = this.dt();
         for (var point of this.points) {
             point.acc.add(this._gravity(point.pos.x, point.pos.y));
-            point.update();
+            point.update(dt);
             for (var bounds of this.bounds) {
                 point.bindToBounds(bounds);
             }
@@ -94,10 +109,32 @@ class Physics2DSystem {
         this.springs.push(s);
     }
     set gravity(gr) {
-        if (typeof(gr) == "function") {
+        if (typeof (gr) == "function") {
             this._gravity = gr;
         } else {
             this._gravity = (x, y) => gr;
         }
     }
 }
+
+class Bounds {
+    constructor(x, y, w, h) {
+        this.x = x + ((w < 0) ? w : 0);
+        this.y = y + ((h < 0) ? h : 0);
+        this.w = Math.abs(w);
+        this.h = Math.abs(h);
+    }
+    contains(px, py) {
+        return (px >= this.x && py >= this.y && px <= this.x + this.w && py <= this.y + this.h);
+    }
+    intersectsRect(rect) {
+        return (this.x < rect.x + rect.w && this.x + this.w > rect.x && this.y < rect.y + rect.h && this.y + this.h > rect.h);
+    }
+    constraint(x, y) {
+        return new Vector2(
+            constraint(x, this.x, this.x + this.w),
+            constraint(y, this.y, this.y + this.h)
+        );
+    }
+}
+const Rect = Bounds;

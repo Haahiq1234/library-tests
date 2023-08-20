@@ -1,3 +1,5 @@
+/// <reference path='../Canvas.js' />
+
 class upperName {
     constructor() {
         var lowerName = this;

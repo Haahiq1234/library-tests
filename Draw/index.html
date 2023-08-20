@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="../Canvas.js"></script>
     <script src="drawer.js"></script>
@@ -15,32 +17,47 @@
     <script>
         const WIDTH = 400;
         const HEIGHT = 400;
-        let bet = false;
+        const PANEL_WIDTH = 400;
+        const PANEL_HEIGHT = HEIGHT;
+        let previously_in_between = false;
+
+
         function setUp() {
-            createCanvas(WIDTH + 400, HEIGHT + 0);
+            createCanvas(WIDTH + PANEL_WIDTH, HEIGHT);
             frameRate(60);
         }
         function draw() {
             clear(WIDTH, 0, CanvasWidth - WIDTH, HEIGHT);
             line(WIDTH, 0, WIDTH, HEIGHT);
-            let nbet = Between.rect(Mouse.x, Mouse.y, 0, 0, WIDTH, HEIGHT);
+            let currently_in_between = Between.rect(Mouse.x, Mouse.y, 0, 0, WIDTH, HEIGHT);
             if (mousePressed) {
-                if (bet && !nbet) {
-                    drawLine(Mouse.px, Mouse.py, constraint(Mouse.x, 0, WIDTH), constraint(Mouse.y, 0, HEIGHT));
-                } else if (nbet && !bet) {
-                    drawLine(constraint(Mouse.px, 0, WIDTH), constraint(Mouse.py, 0, HEIGHT), Mouse.x, Mouse.y);
-                } else if (nbet) {
-                    drawLine(Mouse.px, Mouse.py, Mouse.x, Mouse.y);
+                if (previously_in_between && !currently_in_between) {
+                    ln(Mouse.px, Mouse.py, constraint(Mouse.x, 0, WIDTH), constraint(Mouse.y, 0, HEIGHT));
+                } else if (currently_in_between && !previously_in_between) {
+                    ln(constraint(Mouse.px, 0, WIDTH), constraint(Mouse.py, 0, HEIGHT), Mouse.x, Mouse.y);
+                } else if (currently_in_between) {
+                    ln(Mouse.px, Mouse.py, Mouse.x, Mouse.y);
                 }
             }
-            bet = nbet;
+            previously_in_between = currently_in_between;
         };
-        function drawLine(ax, ay, bx, by) {
+        function ln(ax, ay, bx, by) {
             line(ax, ay, bx, by);
+            line(ay, ax, by, bx);
+
+            line(ay, WIDTH - ax, by, WIDTH - bx);
+            line(WIDTH - ax, ay, WIDTH - bx, by);
+
+            line(ax, HEIGHT - ay, bx, HEIGHT - by);
+            line(HEIGHT - ay, ax, HEIGHT - by, bx);
+
+            line(WIDTH - ax, HEIGHT - ay, WIDTH - bx, HEIGHT - by);
+            line(HEIGHT - ay, WIDTH - ax, HEIGHT - by, WIDTH - bx);
         }
         function key_Press() {
 
         }
     </script>
 </body>
+
 </html>

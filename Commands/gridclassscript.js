@@ -1,3 +1,5 @@
+/// <reference path='../Canvas.js' />
+
 class upperName extends Array2D {
     constructor(w, h) {
         super(w, h);
