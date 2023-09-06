@@ -3508,6 +3508,18 @@ class UIElement {
     get y() {
         return this.position.y;
     }
+    lx(lx) {
+        if (lx) {
+            this.localPosition.x = lx;
+        }
+        return this.localPosition.x;
+    }
+    ly(ly) {
+        if (ly) {
+            this.localPosition.y = ly;
+        }
+        return this.localPosition.y;
+    }
     set position(val) {
         this.localPosition = val;
     }

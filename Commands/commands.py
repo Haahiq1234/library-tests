@@ -217,9 +217,6 @@ def create(args, clr):
     with open("index_template.html", "r") as file:
         index_text = file.read().replace("projectName", name)
 
-    with open("script.js", "r") as file:
-        script_text = file.read()
-
     os.chdir("../")
     if os.path.exists(name):
         if os.path.exists(name + "/index.html"):
@@ -233,8 +230,6 @@ def create(args, clr):
     with open("index.html", "w") as file:
         file.write(index_text)
 
-    with open("script.js", "w") as file:
-        file.write(script_text)
 
     copy_files_to_directory(cwd + "/Files", os.getcwd())
 
