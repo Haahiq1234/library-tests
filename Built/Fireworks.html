@@ -32,6 +32,12 @@
 <body>
     <script>
         // #region Misc
+        function downloadFromURL(url, filename = "download") {
+            let a = document.createElement("a");
+            a.download = filename;
+            a.href = url;
+            a.click();
+        }
         function IsMobile() {
             return navigator.maxTouchPoints > 0;
         }
@@ -91,7 +97,7 @@
             setStorageItemType("Vector2", Vector2);
         }
         function loadFile(url, callback, id = 0) {
-            Control.LOADING++;
+            Sketch.LOADING++;
             let request = new XMLHttpRequest();
             //console.log(request);
             request.open("GET", url, true);
@@ -101,8 +107,8 @@
                 } else {
                     callback(request.responseText, false, id);
                 }
-                Control.LOADING--;
-                Control.startIfLoaded();
+                Sketch.LOADING--;
+                Sketch.tryStart();
             };
             request.send();
         }
@@ -166,11 +172,14 @@
         }
         const on = {
             click: new EventHandler(),
+            mousemove: new EventHandler(),
             pointermove: new EventHandler(),
             start: new EventHandler(),
             update: new EventHandler(),
             draw: new EventHandler(),
+            mousedown: new EventHandler(),
             pointerdown: new EventHandler(),
+            mouseup: new EventHandler(),
             pointerup: new EventHandler(),
             key: new EventHandler(),
             keydown: new EventHandler(),
@@ -183,15 +192,21 @@
             document.onpointermove = function (event) {
                 event.preventDefault();
                 on.pointermove.Fire(event.clientX, event.clientY, event);
+                on.mousemove.Fire(event.clientX, event.clientY, event);
             };
-            // document.oncontextmenu = function(event) {
-            //   event.preventDefault();
-            // }
             document.onpointerup = function (event) {
                 event.preventDefault();
                 let x = event.clientX;
                 let y = event.clientY;
                 on.pointerup.Fire(
+                    x,
+                    y,
+                    startPosition.x,
+                    startPosition.y,
+                    Time.time - startTime,
+                    event
+                );
+                on.mouseup.Fire(
                     x,
                     y,
                     startPosition.x,
@@ -207,12 +222,22 @@
                     Time.time - startTime,
                     event
                 );
+                Mouse.pressed = 0;
             };
             document.onpointercancel = function (event) {
                 event.preventDefault();
+                Mouse.pressed = 0;
                 let x = event.clientX;
                 let y = event.clientY;
                 on.pointerup.Fire(
+                    x,
+                    y,
+                    startPosition.x,
+                    startPosition.y,
+                    Time.time - startTime,
+                    event
+                );
+                on.mouseup.Fire(
                     x,
                     y,
                     startPosition.x,
@@ -233,7 +258,9 @@
                 event.preventDefault();
                 startTime = Time.time;
                 startPosition = new Vector2(event.clientX, event.clientY);
+                Mouse.pressed = event.buttons;
                 on.pointerdown.Fire(event.clientX, event.clientY, event);
+                on.mousedown.Fire(event.clientX, event.clientY, event.buttons, event);
             };
             document.onkeyup = function (event) {
                 keyCode = event.key;
@@ -326,7 +353,25 @@
         function createVector(x = 0, y = 0) {
             return new Vector2(x, y);
         }
-        const Vector = {};
+        const Vector = {
+            dist2: function (a, b) {
+                let dx = abs(a.x - b.x);
+                let dy = abs(a.y - b.y);
+                return max(dx, dy) + min(dx, dy) * (Math.SQRT2 - 1);
+            },
+            distM: function (a, b) {
+                let dx = abs(a.x - b.x);
+                let dy = abs(a.y - b.y);
+                return dx + dy;
+            },
+            derp: function (a, b, dist) {
+                let ab_dist = Vector.dist(a, b);
+                if (ab_dist < dist) {
+                    return b.copy();
+                }
+                return this.lerp(a, b, dist / ab_dist);
+            }
+        };
         Vector.InFov = function (p, o, d, fov) {
             let dot = Vector.dot(d.copy().normalize(), Vector.sub(p, o).normalize());
             if (dot >= cos(fov / 2)) {
@@ -654,16 +699,76 @@
         
         // #endregion
         
+        // #region Keyboard 
+        {
+            const onkeyqueue = {};
+            function addHotKey(key, func) {
+                if (onkeyqueue[key]) {
+                    onkeyqueue[key].push(function () { func() });
+                } else {
+                    onkeyqueue[key] = [function () { func() }];
+                }
+                console.log(onkeyqueue);
+            }
+            class SentenceCommand {
+                constructor(sentence, func) {
+                    this.func = func;
+                    this.sentence = sentence;
+                    this.current = 0;
+                }
+                check(key) {
+                    if (this.sentence[this.current] == key) {
+                        this.current++;
+                        if (this.current == this.sentence.length) {
+                            this.current = 0;
+                            this.func();
+                        }
+                        return true;
+                    } else {
+                        this.current = 0;
+                    }
+                    return false;
+                }
+            }
+            const sentenceCommands = [];
+            function addSentenceCommand(sentence, func) {
+                sentenceCommands.push(new SentenceCommand(sentence, func));
+            }
+            on.keydown.bind(function (key) {
+                for (var sentenceCommand of sentenceCommands) {
+                    sentenceCommand.check(key);
+                }
+                if (onkeyqueue[key]) {
+                    let obj = onkeyqueue[key];
+                    if (obj && obj.length > 0) {
+                        for (var func of obj) {
+                            func();
+                        }
+                    }
+                }
+            });
+            addSentenceCommand("stop", noLoop);
+            addSentenceCommand("start", loop);
+        }
+        // #endregion
+        
         // #region Input
         const Input = {
-            pressed: {
-        
+            pressed: {}
+        }
+        function disableContextMenu() {
+            document.oncontextmenu = function (event) {
+                if (Canvas.enabled && event.clientX >= 0 && event.clientY >= 0 && event.clientX <= CanvasWidth && event.clientY <= CanvasHeight) {
+                    event.preventDefault();
+                }
             }
         }
         const Mouse = {
+            pressed: -1,
             position: new Vector2(0, 0),
             previous: new Vector2(0, 0),
-            timeSinceHeld: 0,
+            startPress: new Vector2(0, 0),
+            pressedTime: 0,
             get x() {
                 return this.position.x;
             },
@@ -769,16 +874,13 @@
             }
             on.pointerdown.bind(function (x, y) {
                 mousePressed = true;
+                Mouse.pressedTime = new Date();
+                Mouse.startPress.set(x, y);
                 mouse.set(...Camera2D.invertPos(x, y));
                 mouse2.set(x, y);
-                if (window.mouse_Down) {
-                    mouse_Down();
-                }
             });
             on.pointerup.bind(function () {
                 mousePressed = false;
-                Mouse.timeSinceHeld = 0;
-                //console.log("Hello");
             });
             function GetKey(keyCode) {
                 return Boolean(Input.pressed[keyCode]);
@@ -809,28 +911,28 @@
         let RADIANS = 1;
         // #endregion
         
-        // #region Control
+        // #region Sketch
         const Time = {
             deltaTime: 0,
             frameRate: 0,
             time: 0,
         };
-        const Control = {
+        const Sketch = {
             LOADED: false,
             LOADING: 0,
             STARTED: false,
             FIXED_FPS: false,
             RUNNING: false,
-            LOOP_ID: -1,
+            LOOP_ID: 0,
             FRAME_DRAWN: false,
             FRAME_NO: 0,
             loop: function () {
                 if (this.RUNNING) return;
                 this.RUNNING = true;
                 if (this.FIXED_FPS) {
-                    this.LOOP_ID = setInterval(this.callRedraw, 1000 / Time.frameRate);
+                    this.LOOP_ID = setInterval(this.tryRedraw, 1000 / Time.frameRate);
                 } else {
-                    this.LOOP_ID = requestAnimationFrame(this.callRedraw);
+                    this.LOOP_ID = requestAnimationFrame(this.tryRedraw);
                 }
             },
             noLoop: function () {
@@ -839,17 +941,18 @@
                 if (this.FIXED_FPS) {
                     clearInterval(this.LOOP_ID);
                 } else {
+                    // console.log(this.LOOP_ID);
                     cancelAnimationFrame(this.LOOP_ID);
                 }
             },
-            callRedraw: function (timeStamp) {
+            tryRedraw: function (timeStamp) {
                 redraw(timeStamp);
-                if (!Control.FIXED_FPS) {
-                    Control.LOOP_ID = requestAnimationFrame(Control.callRedraw);
+                if (!Sketch.FIXED_FPS) {
+                    Sketch.LOOP_ID = requestAnimationFrame(Sketch.tryRedraw);
                 }
-                Control.FRAME_DRAWN = false;
+                Sketch.FRAME_DRAWN = false;
             },
-            startIfLoaded: function () {
+            tryStart: function () {
                 //console.log(this.LOADED && this.LOADING == 0 && !this.STARTED);
                 if (this.LOADED && this.LOADING == 0 && !this.STARTED) {
                     this.STARTED = true;
@@ -862,8 +965,8 @@
             },
         };
         document.body.onload = function () {
-            Control.LOADED = true;
-            Control.startIfLoaded();
+            Sketch.LOADED = true;
+            Sketch.tryStart();
         };
         on.start.bind(function () {
             for (var i = 0; i < UI.Elements.length; i++) {
@@ -875,25 +978,22 @@
             }
         });
         function frameRate(rate) {
-            Control.noLoop();
-            Control.FIXED_FPS = true;
+            Sketch.noLoop();
+            Sketch.FIXED_FPS = true;
             Time.frameRate = rate;
             Time.deltaTime = 1000 / rate;
             Time.time = 0;
-            Control.loop();
+            Sketch.loop();
         }
         let loopGoing = true;
         function noLoop() {
-            Control.noLoop();
+            Sketch.noLoop();
         }
         function loop() {
-            Control.loop();
+            Sketch.loop();
         }
         function redraw(timeStamp = Time.time + Time.deltaTime) {
-            if (Control.FRAME_DRAWN) {
-                return;
-            }
-            if (!Control.FIXED_FPS) {
+            if (!Sketch.FIXED_FPS) {
                 Time.deltaTime = timeStamp - Time.time;
                 Time.frameRate = 1000 / Time.deltaTime;
                 Time.time = timeStamp;
@@ -902,19 +1002,19 @@
             }
             Mouse.previous.set(Mouse.x, Mouse.y);
             Mouse.position.set(mouse2.x, mouse2.y);
-            Control.FRAME_NO++;
+            Sketch.FRAME_NO++;
             if (Canvas.enabled) {
                 UI.Update();
                 ctx.save();
+                push();
             }
-            push();
             on.update.Fire();
             if (window.draw) {
                 draw();
             }
-            pop();
             on.draw.Fire();
             if (Canvas.enabled) {
+                pop();
                 UI.Draw();
             }
             if (window.lateDraw) {
@@ -924,6 +1024,9 @@
                 saveColor();
                 ctx.restore();
                 loadColor();
+                if (Canvas.recordingFrames && Canvas.autoRecordingFrames) {
+                    Canvas.recordFrame();
+                }
             }
         }
         // interval stuff
@@ -2168,8 +2271,8 @@
         function setAlpha(alpha) {
             ctx.globalAlpha = constraint(alpha, 0, 255) / 255;
         }
-        var fl = true;
-        var st = true;
+        var CANVAS_FILL_MODE_ENABLED = true;
+        var CANVAS_STROKE_MODE_ENABLED = true;
         function brightness(rgb) {
             if (typeof rgb == "object") {
                 rgb = rgb.slice(0, 3);
@@ -2179,20 +2282,8 @@
                 return avg(mn, mx);
             }
         }
-        function addAlpha(col, al, mode) {
-            if ("RGB" == mode) {
-                return col.replace("b(", "ba(").replace(")", ", " + al / 255 + ")");
-            }
-        }
         function colorMode(mode) {
             Canvas.colorMode = mode;
-        }
-        var alphaValues = [];
-        for (var i = 0; i < 255; i++) {
-            i = Math.round(i * 100) / 100;
-            var alpha = Math.round(i * 255);
-            var hex = (alpha + 0x10000).toString(16).substr(-2).toUpperCase();
-            alphaValues.unshift(hex);
         }
         function rgb(...args) {
             //console.log(args);
@@ -2205,44 +2296,17 @@
             if (args[0] instanceof Array) {
                 args = args[0];
             }
+            for (var i in args) {
+                args[i] = constraint(args[i], 0, 255);
+            }
             if (args.length == 1) {
-                args[0] = constraint(args[0], 0, 255);
-                return "rgba(" + args[0] + ", " + args[0] + ", " + args[0] + ", 1)";
+                return `rgba(${args[0]}, ${args[0]}, ${args[0]}, 1)`;
             } else if (args.length == 2) {
-                args[0] = constraint(args[0], 0, 255);
-                args[1] = constraint(args[1], 0, 255);
-                return (
-                    "rgba(" +
-                    args[0] +
-                    ", " +
-                    args[0] +
-                    ", " +
-                    args[0] +
-                    ", " +
-                    args[1] / 255 +
-                    ")"
-                );
+                return `rgba(${args[0]}, ${args[0]}, ${args[0]}, ${args[1] / 255})`;
             } else if (args.length == 3) {
-                args[0] = constraint(args[0], 0, 255);
-                args[1] = constraint(args[1], 0, 255);
-                args[2] = constraint(args[2], 0, 255);
-                return "rgba(" + args[0] + ", " + args[1] + ", " + args[2] + ", 1)";
+                return `rgba(${args[0]}, ${args[1]}, ${args[2]}, 1)`;
             } else if (args.length == 4) {
-                args[0] = constraint(args[0], 0, 255);
-                args[1] = constraint(args[1], 0, 255);
-                args[2] = constraint(args[2], 0, 255);
-                args[3] = constraint(args[3], 0, 255);
-                return (
-                    "rgba(" +
-                    args[0] +
-                    ", " +
-                    args[1] +
-                    ", " +
-                    args[2] +
-                    ", " +
-                    args[3] / 255 +
-                    ")"
-                );
+                return `rgba(${args[0]}, ${args[1]}, ${args[2]}, ${args[3] / 255})`;
             }
         }
         function invertColor(col) {
@@ -2266,23 +2330,16 @@
                 if (args[0] instanceof Array) {
                     return args[0];
                 }
+                for (var i in args) {
+                    args[i] = constraint(args[i], 0, 255);
+                }
                 if (args.length == 1) {
-                    args[0] = constraint(args[0], 0, 255);
                     return [args[0], args[0], args[0], 255];
                 } else if (args.length == 2) {
-                    args[0] = constraint(args[0], 0, 255);
-                    args[1] = constraint(args[1], 0, 255);
                     return [args[0], args[0], args[0], args[1]];
                 } else if (args.length == 3) {
-                    args[0] = constraint(args[0], 0, 255);
-                    args[1] = constraint(args[1], 0, 255);
-                    args[2] = constraint(args[2], 0, 255);
                     return [args[0], args[1], args[2], 255];
                 } else if (args.length == 4) {
-                    args[0] = constraint(args[0], 0, 255);
-                    args[1] = constraint(args[1], 0, 255);
-                    args[2] = constraint(args[2], 0, 255);
-                    args[3] = constraint(args[3], 0, 255);
                     return [args[0], args[1], args[2], args[3]];
                 }
             } else if (Canvas.colorMode == HSL) {
@@ -2374,6 +2431,15 @@
                         Random.rangeInt(args[4], args[5])
                     );
                 }
+            },
+            weighted: function (...args) {
+                let col = 0;
+                for (var i = 0; i < args.length; i += 2) {
+        
+                }
+            },
+            lerp: function (a, b, t) {
+                return a.map((v, i) => v * (1 - t) + b[i] * t);
             }
         }
         function stroke() {
@@ -2387,8 +2453,8 @@
             Canvas.strokeStyle = col;
         }
         function nofill() {
-            fl = false;
-            st = true;
+            CANVAS_FILL_MODE_ENABLED = false;
+            CANVAS_STROKE_MODE_ENABLED = true;
         }
         function fill() {
             var col = color(arguments[0], arguments[1], arguments[2], arguments[3]);
@@ -2398,13 +2464,13 @@
                     col = rgb(...col);
                 }
             }
-            fl = true;
+            CANVAS_FILL_MODE_ENABLED = true;
             ctx.fillStyle = col;
             Canvas.fillStyle = col;
         }
         function noStroke() {
-            st = false;
-            fl = true;
+            CANVAS_STROKE_MODE_ENABLED = false;
+            CANVAS_FILL_MODE_ENABLED = true;
         }
         // #endregion
         
@@ -2433,15 +2499,16 @@
         class Array2D {
             constructor(width, height, defaultVal = 0) {
                 this.array = new Array(width * height);
-                for (var i = 0; i < this.array.length; i++) {
-                    if (typeof defaultVal == "function") {
-                        this.array[i] = defaultVal();
-                    } else {
-                        this.array[i] = defaultVal;
-                    }
+                let def;
+                if (typeof defaultVal != "function") {
+                    def = () => defaultVal;
+                } else {
+                    def = defaultVal;
                 }
-                this.width = width;
-                this.height = height;
+                for (var i = 0; i < this.array.length; i++) {
+                    this.array[i] = def();
+                }
+                this.resize(width, height);
                 this.getCol = function (col) {
                     let cl = [];
                     for (var i = 0; i < this.height; i++) {
@@ -2455,29 +2522,23 @@
                 };
                 this.set = function (x, y, val) {
                     let ind = this.index(x, y);
-                    if (x < 0 || y < 0 || x > 4 || y > 4) {
-                        //console.trace(val, x, y);
-                    }
+                    // if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+                    //     console.log("Position(" + x + ", " + y + ") out of bounds of 2d array");
+                    // }
                     this.array[ind] = val;
                 };
                 this.index = function (x, y) {
                     return y * this.width + x;
                 };
-                this.setRow = function (rw, row) {
+                this.setRow = function (j, arr) {
                     for (var i = 0; i < this.width; i++) {
-                        this.array[this.index(i, row)] = rw[i];
+                        this.array[this.index(i, j)] = arr[i];
                     }
                 };
-                this.setCol = function (cl, col) {
-                    for (var i = 0; i < this.height; i++) {
-                        this.array[this.index(col, i)] = cl[i];
+                this.setCol = function (i, arr) {
+                    for (var j = 0; j < this.height; j++) {
+                        this.array[this.index(i, j)] = arr[j];
                     }
-                };
-                this.shuffleCol = function (cl) {
-                    this.setCol(shuffle(this.getCol(cl)), cl);
-                };
-                this.shuffleRow = function (rw) {
-                    this.setRow(shuffle(this.getRow(rw)), rw);
                 };
                 this.shuffle = function () {
                     shuffle(this.array);
@@ -2490,6 +2551,23 @@
                 this.get = function (x, y) {
                     return this.array[this.index(x, y)];
                 };
+                this.getDimensionSize = function (dimension) {
+                    return dimension == 0 ? this.width : this.height;
+                }
+                this.getDimensionArr = function (dimension, pos) {
+                    if (dimension == 0) {
+                        return this.getCol(pos);
+                    } else if (dimension == 1) {
+                        return this.getRow(pos);
+                    }
+                }
+                this.setDimensionArr = function (dimension, pos, arr) {
+                    if (dimension == 0) {
+                        this.setCol(pos, arr);
+                    } else if (dimension == 1) {
+                        this.setRow(pos, arr);
+                    }
+                }
                 this.swap = function (x, y, x1, y1) {
                     let ind1 = this.index(x, y);
                     let ind2 = this.index(x1, y1);
@@ -2508,43 +2586,32 @@
                     }
                     return arr;
                 };
-                this.transpose = function () {
-                    let grid = this.grid();
-                    let arr = [];
-                    for (let y = 0; y < this.height; y++) {
-                        arr.push([]);
-                        for (let x = 0; x < this.width; x++) {
-                            arr[y].push(this.array[this.index(x, y)]);
+            }
+            forEach(f, set = true) {
+                this.f = f;
+                if (set) {
+                    for (var i = 0; i < this.width; i++) {
+                        for (var j = 0; j < this.height; j++) {
+                            let ind = this.index(i, j);
+                            this.array[ind] = this.f(i, j, this.array[ind], ind);
                         }
                     }
-                    return arr;
-                };
-                //this.transpose2 = function () {
-                //    let grid = Object.assign({}, this);
-                //    //let i = 0;
-                //    console.table(grid.grid());
-                //    for (let y = 0; y < this.height; y++) {
-                //        for (let x = y; x < this.width; x++) {
-                //            grid.swap(x, y, y, x);
-                //            console.log(x, y);
-                //        }
-                //    }
-                //    console.table(grid.grid());
-                //    return grid;
-                //}
-                this.transpose2 = function () {
-                    let grid = new Array2D(this.height, this.width);
-                    console.table(this.grid());
-                    let cols = [];
-                    for (var i = 0; i < grid.width; i++) {
-                        cols.push(this.getCol(i));
+                } else {
+                    for (var i = 0; i < this.width; i++) {
+                        for (var j = 0; j < this.height; j++) {
+                            let ind = this.index(i, j);
+                            this.f(i, j, this.array[ind], ind);
+                        }
                     }
-                    for (var i = 0; i < cols.length; i++) {
-                        grid.setRow(cols[i]);
-                    }
-                    console.table(grid.grid());
-                    return grid;
-                };
+                }
+            }
+            resize(width, height) {
+                this.width = width;
+                this.height = height;
+                this.array.length = width * height;
+            }
+            get length() {
+                return this.array.length;
             }
         }
         function shuffle(arr) {
@@ -2630,6 +2697,13 @@
             invertPos: function (_x, _y) {
                 return [(_x - this.x) / this.scaleX, (_y - this.y) / this.scaleY];
             },
+            enablePanning() {
+                on.update.bind(function () {
+                    if (mousePressed) {
+                        Camera2D.translate(Mouse.dx, Mouse.dy);
+                    }
+                });
+            },
             getRect: function (_x, _y, _w, _h) {
                 [_x, _y] = this.convertPos(_x, _y);
                 // if (_w < 0) {
@@ -2676,10 +2750,10 @@
             ctx.arc(x + w - r, y + h - r, r, 0, PI / 2);
             ctx.arc(x + r, y + h - r, r, PI / 2, PI);
             ctx.closePath();
-            if (st) {
+            if (CANVAS_STROKE_MODE_ENABLED) {
                 ctx.stroke();
             }
-            if (fl) {
+            if (CANVAS_FILL_MODE_ENABLED) {
                 ctx.fill();
             }
         }
@@ -2701,15 +2775,15 @@
             function saveColor() {
                 savedColor = ctx.fillStyle;
                 savedColor2 = ctx.strokeStyle;
-                sls = st;
-                fls = fl;
+                sls = CANVAS_STROKE_MODE_ENABLED;
+                fls = CANVAS_FILL_MODE_ENABLED;
             }
             function loadColor() {
                 if (savedColor && savedColor2) {
                     ctx.fillStyle = savedColor;
                     ctx.strokeStyle = savedColor2;
-                    st = sls;
-                    fl = fls;
+                    CANVAS_STROKE_MODE_ENABLED = sls;
+                    CANVAS_FILL_MODE_ENABLED = fls;
                 }
             }
             let savedLineCap;
@@ -2719,14 +2793,14 @@
                 savedLineWidth = ctx.lineWidth;
                 savedLineCap = ctx.lineCap;
                 savedLineColor = ctx.strokeStyle;
-                savedStroke = st;
+                savedStroke = CANVAS_STROKE_MODE_ENABLED;
             }
             function loadLineState() {
                 if (savedLineWidth) {
                     ctx.lineWidth = savedLineWidth;
                     ctx.lineCap = savedLineCap;
                     ctx.strokeStyle = savedLineColor;
-                    st = savedStroke;
+                    CANVAS_STROKE_MODE_ENABLED = savedStroke;
                 }
             }
             class TextMeasure {
@@ -2770,10 +2844,10 @@
                     ctx.lineTo(vertices[0], vertices[1]);
                     ctx.closePath();
                 }
-                if (fl && close == CLOSE) {
+                if (CANVAS_FILL_MODE_ENABLED && close == CLOSE) {
                     ctx.fill();
                 }
-                if (st) {
+                if (CANVAS_STROKE_MODE_ENABLED) {
                     ctx.stroke();
                 }
                 vertices = [];
@@ -2797,11 +2871,11 @@
             ctx.lineTo(x2, y2);
             ctx.lineTo(x, y);
             ctx.closePath();
-            if (st) {
-                ctx.stroke();
-            }
-            if (fl) {
+            if (CANVAS_FILL_MODE_ENABLED) {
                 ctx.fill();
+            }
+            if (CANVAS_STROKE_MODE_ENABLED) {
+                ctx.stroke();
             }
         }
         function circle(x, y, r, arca = 0, arcb = 360) {
@@ -2816,11 +2890,11 @@
                 Angle.angleModeToRadians(arcb)
             );
             ctx.closePath();
-            if (st) {
-                ctx.stroke();
-            }
-            if (fl) {
+            if (CANVAS_FILL_MODE_ENABLED) {
                 ctx.fill();
+            }
+            if (CANVAS_STROKE_MODE_ENABLED) {
+                ctx.stroke();
             }
         }
         function ellipse(x, y, a, b, arca = 0, arcb = 360) {
@@ -2838,10 +2912,10 @@
                 Angle.angleModeToRadians(arcb)
             );
             ctx.closePath();
-            if (fl) {
+            if (CANVAS_FILL_MODE_ENABLED) {
                 ctx.fill();
             }
-            if (st) {
+            if (CANVAS_STROKE_MODE_ENABLED) {
                 ctx.stroke();
             }
         }
@@ -2852,15 +2926,18 @@
         }
         function rect(x, y, w, h, rotat) {
             [x, y, w, h] = Camera2D.getRect(x, y, w, h);
-            if (st) {
+            if (CANVAS_FILL_MODE_ENABLED) {
+                ctx.fillRect(x, y, w, h);
+            }
+            if (CANVAS_STROKE_MODE_ENABLED) {
                 ctx.beginPath();
                 ctx.strokeRect(x, y, w, h);
                 ctx.closePath();
             }
-            if (fl) {
-                ctx.fillRect(x, y, w, h);
-            }
         }
+        // const video = document.createElement("video");
+        // video.controls = true;
+        // document.body.appendChild(video);
         const Canvas = {
             textFontFamily: "Verdana",
             textFontSize: 10,
@@ -2870,6 +2947,96 @@
             fillStyle: undefined,
             colorMode: RGB,
             enabled: false,
+            recording: false,
+            recordingFrames: false,
+            mediaRecorder: null,
+            chunks: [],
+            setRecordingStartStop: function (start, stop, filename = "download") {
+                this.setRecordingStart(start);
+                this.setRecordingStop(stop, filename);
+            },
+            setRecordingStart(key) {
+                addHotKey(key, function () {
+                    Canvas.startRecording();
+                });
+            },
+            setRecordingStop(key, filename = "download") {
+                addHotKey(key, function () {
+                    Canvas.stopRecording(filename);
+                });
+            },
+            startRecording: function () {
+                var videoStream = this.canvas.captureStream(30);
+                this.mediaRecorder = new MediaRecorder(videoStream);
+                this.mediaRecorder.ondataavailable = function (e) {
+                    //console.log(e);
+                    Canvas.chunks.push(e.data);
+                };
+                this.mediaRecorder.start();
+                this.recording = true;
+        
+            },
+            stopRecording: function (filename = "download") {
+                if (!this.recording) return;
+                this.mediaRecorder.onstop = function (e) {
+                    var blob = new Blob(Canvas.chunks, { 'type': 'video/mp4' });
+                    var videoURL = URL.createObjectURL(blob);
+                    Canvas.chunks = [];
+                    let a = document.createElement("a");
+                    a.download = filename;
+                    a.href = videoURL;
+        
+                    a.click();
+                    //video.play();
+                };
+                this.mediaRecorder.stop();
+                this.recording = false;
+        
+            },
+            recordingFrames: false,
+            autoRecordingFrames: false,
+            startRecordingFrames: function (auto) {
+                if (!this.recordingFrames) {
+                    this.recordingFrames = true;
+                    this.autoRecordingFrames = auto;
+                    var videoStream = this.canvas.captureStream(30);
+                    this.mediaRecorder = new MediaRecorder(videoStream);
+        
+                    this.mediaRecorder.ondataavailable = function (e) {
+                        console.log(e.data);
+                        Canvas.chunks.push(e.data);
+                        console.log("doing");
+                    };
+                    console.log("done");
+                    this.mediaRecorder.start();
+                }
+            },
+            recordFrame: function () {
+                if (this.recordingFrames) {
+        
+                }
+            },
+            stopRecordingFrames: function (filename = "download") {
+                if (this.recordingFrames) {
+                    this.recordingFrames = false;
+                    this.mediaRecorder.onstop = function (e) {
+                        var blob = new Blob(Canvas.chunks, { 'type': 'video/mp4' });
+                        var videoURL = URL.createObjectURL(blob);
+                        Canvas.chunks = [];
+                        downloadFromURL(videoURL, filename);
+                        //video.play();
+                    };
+                    this.mediaRecorder.stop();
+                }
+            },
+            record(seconds, filename = "download") {
+                this.startRecording();
+                setTimeout(function () { Canvas.stopRecording(filename); }, seconds);
+            },
+            recordFrames(seconds, filename = "download") {
+                this.startRecording();
+                setTimeout(function () { Canvas.stopRecording(); }, seconds);
+            }
         };
         var ctx,
             CanvasWidth,
@@ -2899,9 +3066,10 @@
         }
         function text(txt, x, y) {
             [x, y] = Camera2D.convertPos(x, y);
-            if (!fl) {
+            if (CANVAS_STROKE_MODE_ENABLED) {
                 ctx.strokeText(txt, x, y);
-            } else {
+            }
+            if (CANVAS_FILL_MODE_ENABLED) {
                 ctx.fillText(txt, x, y);
             }
         }
@@ -2919,7 +3087,7 @@
         function createCanvas(
             w = windowWidth,
             h = windowHeight,
-            willReadFrequently = false
+            color
         ) {
             var canvas = document.createElement("canvas");
             canvas.width = w;
@@ -2928,7 +3096,7 @@
             CanvasHeight = h;
             Canvas.enabled = true;
             document.body.insertBefore(canvas, document.body.childNodes[0]);
-            ctx = canvas.getContext("2d", { willReadFrequently });
+            ctx = canvas.getContext("2d");
             ctx.imageSmoothingEnabled = false;
             Canvas.lineWidth = ctx.lineWidth;
             Canvas.fillStyle = ctx.fillStyle;
@@ -2939,7 +3107,9 @@
             ctx.font = Canvas.textFontSize + "px " + Canvas.textFontFamily;
         
             Canvas.canvas = canvas;
-            canvas.setAttribute("willReadFrequently", true)
+            if (color)
+                canvas.style.backgroundColor = color;
+        
             return canvas;
         }
         function clear(x = 0, y = 0, w = CanvasWidth, h = CanvasHeight) {
@@ -3423,7 +3593,7 @@
                 ctx.drawImage(pushedImages.pop());
             }
             function loadImage(name, width, height, cb) {
-                Control.LOADING++;
+                Sketch.LOADING++;
                 var myImage = new Image();
                 myImage.src = name;
                 let im = new CImage(myImage);
@@ -3440,8 +3610,8 @@
                     } else if (!height && width) {
                         width(im);
                     }
-                    Control.LOADING--;
-                    Control.startIfLoaded();
+                    Sketch.LOADING--;
+                    Sketch.tryStart();
                 };
                 return im;
             }
@@ -3468,13 +3638,12 @@
                 let element = UI.Elements[i];
                 if (element.getHoveredInfo() && element.enabled) {
                     UI.Click(element);
-                    mousePressed = false;
-                    return;
+                    //mousePressed = false;
+                    return EVENT_PREVENT_DEFAULT;
                 }
             }
         });
         on.pointerup.bind(function (x, y, dx, dy, event) {
-            //MobileDebug.Log("UI Unclicked", x, y, dx, y);
             UI.UnClick();
         });
         class UIElement {
@@ -3491,7 +3660,7 @@
             outlineCol = color(0);
         
             baseColor;
-            color;
+            color = color(0, 255, 0);
         
             size;
             shape;
@@ -3509,7 +3678,7 @@
                 //console.log(shapeArgs);
                 this.setShape(...shapeArgs);
         
-                if (Control.STARTED) {
+                if (Sketch.STARTED) {
                     this.a = new Vector2(0, 0);
                     this.b = new Vector2(CanvasWidth, CanvasHeight);
                 }
@@ -3522,6 +3691,18 @@
             }
             get y() {
                 return this.position.y;
+            }
+            lx(lx) {
+                if (lx) {
+                    this.localPosition.x = lx;
+                }
+                return this.localPosition.x;
+            }
+            ly(ly) {
+                if (ly) {
+                    this.localPosition.y = ly;
+                }
+                return this.localPosition.y;
             }
             set position(val) {
                 this.localPosition = val;
@@ -3596,7 +3777,8 @@
                         this.size[1]
                     );
                 }
-                let textt = this._text(this);
+                let textt = "" + this._text(this);
+                //console.log(textt);
                 if (textt.length > 0) {
                     ctx.save();
                     fill(this._textcolor(this.color));
@@ -3656,25 +3838,25 @@
         }
         class Button extends UIElement {
             hoveredColor;
-            normalColor;
             clickedColor;
         
             constructor(x, y, w, h, col = color(0, 255, 0)) {
                 super(x, y, UI.RECT, w, h);
                 this.setColor(col);
             }
-            setColor(col2) {
-                this.baseColor = col2;
-                this.hoveredColor = col2.map((a, i) => (i == 3 ? a : a * 0.85));
-                this.clickedColor = col2.map((a, i) => (i == 3 ? a : a * 0.7));
+            setColor(col) {
+                this.baseColor = col;
+                this.hoveredColor = col.map((a, i) => (i == 3 ? a : a * 0.85));
+                this.clickedColor = col.map((a, i) => (i == 3 ? a : a * 0.7));
             }
-            update() {
-                super.update();
+            drawUI() {
+                this.color = this.baseColor;
                 if (this.clicked) {
                     this.color = this.clickedColor;
                 } else if (this.hovered) {
                     this.color = this.hoveredColor;
                 }
+                super.drawUI();
             }
         }
         class Gizmo extends UIElement {
@@ -3908,7 +4090,7 @@
                 let den = Vector.dist(this.a, this.b);
                 let num = Vector.dist(this.localPosition, this.a);
                 return (
-                    Math.floor(
+                    Math.round(
                         (this.min + (this.max - this.min) * (num / den)) * accuracy
                     ) / accuracy
                 );
@@ -3955,12 +4137,12 @@
                     this.Elements[i].id = i;
                 }
             },
-            Click: function (element) {
+            Click(element) {
                 element.clicked = true;
                 UIElement.Selected = element;
                 element.onclick.Fire(element);
             },
-            UnClick: function (element) {
+            UnClick(element) {
                 if (UIElement.Selected) {
                     UIElement.Selected.clicked = false;
                     UIElement.Selected = false;
@@ -3988,6 +4170,17 @@
                     delete this.Elements[i];
                 }
                 this.Elements.length = 0;
+            },
+            Enable() {
+                this.enabled = true;
+            },
+            Disable() {
+                this.enabled = false;
+            },
+            set enabled(val) {
+                for (let elem of this.Elements) {
+                    elem.enabled = val;
+                }
             },
             Selected: false,
             CIRCLE: 0,
@@ -4272,8 +4465,8 @@
                     createVector(Random.range(SCREEN_PADDING, CanvasWidth - SCREEN_PADDING), CanvasHeight),
                     Random.range(3, 4),
                     new Vector2(0, Random.range(-10, -15)),
-                    //Rgb.random(255, 255, 255),
-                    color(207, 181, 59)
+                    Rgb.random(255, 255, 255),
+                    //color(207, 181, 59)
                 );
                 this.particles = [];
                 this.exploded = false;
@@ -4317,25 +4510,23 @@
         }
     </script>
     <script>
+        /// <reference path='..\Canvas.js' />
+        
         const fireworks = [];
-        const FIREWORK_CHANCE = 5;
+        const FIREWORK_CHANCE = 10;
         const gravity = new Vector2(0, 0.2);
         
         
         function setUp() {
-            createCanvas();
+            createCanvas(500, 500);
             fireworks.push(new Firework());
             textSize(min(CanvasWidth / 2, CanvasHeight) / 4);
             textFont("Verdana");
         }
+        addSentenceCommand("p", function () { downloadCanvasImage() });
         function draw() {
-            backGround(1, 50, 32, 100);
+            backGround(255, 70);
             fill(207, 181, 59);
-            //text("Eid", CanvasWidth / 2, CanvasHeight * 2.5 / 5);
-            //text("Mubarak", CanvasWidth / 2, CanvasHeight / 5 * 3.5);
-        
-            text("Eid", CanvasWidth / 2, CanvasHeight / 2 - Canvas.textFontSize / 2);
-            text("Mubarak", CanvasWidth / 2, CanvasHeight / 2 + Canvas.textFontSize / 2);
             for (let i = 0; i < fireworks.length; i++) {
                 fireworks[i].update();
                 if (fireworks[i].done()) {
@@ -4347,6 +4538,15 @@
                 fireworks.push(new Firework());
             }
         }
+        on.keydown.bind(function (keyCode) {
+            if (keyCode == key.backSpace) {
+                noLoop();
+            } else if (keyCode == key.space) {
+                redraw();
+            } else if (keyCode == key.enter) {
+                loop();
+            }
+        });
     </script>
 </body>
 

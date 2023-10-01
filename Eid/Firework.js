@@ -11,8 +11,8 @@ class Firework extends Particle {
             createVector(Random.range(SCREEN_PADDING, CanvasWidth - SCREEN_PADDING), CanvasHeight),
             Random.range(3, 4),
             new Vector2(0, Random.range(-10, -15)),
-            Rgb.random(255, 255, 255),
-            //color(207, 181, 59)
+            //Rgb.random(255, 255, 255),
+            color(207, 181, 59)
         );
         this.particles = [];
         this.exploded = false;

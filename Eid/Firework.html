@@ -1,0 +1,106 @@
+<html>
+
+<head>
+    <link href="../style.css" rel="stylesheet" />
+</head>
+
+<body>
+    <script src="../Canvas.js"></script>
+    <script>
+        var fireworkChance = 3;
+        var fireworks = [];
+        var gravity = new Vector2(0, 0.25);
+        function setUp() {
+            createCanvas();
+            fireworks.push(new FireWork());
+        }
+        function draw() {
+            backGround(255, 50);
+            for (let i = 0; i < fireworks.length; i++) {
+                fireworks[i].Update();
+                if (fireworks[i].done()) {
+                    fireworks.splice(i, 1);
+                    i--;
+                }
+            }
+            if (Random.range(1) < 0.01 * fireworkChance) {
+                fireworks.push(new FireWork());
+            }
+        }
+        function key_Press() {
+            if (keyCode == key.backSpace) {
+                noLoop();
+            }
+            if (keyCode == key.enter) {
+                loop();
+            }
+            if (keyCode == key.space) {
+                redraw();
+            }
+        }
+        function Particle(pos, size, vel, col, spanned = false) {
+            this.position = pos.copy();
+            this.velocity = vel;
+            this.size = size;
+            this.color = Rgb.split(col);
+            this.acceleration = new Vector2(0, 0);
+            this.spanned = spanned;
+            this.span = 1;
+            this.addForce = function (force) {
+                this.acceleration = force;
+            }
+            this.Update = function () {
+                this.velocity.add(this.acceleration);
+                this.position.add(this.velocity);
+                this.acceleration = new Vector2(0, 0);
+                lineWidth(this.size);
+                let c = color(this.color.r, this.color.g, this.color.b, 255 * this.span);
+                if (this.spanned && this.span > 0) {
+                    this.span -= 0.01;
+                }
+                fill(c);
+                noStroke();
+                circle(this.position.x, this.position.y, this.size / 2 * Math.max(this.span, 0.5));
+            }
+
+        }
+        function FireWork() {
+            this.color = Rgb.random(255, 255, 255);
+            this.firework = new Particle(createVector(Random.range(CanvasWidth), CanvasHeight), Random.rangeInt(4, 5), new Vector2(0, Random.rangeInt(-7, -14)), this.color);
+            this.exploded = false;
+            this.particles = [];
+            this.Update = function () {
+                if (!this.exploded) {
+                    this.firework.Update();
+                    this.firework.addForce(gravity);
+                    if (this.firework.velocity.y >= 0) {
+                        this.exploded = true;
+                        this.explode();
+                    }
+                } else {
+                    for (var i = 0; i < this.particles.length; i++) {
+                        this.particles[i].Update();
+                        this.particles[i].addForce(new Vector2(0, 0.04));
+                        if (this.particles[i].span <= 0) {
+                            this.particles.splice(i, 1);
+                        }
+                    }
+                }
+            }
+            this.explode = function () {
+                for (var i = 0; i < 50; i++) {
+                    this.particles.push(new Particle(this.firework.position, Random.range(2, 3), Vector.AngleToVector(Random.rangeInt(360), Random.range(1, 5)), this.color, true));
+                }
+            }
+            this.done = function () {
+                if (this.exploded && this.particles.length == 0)
+                    return true;
+                else
+                    return false;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
