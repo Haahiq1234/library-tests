@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,6 +8,7 @@
     <title>Document</title>
     <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
@@ -26,7 +28,7 @@
         function setUp() {
             createCanvas(600, 600);
             frameRate(30);
-            AngleMode(AngleModes.radians);
+            AngleMode(RADIANS);
             //for (var ang = 0; ang < PI * 2; ang += 0.1) {
             //    //console.log(ang);
             //    let nx = 100 * cos(ang);
@@ -126,6 +128,7 @@
                 this.start = this.p.heading();
             }
         }
-    </script>    
+    </script>
 </body>
+
 </html>

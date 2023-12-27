@@ -20,7 +20,9 @@
         var bc = color(0, 255, 0);
         var cc = color(0, 0, 255);
         let re = 1;
-        var slider = createSlider(2, 20, 1, 10, "resolution");
+        var slider = new Slider(50, 50, 50, 350, 2, 15);
+        slider.setShape(UI.RECT, 25, 20);
+        slider.text((slider) => slider.value(1), 15);
         function setUp() {
             createCanvas(400, 400);
         }
@@ -29,7 +31,8 @@
             b = bg.position;
             c = cg.position;
             clear();
-            Shapes.shape.forPixel(p, slider.value, a, b, c);
+            re = slider.value(1);
+            Shapes.shape.forPixel(p, re, a, b, c);
             nofill();
             triangle(a.x, a.y, b.x, b.y, c.x, c.y);
         }
@@ -60,9 +63,15 @@
             let pt = new Vector2(x, y);
             let ws = CartesianToBarycentric(pt, a, b, c);
             let col = Rgb.weighted(ac, ws[0], bc, ws[1], cc, ws[2]);
+            // if (x > 200 && x < 210) {
+            //     //console.log(col);
+
+            // }
+            //console.log(ac, ws[0]);
+            //console.log(Rgb);
             fill(col);
             noStroke();
-            rect(x, y, slider.value, slider.value);
+            rect(x, y, re, re);
         }
     </script>
 

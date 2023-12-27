@@ -1,7 +1,9 @@
 ﻿<html>
+
 <head>
     <link href="style.css" rel="stylesheet" />
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
@@ -14,7 +16,7 @@
         let shaped = [];
         function setUp() {
             createCanvas(600, 600, color(255));
-            frameRate(10);
+            frameRate(60);
             pos = new Vector2(200, CanvasHeight / 2);
             lineWidth(2);
             shaped.push(0, 0);
@@ -22,10 +24,11 @@
             shaped.push(CanvasWidth, CanvasHeight);
             shaped.push(0, CanvasHeight);
         }
-        function cast(ro, rd) {
+        function cast(ro, rd, n) {
             let shapeCast = Raycast.shape(ro.x, ro.y, rd.x, rd.y, ...shaped);
-            let circleCast = Raycast.circle(ro.x, ro.y, rd.x, rd.y, 300, 300, 50);
-            //console.log(circleCast.normal)
+            let circleCast = Raycast.circle(ro.x, ro.y, rd.x, rd.y, 300, 300, 50, n);
+            //console.log(shapeCast)
+            //return circleCast;
             return RaycastHit.nearest(ro, shapeCast, circleCast);
         }
         function draw() {
@@ -33,18 +36,19 @@
             clear();
             let ap = a.localPosition;
             let bp = b.position;
-            line(ap.x, ap.y, bp.x, bp.y);
+            //line(ap.x, ap.y, bp.x, bp.y);
             nofill();
             circle(300, 300, 50);
             rcast(ap, b.localPosition);
         }
-        function rcast(o, r, t = 20) {
-            //console.log(r);
-            let hit = cast(o, r);
+        function rcast(o, r, t = 2) {
+            //console.log(t);
+            let hit = cast(o, r, t);
             if (hit.hit) {
                 line(o.x, o.y, hit.point.x, hit.point.y);
                 if (t > 0) {
                     stroke(255, 0, 0);
+                    //console.log(hit.normal);
                     line(hit.point.x, hit.point.y, hit.point.x + hit.normal.x * 20, hit.point.y + hit.normal.y * 20);
                     stroke(0);
                     let rr = Vector.reflect(r, hit.normal);
@@ -56,4 +60,5 @@
         }
     </script>
 </body>
+
 </html>

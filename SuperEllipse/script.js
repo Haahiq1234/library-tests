@@ -1,8 +1,11 @@
+///<reference path="../Canvas.js"/>
+
 const inc = 1;
 let t = 0;
 let frames = 360;
 const t_S = new Slider(50, 350, 50, 50, 0, 1, 0.5);
-t_S.name("t", 20, 0, 20);
+t_S.setShape(UI.RECT, 50, 24);
+//t_S.name("t", 20, 0, 20);
 t_S.text((sl) => sl.value(100), 20);
 
 function setUp() {
@@ -28,29 +31,29 @@ const SuperEllipse = {
     b: 100,
     n: 10,
     na: 2 / this.n,
-    xy: function(angle) {
+    xy: function (angle) {
         var na = 2 / this.n;
         let ca = cos(angle);
         let sa = sin(angle);
         let x = pow(abs(ca), na) * this.a * sign(ca);
         let y = pow(abs(sa), na) * this.b * sign(sa);
-        return new  Vector2(x, y);
+        return new Vector2(x, y);
     },
-    xyr: function(angle) {
+    xyr: function (angle) {
         let r = this.r(angle);
         return new Vector2(cos(angle), sin(angle)).mult(r);
     },
-    r: function(a) {
+    r: function (a) {
         return (this.a * this.b) / (((this.b * cos(a)) ** this.n + (this.a * sin(a)) ** this.n) ** (1 / this.n))
     }
 }
 const square = {
     a: 200,
-    xyr: function(angle) {
+    xyr: function (angle) {
         let r = lerp(this.a / 2, this.r(angle), t);
         return new Vector2(cos(angle), sin(angle)).mult(r);
     },
-    r: function(angle) {
+    r: function (angle) {
         let ca = cos(angle);
         let sa = sin(angle);
         return this.a / (abs(sa + ca) + abs(sa - ca))

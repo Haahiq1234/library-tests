@@ -1,14 +1,21 @@
+const PERCEPTION_RADIUS = 25;
+const circleToUse = new CircleBoundary(0, 0, 2 * PERCEPTION_RADIUS);
+
+
 class Boid extends Vector2 {
     constructor(x, y) {
         super(x, y);
         this.vel = Vector.randomVelocity(1, 2);
         //this.vel.setMag(Random.range(1, 2));
-        this.perceptionRadius = 25;
+        this.perceptionRadius = PERCEPTION_RADIUS;
         this.acc = new Vector2(0, 0);
         this.len = 6.6;
         this.maxSpeed = 3;
         this.angle = 0;
         this.maxForce = 0.1;
+        this.circle = new CircleBoundary(x, y, this.perceptionRadius);
+        this.tempData = 0;
+        this.cur_dist = 0;
     }
     addForce(force) {
         this.acc.add(force);
@@ -19,8 +26,14 @@ class Boid extends Vector2 {
         //force.limit(this.maxForce);
         this.acc.add(force);
     }
-    flock(flock) {
+    flock(qt) {
         let force = createVector();
+        circleToUse.x = this.x;
+        circleToUse.y = this.y;
+        let flock = [];
+        qt.addInCircle(circleToUse, flock);
+        flock = flock.map(boid => { boid.data.cur_dist = boid.len; return boid.data; });
+
         force.add(this.align(flock));
         force.add(this.steer(flock));
         force.add(this.flee(flock));
@@ -31,7 +44,11 @@ class Boid extends Vector2 {
         let total = 0;
         let force = createVector();
         for (let boid of flock) {
-            if (boid != this && Vector.dist(this, boid) < this.perceptionRadius) {
+            //console.log(boid);
+            //boid.tempData = Vector.dist(this, boid);
+            boid.tempData = boid.cur_dist;
+            let d = boid.tempData;
+            if (boid != this && d < this.perceptionRadius) {
                 force.add(boid.vel);
                 total++;
             }
@@ -47,7 +64,7 @@ class Boid extends Vector2 {
         let pos = createVector();
         let force = createVector();
         for (let boid of flock) {
-            let d = Vector.dist(this, boid)
+            let d = boid.tempData;
             if (boid != this && d < this.perceptionRadius / 1.25) {
                 let diff = Vector.sub(this, boid);
                 diff.div(d);
@@ -68,7 +85,7 @@ class Boid extends Vector2 {
         let pos = createVector();
         let force = createVector();
         for (let boid of flock) {
-            if (boid != this && Vector.dist(this, boid) < this.perceptionRadius * 2) {
+            if (boid != this) {
                 pos.add(boid);
                 total++;
             }
@@ -81,11 +98,11 @@ class Boid extends Vector2 {
         force.limit(this.maxForce);
         return force;
     }
-    run(flock) {
+    run(qt) {
         this.update();
         this.edges();
         this.show();
-        this.flock(flock);
+        this.flock(qt);
     }
     edges() {
         if (this.x > CanvasWidth + this.len / 2) {

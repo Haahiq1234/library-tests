@@ -1,104 +1,107 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <style>
 
-        </style>
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-        <script src="Canvas.js"></script>
-        <script>
-            let gizmo = new Gizmo(200, 200);
-            let gizmo1 = new Gizmo(200, 300);
-            let a = createVector(300, 100);
-            let b = createVector(100, 300);
-            let times = 30;
-            let r = Vector.dist(a, b) / times;
-            function setUp() {
-                createCanvas(400, 400, color(255));
-                stroke(0);
-                frameRate(60);
+<head>
+    <style>
+
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <script src="Canvas.js"></script>
+    <script>
+        let gizmo = new Gizmo(200, 200);
+        let gizmo1 = new Gizmo(200, 300);
+        let a = createVector(300, 100);
+        let b = createVector(100, 300);
+        let times = 30;
+        let r = Vector.dist(a, b) / times;
+        function setUp() {
+            createCanvas(400, 400, color(255));
+            stroke(0);
+            frameRate(60);
+        }
+        function draw() {
+            clear();
+            for (var i = 0; i <= times; i++) {
+                let pos = curve2(a, b, gizmo.position.copy(), i / times);
+                //let pos1 = curve2(a, b, gizmo1.position.copy(), i / times);
+                //let pos = Vector.avg(pos1, pos2);
+                circle(pos.x, pos.y, 5);
+                //curve2(a, b, gizmo.position.copy(), i / times);
             }
-            function draw() {
-                clear();
-                for (var i = 0; i <= times; i++) {
-                    let pos = curve2(a, b, gizmo.position.copy(), i / times);
-                    //let pos1 = curve2(a, b, gizmo1.position.copy(), i / times);
-                    //let pos = Vector.avg(pos1, pos2);
-                    circle(pos.x, pos.y, 5);
-                    //curve2(a, b, gizmo.position.copy(), i / times);
-                }
+        }
+        function curve2(a, b, p, t) {
+            let c = Vector.directionVector(a, b);
+            let cb = c.copy();
+            let mid = distance.line(a.x, a.y, b.x, b.y, p.x, p.y);
+
+            //c.setMag(Vector.dist(mid.point, a));
+            //cb.setMag(Vector.dist(mid.point, b));
+
+            let midDist = Vector.dist(a, Vector.mid(a, b));
+            c.setMag(midDist);
+            cb.setMag(midDist);
+
+            let A = a.copy();
+            let B = b.copy();
+            let CA = Vector.add(p, cb);
+            let CB = Vector.sub(p, c);
+
+            line(CA.x, CA.y, CB.x, CB.y);
+
+            let C = CB;
+            let D = CA;
+
+            ln(A, C);
+            ln(B, D);
+
+            let E = Vector.lerp(A, C, t);
+            let F = Vector.lerp(C, D, t);
+            let G = Vector.lerp(D, B, t);
+
+            //ln(E, F);
+            //ln(F, G);
+
+            let H = Vector.lerp(E, F, t);
+            let I = Vector.lerp(F, G, t);
+            //ln(H, I);
+
+            return Vector.lerp(H, I, t);
+        }
+        function intersects() {
+
+        }
+        function curve(p, a, b, con) {
+            let c = distance.line(a.x, a.y, b.x, b.y, con.x, con.y);
+            let len = c.dist;
+            let cp = c.point;
+            let tan = Vector.sub(con, cp).normalize();
+            let ada = Vector.dist(a, cp);
+            let bda = Vector.dist(b, cp);
+            let adb = Vector.dist(cp, p);
+            let bdb = Vector.dist(cp, p);
+            let dista = bda;
+            let distb = bdb;
+            if (adb <= ada) {
+                dista = ada;
+                distb = adb;
             }
-            function curve2(a, b, p, t) {
-                let c = Vector.DirectionVector(a, b);
-                let cb = c.copy();
-                let mid = distance.line(a.x, a.y, b.x, b.y, p.x, p.y);
+            tan.setMag(
+                len - len ** (distb / dista)
+            );
+            p.add(tan);
+            return p;
+        }
+        function ln(A, B) {
+            line(A.x, A.y, B.x, B.y);
+        }
+        function pt(P) {
+            circle(P.x, P.y, 2);
+        }
+        // first exponential
+    </script>
+</body>
 
-                //c.setMag(Vector.dist(mid.point, a));
-                //cb.setMag(Vector.dist(mid.point, b));
-
-                let midDist = Vector.dist(a, Vector.mid(a, b));
-                c.setMag(midDist);
-                cb.setMag(midDist);
-
-                let A = a.copy();
-                let B = b.copy();
-                let CA = Vector.add(p, cb);
-                let CB = Vector.sub(p, c);
-
-                line(CA.x, CA.y, CB.x, CB.y);
-
-                let C = CB;
-                let D = CA;
-
-                ln(A, C);
-                ln(B, D);
-
-                let E = Vector.lerp(A, C, t);
-                let F = Vector.lerp(C, D, t);
-                let G = Vector.lerp(D, B, t);
-
-                //ln(E, F);
-                //ln(F, G);
-
-                let H = Vector.lerp(E, F, t);
-                let I = Vector.lerp(F, G, t);
-                //ln(H, I);
-
-                return Vector.lerp(H, I, t);
-            }
-            function intersects() {
-
-            }
-            function curve(p, a, b, con) {
-                let c = distance.line(a.x, a.y, b.x, b.y, con.x, con.y);
-                let len = c.dist;
-                let cp = c.point;
-                let tan = Vector.sub(con, cp).normalize();
-                let ada = Vector.dist(a, cp);
-                let bda = Vector.dist(b, cp);
-                let adb = Vector.dist(cp, p);
-                let bdb = Vector.dist(cp, p);
-                let dista = bda;
-                let distb = bdb;
-                if (adb <= ada) {
-                    dista = ada;
-                    distb = adb;
-                }
-                tan.setMag(
-                    len - len ** (distb / dista)
-                );
-                p.add(tan);
-                return p;
-            }
-            function ln(A, B) {
-                line(A.x, A.y, B.x, B.y);
-            }
-            function pt(P) {
-                circle(P.x, P.y, 2);
-            }
-            // first exponential
-        </script>
-    </body>
 </html>

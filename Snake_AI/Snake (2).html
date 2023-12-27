@@ -223,8 +223,8 @@
                 return coll;
             }
             update() {
-                if (Control.FRAME_NO % 2 == 0) {
-                    this.sortTargets();
+                if (Sketch.FRAME_NO % 2 == 0) {
+                    //this.sortTargets();
                     this.follow(0);
                     if (this.collided(Snake.saved)) {
                         grid.render();

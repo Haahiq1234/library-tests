@@ -1,8 +1,9 @@
+<html>
 
- <html>
 <head>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
@@ -22,7 +23,7 @@
             //console.log(points);
             drawPoints(points);
         }
-        function key_Press() {
+        on.keydown.bind(function (keyCode) {
             if (keyCode == key.enter) {
                 //points = interpolatePoints(points);
                 points = subdivide(points);
@@ -31,7 +32,7 @@
             if (keyCode == key.space) {
                 setMags(points);
             }
-        }
+        });
         let distsub = 0.65;
         function subdivide(pts) {
             if (pts.length >= 360) return pts;
@@ -85,4 +86,5 @@
     </script>
 
 </body>
+
 </html>

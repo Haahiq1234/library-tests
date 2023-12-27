@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,6 +8,7 @@
     <title>Document</title>
     <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
@@ -27,7 +29,7 @@
             head.radius = 30;
 
             let rk = root.addChild(60, 70);
-            let lk = root.addChild(60, 180- 70);
+            let lk = root.addChild(60, 180 - 70);
 
             let rl = rk.addChild(80, 0);
             let ll = lk.addChild(80, 0);
@@ -64,7 +66,7 @@
                         this.gizmo.bind("move", function (gzmo, dt) {
                             let p = gzmo.position;
                             let a = ths.parent.gizmo.position;
-                            let ang = Vector.Direction(a, p);
+                            let ang = Vector.angle(a, p);
                             ths.angle = ang;
                         });
                     } else {
@@ -127,6 +129,7 @@
                 line(p.x, p.y, pp.x, pp.y);
             }
         }
-    </script>    
+    </script>
 </body>
+
 </html>

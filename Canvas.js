@@ -1,3 +1,384 @@
+// #region Vector
+const polar = {
+    fromVector: function (v) {
+        return [atan2(v.y, v.x), v.mag()];
+    },
+    toVector: function (p) {
+        return Vector.AngleToVector(p[0], p[1]);
+    },
+    armToVector: function (arm, ni = arm.length - 1, o = Vector.zero) {
+        let ans = o.copy();
+        for (var i = 0; i < arm.length; i++) {
+            ans.add(this.toVector(arm[i]));
+            if (ni == i) {
+                return ans;
+            }
+        }
+        return ans;
+    },
+    armToPoints: function (arm, o = Vector.zero) {
+        let ans = [o.copy()];
+        for (var i = 0; i < arm.length; i++) {
+            ans.push(Vector.add(this.toVector(arm[i]), ans[ans.length - 1]));
+        }
+        return ans;
+    },
+};
+const vec2 = {
+    add: function ([ax, ay], [bx, by]) {
+        return [ax + bx, ay + by];
+    },
+    sub: function ([ax, ay], [bx, by]) {
+        return [ax - bx, ay - by];
+    },
+    mult: function ([ax, ay], s) {
+        return [ax * s, ay * s];
+    },
+    dist: function ([ax, ay], [bx, by]) {
+        return Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2);
+    },
+    mag: function ([x, y]) {
+        return Math.sqrt(x * x + y * y);
+    },
+};
+function createVector(x = 0, y = 0) {
+    return new Vector2(x, y);
+}
+class Vector2 {
+    constructor(x = 0, y = x) {
+        this.x = x;
+        this.y = y;
+        this.add = function (addition) {
+            this.x += addition.x;
+            this.y += addition.y;
+            return this;
+        };
+        this.array = function () {
+            return [this.x, this.y];
+        };
+        this.mult = function (mx, my = mx) {
+            this.x *= mx;
+            this.y *= my;
+            return this;
+        };
+        this.reset = function () {
+            this.x = 0;
+            this.y = 0;
+            return this;
+        };
+        this.sub = function (vec) {
+            this.x -= vec.x;
+            this.y -= vec.y;
+            return this;
+        };
+        this.rotate = function (ang) {
+            let ax = cos(ang);
+            let ay = sin(ang);
+            return this.set(this.x * ax - this.y * ay, this.x * ay + this.y * ax);
+        };
+        this.set = function (nx, ny) {
+            this.x = nx;
+            this.y = ny;
+            return this;
+        };
+        this.setMag = function (len) {
+            return this.normalize().mult(len);
+        };
+    }
+    mag() {
+        return Math.sqrt(this.x ** 2 + this.y ** 2);
+    }
+    copy() {
+        return new Vector2(this.x, this.y);
+    }
+    normalize() {
+        return this.div(this.mag() | 1);
+    }
+    div(no) {
+        if (no == 0) {
+            //console.trace("Division by zero");
+            this.x = 0;
+            this.y = 0;
+            return this;
+        }
+        this.x /= no;
+        this.y /= no;
+        return this;
+    }
+    neg() {
+        return new Vector2(-this.x, -this.y);
+    }
+    limit(no) {
+        if (this.mag() > no) this.setMag(no);
+        return this;
+    }
+    heading() {
+        return Vector.heading(this);
+    }
+    index() {
+        return parseInt(this.x) + ":" + parseInt(this.y);
+    }
+}
+const Vector = {
+    zero: new Vector2(0, 0),
+    dist2: function (a, b) {
+        let dx = abs(a.x - b.x);
+        let dy = abs(a.y - b.y);
+        return max(dx, dy) + min(dx, dy) * (Math.SQRT2 - 1);
+    },
+    distM: function (a, b) {
+        let dx = abs(a.x - b.x);
+        let dy = abs(a.y - b.y);
+        return dx + dy;
+    },
+    derp: function (a, b, dist) {
+        let ab_dist = Vector.dist(a, b);
+        if (ab_dist < dist) {
+            return b.copy();
+        }
+        return this.lerp(a, b, dist / ab_dist);
+    },
+    InFov(p, o, d, fov) {
+        let dot = Vector.dot(d.copy().normalize(), Vector.sub(p, o).normalize());
+        if (dot >= cos(fov / 2)) {
+            return true;
+        }
+        return false;
+    },
+    flip(p, a, b) {
+        let ab = Vector.sub(b, a);
+        let ap = Vector.sub(p, a);
+        return Vector.sub(
+            Vector.add(a, ab.setMag(Vector.dot(ap, ab) / ab.mag())).mult(2),
+            p
+        );
+    },
+    Equal(a, b) {
+        return Boolean(a) && Boolean(b) && a.x == b.x && a.y == b.y;
+    },
+    fromIndex(str) {
+        let arr = str.split(":");
+        let x = arr[0];
+        let y = arr[1];
+        return new Vector2(x, y);
+    },
+    array(...vecs) {
+        let ans = [];
+        for (var vec of vecs) {
+            ans.push(vec.x, vec.y);
+        }
+        return ans;
+    },
+    cross(a, b) {
+        return a.x * b.y - b.x * a.y;
+    },
+    setRotation(v, rot) {
+        let c = Vector.sub(b, a);
+        c.setRotation(rot);
+        return Vector.add(a, c);
+    },
+    interpolateArray(arr, index) {
+        let i = floor(index);
+        let ir = index - i;
+        let ans = arr[i].copy();
+        if (i < arr.length - 1 && ir > 0) {
+            let subbed = Vector.sub(arr[i + 1], ans);
+            ans.add(Vector.mult(subbed, ir));
+        }
+        return new Vector2(ans.x, ans.y);
+    },
+    setMag(vec, mag) {
+        return new Vector2(vec.x, vec.y).setMag(mag);
+    },
+    fromArray(...verts) {
+        let arr = [];
+        for (var i = 0; i < verts.length; i += 2) {
+            arr.push(createVector(verts[i], verts[i + 1]));
+        }
+        return arr;
+    },
+    InSquare(a, b, p) {
+        if (p.x >= a.x && p.y >= a.y && p.x <= b.x && p.y <= b.y) {
+            return true;
+        }
+        return false;
+    },
+    fromOrigin: {
+        farthest(o, arr) {
+            let len = 0;
+            let pt;
+            let li;
+            for (var i = 0; i < arr.length; i++) {
+                let d = Vector.dist(arr[i], o);
+                if (d > len) {
+                    pt = arr[i].copy();
+                    len = d;
+                    li = i;
+                }
+            }
+            return [pt, li];
+        },
+
+        nearest(o, arr) {
+            let len = Infinity;
+            let pt;
+            let li;
+            for (var i = 0; i < arr.length; i++) {
+                let d = Vector.dist(arr[i], o);
+                if (d < len) {
+                    pt = arr[i].copy();
+                    len = d;
+                    li = i;
+                }
+            }
+            return [pt, li];
+        },
+    },
+    mid(a, b) {
+        return new Vector2((a.x + b.x) / 2, (a.y + b.y) / 2);
+    },
+    normal2(a, b, c) {
+        let ao = Vector.sub(a, b);
+        let co = Vector.sub(c, b);
+        let aoh = ao.heading();
+        let coh = co.heading();
+        let mid = avg(aoh, coh);
+        mid += 180;
+        return Vector.AngleToVector(mid, 1);
+    },
+    reflect(v, n) {
+        let d = -Vector.dot(v, n) / n.mag();
+        let p = Vector.setMag(n, d);
+        return new Vector2(2 * p.x + v.x, 2 * p.y + v.y);
+    },
+    copy(vec) {
+        //if (Vector3 && vec instanceof Vector3) {
+        //    return new Vector3(vec.x, vec.y, vec.z);
+        //}
+        return new Vector2(vec.x, vec.y);
+    },
+    normal(a, b, p) {
+        let v = new Vector2(-(b.y - a.y), b.x - a.x);
+        return v.mult((p.x - a.x) * v.x + (p.y - a.y) * v.y).normalize();
+    },
+    constraint(p, a, b) {
+        let x = constraint(p.x, a.x, b.x);
+        let y = constraint(p.y, a.y, b.y);
+        return createVector(x, y);
+    },
+    interpolate(a, b, t, f = (x) => x) {
+        //console.log(f(t));
+        return Vector.lerp(a, b, f(t));
+    },
+    lerp(a, b, t) {
+        return new Vector2(a.x * (1 - t) + b.x * t, a.y * (1 - t) + b.y * t);
+    },
+    mult(v, m) {
+        return new Vector2(v.x * m, v.y * m);
+    },
+    min(...args) {
+        let x = args[0].x;
+        let y = args[0].y;
+        for (var i = 1; i < args.length; i++) {
+            x = min(x, args[i].x);
+            y = min(y, args[i].y);
+        }
+        return new Vector2(x, y);
+    },
+    max(...args) {
+        let x = args[0].x;
+        let y = args[0].y;
+        for (var i = 1; i < args.length; i++) {
+            x = max(x, args[i].x);
+            y = max(y, args[i].y);
+        }
+        return new Vector2(x, y);
+    },
+    neg(vec) {
+        return new Vector2(-vec.x, -vec.y);
+    },
+    avg(...vector2Array) {
+        let x = 0;
+        let y = 0;
+        for (var i = 0; i < vector2Array.length; i++) {
+            x += vector2Array[i].x;
+            y += vector2Array[i].y;
+        }
+        return new Vector2(x / vector2Array.length, y / vector2Array.length);
+    },
+    add(...vectorArray) {
+        let x = 0;
+        let y = 0;
+        for (var i = 0; i < vectorArray.length; i++) {
+            x += vectorArray[i].x;
+            y += vectorArray[i].y;
+        }
+        return new Vector2(x, y);
+    },
+    sub(a, b) {
+        return new Vector2(a.x - b.x, a.y - b.y);
+    },
+    heading(vec) {
+        if (vec.x == 0 && vec.y == 0) {
+            return 0;
+        }
+        var ang = atan2(vec.y, vec.x);
+        return ang;
+    },
+    dot(a, b) {
+        return a.x * b.x + a.y * b.y;
+    },
+    AngleToVector(ang, rad = 1) {
+        let x = rad * cos(ang);
+        let y = rad * sin(ang);
+        return new Vector2(x, y);
+    },
+    div(v, no) {
+        if (no == 0) {
+            console.log("Dividing by 0");
+            return new Vector2(0, 0);
+        }
+        return new Vector2(v.x / no, v.y / no);
+    },
+    randomVelocity(minSpeed, maxSpeed) {
+        return this.AngleToVector(
+            Random.range(0, 360),
+            Random.range(minSpeed, maxSpeed)
+        );
+    },
+    random(aMag, bMag, aAngle = 0, bAngle = 360) {
+        let r = Random.range(aMag, bMag);
+        let a = Random.range(aAngle, bAngle);
+        return Vector.FromAngle(a, r);
+    },
+    directionVector(a, b) {
+        let d = new Vector2(b.x - a.x, b.y - a.y).normalize();
+        return d;
+    },
+    FromAngle(an, r = 1) {
+        return new Vector2(cos(an) * r, sin(an) * r);
+    },
+    angle(a, b) {
+        return this.directionVector(a, b).heading();
+    },
+    dist(a, b) {
+        return mag(a.x - b.x, a.y - b.y);
+        //return mag(a.x - b.x, a.y - b.y);
+    },
+    limitDistance(a, b, lim) {
+        let c = Vector.sub(b, a);
+        c.limit(lim);
+        return Vector.add(a, c);
+    },
+    setDist(a, b, dst) {
+        let c = this.sub(b, a);
+        let ang = c.heading();
+        let d = this.AngleToVector(ang, dst);
+        return this.add(a, d);
+    },
+};
+// #endregion
+
 // #region Misc
 function downloadFromURL(url, filename = "download") {
     let a = document.createElement("a");
@@ -272,398 +653,6 @@ const Debug = {
         }
     }
 }
-// #endregion
-
-// #region Vector
-const polar = {
-    fromVector: function (v) {
-        return [atan2(v.y, v.x), v.mag()];
-    },
-    toVector: function (p) {
-        return Vector.AngleToVector(p[0], p[1]);
-    },
-    armToVector: function (arm, ni = arm.length - 1, o = Vector.zero) {
-        let ans = o.copy();
-        for (var i = 0; i < arm.length; i++) {
-            ans.add(this.toVector(arm[i]));
-            if (ni == i) {
-                return ans;
-            }
-        }
-        return ans;
-    },
-    armToPoints: function (arm, o = Vector.zero) {
-        let ans = [o.copy()];
-        for (var i = 0; i < arm.length; i++) {
-            ans.push(Vector.add(this.toVector(arm[i]), ans[ans.length - 1]));
-        }
-        return ans;
-    },
-};
-const vec2 = {
-    add: function ([ax, ay], [bx, by]) {
-        return [ax + bx, ay + by];
-    },
-    sub: function ([ax, ay], [bx, by]) {
-        return [ax - bx, ay - by];
-    },
-    mult: function ([ax, ay], s) {
-        return [ax * s, ay * s];
-    },
-    dist: function ([ax, ay], [bx, by]) {
-        return Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2);
-    },
-    mag: function ([x, y]) {
-        return Math.sqrt(x * x + y * y);
-    },
-};
-function createVector(x = 0, y = 0) {
-    return new Vector2(x, y);
-}
-const Vector = {
-    dist2: function (a, b) {
-        let dx = abs(a.x - b.x);
-        let dy = abs(a.y - b.y);
-        return max(dx, dy) + min(dx, dy) * (Math.SQRT2 - 1);
-    },
-    distM: function (a, b) {
-        let dx = abs(a.x - b.x);
-        let dy = abs(a.y - b.y);
-        return dx + dy;
-    },
-    derp: function (a, b, dist) {
-        let ab_dist = Vector.dist(a, b);
-        if (ab_dist < dist) {
-            return b.copy();
-        }
-        return this.lerp(a, b, dist / ab_dist);
-    }
-};
-Vector.InFov = function (p, o, d, fov) {
-    let dot = Vector.dot(d.copy().normalize(), Vector.sub(p, o).normalize());
-    if (dot >= cos(fov / 2)) {
-        return true;
-    }
-    return false;
-};
-Vector.flip = function (p, a, b) {
-    let ab = Vector.sub(b, a);
-    let ap = Vector.sub(p, a);
-    return Vector.sub(
-        Vector.add(a, ab.setMag(Vector.dot(ap, ab) / ab.mag())).mult(2),
-        p
-    );
-};
-Vector.zero = new Vector2(0, 0);
-Vector.Equal = function (a, b) {
-    return Boolean(a) && Boolean(b) && a.x == b.x && a.y == b.y;
-};
-Vector.fromIndex = function (str) {
-    let arr = str.split(":");
-    let x = arr[0];
-    let y = arr[1];
-    return new Vector2(x, y);
-};
-Vector.array = function (...vecs) {
-    let ans = [];
-    for (var vec of vecs) {
-        ans.push(vec.x, vec.y);
-    }
-    return ans;
-};
-Vector.cross = function (a, b) {
-    return a.x * b.y - b.x * a.y;
-};
-Vector.setRotation = function (v, rot) {
-    let c = Vector.sub(b, a);
-    c.setRotation(rot);
-    return Vector.add(a, c);
-};
-Vector.interpolateArray = function (arr, index) {
-    let i = floor(index);
-    let ir = index - i;
-    let ans = arr[i].copy();
-    if (i < arr.length - 1 && ir > 0) {
-        let subbed = Vector.sub(arr[i + 1], ans);
-        ans.add(Vector.mult(subbed, ir));
-    }
-    return new Vector2(ans.x, ans.y);
-};
-Vector.setMag = function (vec, mag) {
-    return new Vector2(vec.x, vec.y).setMag(mag);
-};
-Vector.fromArray = function (...verts) {
-    let arr = [];
-    for (var i = 0; i < verts.length; i += 2) {
-        arr.push(createVector(verts[i], verts[i + 1]));
-    }
-    return arr;
-};
-Vector.InSquare = function (a, b, p) {
-    if (p.x >= a.x && p.y >= a.y && p.x <= b.x && p.y <= b.y) {
-        return true;
-    }
-    return false;
-};
-Vector.fromOrigin = {
-    farthest: function (o, arr) {
-        let len = 0;
-        let pt;
-        let li;
-        for (var i = 0; i < arr.length; i++) {
-            let d = Vector.dist(arr[i], o);
-            if (d > len) {
-                pt = arr[i].copy();
-                len = d;
-                li = i;
-            }
-        }
-        return [pt, li];
-    },
-
-    nearest: function (o, arr) {
-        let len = Infinity;
-        let pt;
-        let li;
-        for (var i = 0; i < arr.length; i++) {
-            let d = Vector.dist(arr[i], o);
-            if (d < len) {
-                pt = arr[i].copy();
-                len = d;
-                li = i;
-            }
-        }
-        return [pt, li];
-    },
-};
-Vector.mid = function (a, b) {
-    return new Vector2((a.x + b.x) / 2, (a.y + b.y) / 2);
-};
-Vector.normal2 = function (a, b, c) {
-    let ao = Vector.sub(a, b);
-    let co = Vector.sub(c, b);
-    let aoh = ao.heading();
-    let coh = co.heading();
-    let mid = avg(aoh, coh);
-    mid += 180;
-    return Vector.AngleToVector(mid, 1);
-};
-Vector.reflect = function (v, n) {
-    let d = -Vector.dot(v, n) / n.mag();
-    let p = Vector.setMag(n, d);
-    return new Vector2(2 * p.x + v.x, 2 * p.y + v.y);
-};
-Vector.copy = function (vec) {
-    //if (Vector3 && vec instanceof Vector3) {
-    //    return new Vector3(vec.x, vec.y, vec.z);
-    //}
-    return new Vector2(vec.x, vec.y);
-};
-Vector.normal = function (a, b, p) {
-    let v = new Vector2(-(b.y - a.y), b.x - a.x);
-    return v.mult((p.x - a.x) * v.x + (p.y - a.y) * v.y).normalize();
-};
-Vector.constraint = function (p, a, b) {
-    let x = constraint(p.x, a.x, b.x);
-    let y = constraint(p.y, a.y, b.y);
-    return createVector(x, y);
-};
-Vector.interpolate = function (a, b, t, f = (x) => x) {
-    console.log(f(t));
-    return Vector.lerp(a, b, f(t));
-};
-Vector.lerp = function (a, b, t) {
-    return new Vector2(a.x * (1 - t) + b.x * t, a.y * (1 - t) + b.y * t);
-};
-Vector.mult = function (v, m) {
-    return new Vector2(v.x * m, v.y * m);
-};
-Vector.min = function (...args) {
-    let x = args[0].x;
-    let y = args[0].y;
-    for (var i = 1; i < args.length; i++) {
-        x = min(x, args[i].x);
-        y = min(y, args[i].y);
-    }
-    return new Vector2(x, y);
-};
-Vector.max = function (...args) {
-    let x = args[0].x;
-    let y = args[0].y;
-    for (var i = 1; i < args.length; i++) {
-        x = max(x, args[i].x);
-        y = max(y, args[i].y);
-    }
-    return new Vector2(x, y);
-};
-Vector.neg = function (vec) {
-    return new Vector2(-vec.x, -vec.y);
-};
-Vector.avg = function (...vecs) {
-    let x = 0;
-    let y = 0;
-    for (var i = 0; i < vecs.length; i++) {
-        x += vecs[i].x;
-        y += vecs[i].y;
-    }
-    return new Vector2(x / vecs.length, y / vecs.length);
-};
-Vector.add = function (...vs) {
-    let x = 0;
-    let y = 0;
-    for (var i = 0; i < vs.length; i++) {
-        x += vs[i].x;
-        y += vs[i].y;
-    }
-    return new Vector2(x, y);
-};
-Vector.sub = function (a, b) {
-    return new Vector2(a.x - b.x, a.y - b.y);
-};
-Vector.heading = function (vec) {
-    if (vec.x == 0 && vec.y == 0) {
-        return 0;
-    }
-    var ang = atan2(vec.y, vec.x);
-    return ang;
-};
-Vector.dot = function (a, b) {
-    return a.x * b.x + a.y * b.y;
-};
-Vector.AngleToVector = function (ang, rad = 1) {
-    let x = rad * cos(ang);
-    let y = rad * sin(ang);
-    return new Vector2(x, y);
-};
-Vector.div = function (v, no) {
-    if (no == 0) {
-        console.log("Dividing by 0");
-        return new Vector2(0, 0);
-    }
-    return new Vector2(v.x / no, v.y / no);
-};
-Vector.randomVelocity = function (minSpeed, maxSpeed) {
-    return this.AngleToVector(
-        Random.range(0, 360),
-        Random.range(minSpeed, maxSpeed)
-    );
-};
-Vector.random = function (aMag, bMag, aAngle = 0, bAngle = 360) {
-    let r = Random.range(aMag, bMag);
-    let a = Random.range(aAngle, bAngle);
-    return Vector.FromAngle(a, r);
-}
-Vector.directionVector = function (a, b) {
-    let d = new Vector2(b.x - a.x, b.y - a.y).normalize();
-    return d;
-};
-Vector.FromAngle = function (an, r = 1) {
-    return new Vector2(cos(an) * r, sin(an) * r);
-}
-Vector.angle = function (a, b) {
-    return this.directionVector(a, b).heading();
-};
-Vector.dist = function (a, b) {
-    return b.copy().sub(a).mag();
-    //return mag(a.x - b.x, a.y - b.y);
-};
-Vector.limitDistance = function (a, b, lim) {
-    let c = Vector.sub(b, a);
-    c.limit(lim);
-    return Vector.add(a, c);
-};
-Vector.setDist = function (a, b, dst) {
-    let c = Vector.sub(b, a);
-    let ang = c.heading();
-    let d = Vector.AngleToVector(ang, dst);
-    return Vector.add(a, d);
-};
-function Vector2(x = 0, y = x) {
-    this.x = x;
-    this.y = y;
-    this.add = function (addition) {
-        this.x += addition.x;
-        this.y += addition.y;
-        return this;
-    };
-    this.array = function () {
-        return [this.x, this.y];
-    };
-    this.mult = function (mx, my = mx) {
-        this.x *= mx;
-        this.y *= my;
-        return this;
-    };
-    this.reset = function () {
-        this.x = 0;
-        this.y = 0;
-        return this;
-    };
-    this.sub = function (vec) {
-        this.x -= vec.x;
-        this.y -= vec.y;
-        return this;
-    };
-    this.rotate = function (ang) {
-        let ax = cos(ang);
-        let ay = sin(ang);
-        return this.set(this.x * ax - this.y * ay, this.x * ay + this.y * ax);
-    };
-    this.set = function (nx, ny) {
-        this.x = nx;
-        this.y = ny;
-        return this;
-    };
-    this.transform2 = function (mat) {
-        let v = Matrices.mult(mat, this.matrix());
-        return this.set(v.x, v.y);
-    };
-    this.matrix = function () {
-        return new Matrix(1, 2, [this.x, this.y]);
-    };
-    this.setMag = function (len) {
-        return this.normalize().mult(len);
-    };
-    this.setRotation = function (rot) {
-        let mag = this.mag();
-        let vec = Vector.AngleToVector(rot, mag);
-        return this.set(vec.x, vec.y);
-    };
-    this.mag = function () {
-        return Math.sqrt(this.x ** 2 + this.y ** 2);
-    };
-    this.copy = function () {
-        return new Vector2(this.x, this.y);
-    };
-    this.normalize = function () {
-        return this.div(this.mag() | 1);
-    };
-    this.div = function (no) {
-        if (no == 0) {
-            //console.trace("Division by zero");
-            this.x = 0;
-            this.y = 0;
-            return this;
-        }
-        this.x /= no;
-        this.y /= no;
-        return this;
-    };
-    this.neg = function () {
-        return new Vector2(-this.x, -this.y);
-    };
-    this.limit = function (no) {
-        if (this.mag() > no) this.setMag(no);
-        return this;
-    };
-    this.heading = function () {
-        return Vector.heading(this);
-    };
-    this.index = function () {
-        return parseInt(this.x) + ":" + parseInt(this.y);
-    };
-}
-
 // #endregion
 
 // #region Keyboard 
@@ -1340,6 +1329,12 @@ function lineCast(ox, oy, dx, dy, x3, y3, x4, y4) {
     y2 = oy + dy;
     //console.log(...arguments);
     let d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+
+
+    if (abs(d) < EPSILON / 100) {
+        return { intersected: false, parallel: true };
+    }
+
     let u = ((x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)) / d; // belongs to x3, x4, y3, y4
     let t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / d; // belongs to x1, x2, y1, y2
     if (t >= 0 && u >= 0 && u <= 1) {
@@ -1603,7 +1598,7 @@ class RaycastHit {
         this.point = point;
     }
     length(or) {
-        if (this._length ?? false) return this.length;
+        if (this._length ?? false) return this._length;
         if (this.hit) {
             this._length = Vector.dist(or, this.point);
         } else {
@@ -1611,17 +1606,71 @@ class RaycastHit {
         }
         return this._length;
     }
-    static nearest(o, ...hits) {
-        let currentCast = hits[0];
-        for (var i = 1; i < hits.length; i++) {
-            let len = hits[i].length(o);
-            //console.log(currentCast.length(o), len);
-            if (hits[i].hit && len < currentCast.length(o)) {
-                //console.log(hits[i]);
-                currentCast = hits[i];
-            }
+    lengthFromXY(x, y) {
+        if (this._length ?? false) return this._length;
+        if (this.hit) {
+            this._length = ((x - this.point.x) ** 2 + (y - this.point.y) ** 2) ** 0.5;
+        } else {
+            this._length = Infinity;
         }
-        return currentCast;
+        return this._length;
+    }
+    static nearest(o, ...hits) {
+        if (hits.length > 0) {
+            let currentCast = hits[0];
+            //console.log(currentCast);
+            let length = currentCast.length(o);
+            for (var i = 1; i < hits.length; i++) {
+                let len = hits[i].length(o);
+                //console.log(currentCast.length(o), len);
+                if (hits[i].hit && len < length) {
+                    length = len;
+                    //console.log(hits[i]);
+                    currentCast = hits[i];
+                }
+            }
+            return currentCast;
+        }
+        return new RaycastHit(false);
+    }
+}
+class RaycastHits extends RaycastHit {
+    constructor(hit, array) {
+        super(hit.hit, hit.point, hit.normal);
+        //console.log(hit);
+        this.points = array;
+    }
+}
+function getRectSide(rectData, n) {
+    switch (n) {
+        case 0:
+            return [
+                rectData[0],
+                rectData[1],
+                rectData[0] + rectData[2],
+                rectData[1],
+            ];
+        case 1:
+            return [
+                rectData[0] + rectData[2],
+                rectData[1],
+                rectData[0] + rectData[2],
+                rectData[1] + rectData[3],
+            ];
+        case 2:
+            return [
+                rectData[0] + rectData[2],
+                rectData[1] + rectData[3],
+                rectData[0],
+                rectData[1] + rectData[3],
+            ];
+        case 3:
+            return [
+                rectData[0],
+                rectData[1] + rectData[3],
+                rectData[0],
+                rectData[1],
+            ];
     }
 }
 const Raycast = {
@@ -1654,12 +1703,9 @@ const Raycast = {
             return Raycast.circle(o.x, o.y, r.x, r.y, c.x, c.y, rad);
         },
     },
-    line: function (rsx, rsy, rx, ry, ax, ay, bx, by) {
-        line(rsx, rsy, rsx + rx, rsy + ry);
-        let rs = createVector(rsx, rsy);
-        let a = createVector(ax, ay);
-        let b = createVector(bx, by);
-        let ln = lineCast(rsx, rsy, rx, ry, ax, ay, bx, by);
+    line: function (rsx, rsy, rx, ry, ax, ay, bx, by,
+        rs = createVector(rsx, rsy), a = createVector(ax, ay), b = createVector(bx, by)) { // for optimization they can be calculated once and passed in if needed
+        let ln = lineCast(rs.x, rs.y, rx, ry, a.x, a.y, b.x, b.y);
         //console.log(l);
         if (ln.intersected && Vector.dist(rs, ln.point) > EPSILON) {
             return new RaycastHit(true, ln.point, Vector.normal(a, b, rs));
@@ -1688,33 +1734,45 @@ const Raycast = {
             ay + ah
         );
     },
-    shape: function (originX, originY, dirX, dirY, ...vertices) {
+    rects: function (originX, originY, dirX, dirY, rectDatas) {
+        let casts = [];
+        let origin = createVector(originX, originY);
+        for (let rectData of rectDatas) {
+            for (let i = 0; i < 4; i++) {
+                let cast = this.line(originX, originY, dirX, dirY, ...getRectSide(rectData, i), origin);
+                if (cast.hit) {
+                    casts.push(cast);
+                }
+            }
+
+        }
+        return RaycastHit.nearest(origin, ...casts);
+    },
+    indexedShape: function (originX, originY, dirX, dirY, vertices, indices) {
         //console.log(originX, originY, dirX, dirY);
         let origin = createVector(originX, originY);
-        let verts = [];
-        for (var i = 0; i < vertices.length; i += 2) {
-            verts.push(createVector(vertices[i], vertices[i + 1]));
-        }
 
         let length = Infinity;
         let finalCast = new RaycastHit(false);
-        for (var i = 0; i < vertices.length / 2; i++) {
-            let a = verts[i];
-            let b = verts[(i + 1) % (vertices.length / 2)];
+        let hits = [];
+        for (var i = 0; i < indices.length; i += 2) {
+            let a = indices[i];
+            let b = indices[i + 1];
             let cast = this.line(
                 originX,
                 originY,
                 dirX,
                 dirY,
-                a.x,
-                a.y,
-                b.x,
-                b.y
+                vertices[a * 2],
+                vertices[a * 2 + 1],
+                vertices[b * 2],
+                vertices[b * 2 + 1],
             );
             //console.log(cast.point);
             //console.log(dirX, dirY);
             if (cast.hit) {
-                let len = Vector.dist(origin, cast.point);
+                hits.push(cast.point);
+                let len = cast.lengthFromXY(originX, originY);
                 //console.log(cast.point);
                 //let len2 = Vector.dist(Vector.add(origin, dir), cast.point);
                 if (len < length /* && len2 < len*/) {
@@ -1723,39 +1781,85 @@ const Raycast = {
                 }
             }
         }
-        return finalCast;
+        return new RaycastHits(finalCast, hits);
     },
-    circle: function (ox, oy, rx, ry, cx, cy, cr) {
-        let o = new Vector2(ox, oy);
-        ox -= cx;
-        oy -= cy;
-        let a = rx ** 2 + ry ** 2;
-        let b = 2 * ox * rx + 2 * oy * ry;
-        let c = ox ** 2 + oy ** 2 - cr ** 2;
-        let eq = QuadraticFormula(a, b, c);
-        let hit;
+    circles(originX, originY, dirX, dirY, circleDatas) {
+        let finalCast = new RaycastHit(false);
+        let hits = [];
         let length = Infinity;
-        for (var i = 0; i < eq.length; i++) {
-            if (eq[i] > 0) {
-                let x = cx + ox + rx * eq[i];
-                let y = cy + oy + ry * eq[i];
-                let p = createVector(x, y);
-                let len = Vector.dist(p, o);
-                if (len > EPSILON && len < length) {
-                    hit = new RaycastHit(true, p);
+        for (let i = 0; i < circleDatas.length; i++) {
+            let cast = this.circle(originX, originY, dirX, dirY, circleDatas[i][0], circleDatas[i][1], circleDatas[i][2]);
+            if (cast.hit) {
+                hits.push(cast);
+                let len = cast.lengthFromXY(originX, originY);
+                if (len < length) {
                     length = len;
+                    finalCast = cast;
+                }
+
+            }
+        }
+        return new RaycastHits(finalCast, hits);
+    },
+    shape(originX, originY, dirX, dirY, ...vertices) {
+        //console.log(originX, originY, dirX, dirY);
+
+        let length = Infinity;
+        let finalCast = new RaycastHit(false);
+        let hits = [];
+        for (var i = 0; i < vertices.length; i += 2) {
+            let a = i;
+            let b = (i + 2) % (vertices.length);
+            let cast = this.line(
+                originX,
+                originY,
+                dirX,
+                dirY,
+                vertices[a],
+                vertices[a + 1],
+                vertices[b],
+                vertices[b + 1],
+            );
+            // console.log(cast.hit);
+            //console.log(dirX, dirY);
+            if (cast.hit) {
+                hits.push(cast.point);
+                let len = cast.lengthFromXY(originX, originY);
+                //console.log(cast.point);
+                //let len2 = Vector.dist(Vector.add(origin, dir), cast.point);
+                if (len < length /* && len2 < len*/) {
+                    length = len;
+                    finalCast = cast;
                 }
             }
         }
-        if (hit) {
-            let c = new Vector2(cx, cy);
-            hit.normal = Vector.sub(hit.point, c).normalize();
-            if (Between.circle(c, cr, o)) {
-                //console.log("ok");
-                hit.normal.x *= -1;
-                hit.normal.y *= -1;
-            }
-            //console.log(hit.normal);
+        //console.log(finalCast);
+        return new RaycastHits(finalCast, hits);
+    },
+    circle(rayOriginX, rayOriginY, rx, ry, cx, cy, circleRadius, n) {
+        let relativeRayOriginX = rayOriginX - cx;
+        let relativeRayOriginY = rayOriginY - cy;
+        let rayLength = mag(rx, ry);
+        let circleCenter = new Vector2(cx, cy);
+        let a = rx ** 2 + ry ** 2;
+        let b = 2 * relativeRayOriginX * rx + 2 * relativeRayOriginY * ry;
+        let c = relativeRayOriginX ** 2 + relativeRayOriginY ** 2 - circleRadius ** 2;
+        let eq = QuadraticFormula(a, b, c).filter((x) => x * rayLength > EPSILON);
+
+        if (eq.length > 0) {
+            let t = min(...eq);
+
+            let relativeX = rx * t;
+            let relativeY = ry * t;
+            let relativeP = new Vector2(relativeX, relativeY);
+            let x = rayOriginX + relativeX;
+            let y = rayOriginY + relativeY;
+            let p = new Vector2(x, y);
+            circle(x, y, 5);
+
+            let hit = new RaycastHit(true, p, Vector.sub(p, circleCenter).normalize());
+            hit._length = relativeP.mag();
+            if (hit._length > EPSILON);
             return hit;
         }
         return new RaycastHit(false);
@@ -2400,10 +2504,14 @@ const Rgb = {
         }
     },
     weighted: function (...args) {
-        let col = 0;
+        let col = [0, 0, 0, 0];
         for (var i = 0; i < args.length; i += 2) {
-
+            col[0] += args[i][0] * args[i + 1];
+            col[1] += args[i][1] * args[i + 1];
+            col[2] += args[i][2] * args[i + 1];
+            col[3] += args[i][3] * args[i + 1];
         }
+        return col;
     },
     lerp: function (a, b, t) {
         return a.map((v, i) => v * (1 - t) + b[i] * t);
@@ -2476,83 +2584,83 @@ class Array2D {
             this.array[i] = def();
         }
         this.resize(width, height);
-        this.getCol = function (col) {
-            let cl = [];
-            for (var i = 0; i < this.height; i++) {
-                cl.push(this.array[this.index(col, i)]);
-            }
-            return cl;
-        };
-        this.getRow = function (row) {
-            let rw = this.array.slice(this.width * row, this.width * (row + 1));
-            return rw;
-        };
-        this.set = function (x, y, val) {
-            let ind = this.index(x, y);
-            // if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
-            //     console.log("Position(" + x + ", " + y + ") out of bounds of 2d array");
-            // }
-            this.array[ind] = val;
-        };
-        this.index = function (x, y) {
-            return y * this.width + x;
-        };
-        this.setRow = function (j, arr) {
-            for (var i = 0; i < this.width; i++) {
-                this.array[this.index(i, j)] = arr[i];
-            }
-        };
-        this.setCol = function (i, arr) {
-            for (var j = 0; j < this.height; j++) {
-                this.array[this.index(i, j)] = arr[j];
-            }
-        };
-        this.shuffle = function () {
-            shuffle(this.array);
-        };
-        this.pos = function (ind) {
-            let x = ind % this.width;
-            let y = (ind - x) / this.width;
-            return new Vector2(x, y);
-        };
-        this.get = function (x, y) {
-            return this.array[this.index(x, y)];
-        };
-        this.getDimensionSize = function (dimension) {
-            return dimension == 0 ? this.width : this.height;
+    }
+    getCol(col) {
+        let cl = [];
+        for (var i = 0; i < this.height; i++) {
+            cl.push(this.array[this.index(col, i)]);
         }
-        this.getDimensionArr = function (dimension, pos) {
-            if (dimension == 0) {
-                return this.getCol(pos);
-            } else if (dimension == 1) {
-                return this.getRow(pos);
+        return cl;
+    }
+    getRow(row) {
+        let rw = this.array.slice(this.width * row, this.width * (row + 1));
+        return rw;
+    }
+    set(x, y, val) {
+        let ind = this.index(x, y);
+        // if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+        //     console.log("Position(" + x + ", " + y + ") out of bounds of 2d array");
+        // }
+        this.array[ind] = val;
+    }
+    index(x, y) {
+        return y * this.width + x;
+    }
+    setRow(j, arr) {
+        for (var i = 0; i < this.width; i++) {
+            this.array[this.index(i, j)] = arr[i];
+        }
+    }
+    setCol(i, arr) {
+        for (var j = 0; j < this.height; j++) {
+            this.array[this.index(i, j)] = arr[j];
+        }
+    }
+    shuffle() {
+        shuffle(this.array);
+    }
+    pos(ind) {
+        let x = ind % this.width;
+        let y = (ind - x) / this.width;
+        return new Vector2(x, y);
+    }
+    get(x, y) {
+        return this.array[this.index(x, y)];
+    }
+    getDimensionSize(dimension) {
+        return dimension == 0 ? this.width : this.height;
+    }
+    getDimensionArr(dimension, pos) {
+        if (dimension == 0) {
+            return this.getCol(pos);
+        } else if (dimension == 1) {
+            return this.getRow(pos);
+        }
+    }
+    setDimensionArr(dimension, pos, arr) {
+        if (dimension == 0) {
+            this.setCol(pos, arr);
+        } else if (dimension == 1) {
+            this.setRow(pos, arr);
+        }
+    }
+    swap(x, y, x1, y1) {
+        let ind1 = this.index(x, y);
+        let ind2 = this.index(x1, y1);
+        [this.array[ind1], this.array[ind2]] = [
+            this.array[ind2],
+            this.array[ind1],
+        ];
+    }
+    grid() {
+        let arr = [];
+        for (let x = 0; x < this.width; x++) {
+            arr.push([]);
+            for (let y = 0; y < this.height; y++) {
+                arr[x].push(this.array[this.index(x, y)]);
             }
         }
-        this.setDimensionArr = function (dimension, pos, arr) {
-            if (dimension == 0) {
-                this.setCol(pos, arr);
-            } else if (dimension == 1) {
-                this.setRow(pos, arr);
-            }
-        }
-        this.swap = function (x, y, x1, y1) {
-            let ind1 = this.index(x, y);
-            let ind2 = this.index(x1, y1);
-            [this.array[ind1], this.array[ind2]] = [
-                this.array[ind2],
-                this.array[ind1],
-            ];
-        };
-        this.grid = function () {
-            let arr = [];
-            for (let x = 0; x < this.width; x++) {
-                arr.push([]);
-                for (let y = 0; y < this.height; y++) {
-                    arr[x].push(this.array[this.index(x, y)]);
-                }
-            }
-            return arr;
-        };
+        return arr;
     }
     forEach(f) {
         this.f = f;
@@ -2564,6 +2672,7 @@ class Array2D {
         }
     }
     setEach(f) {
+        //console.log(this.index);
         this.f = f;
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
@@ -2888,8 +2997,7 @@ function ellipse(x, y, a, b, arca = 0, arcb = 360) {
     }
 }
 function point(x, y) {
-    x = Canvas.x(x);
-    y = Canvas.y(y);
+    [x, y] = Camera2D.convertPos(x, y);
     circle(x, y, ctx.lineWidth / 2);
 }
 function rect(x, y, w, h, rotat) {
@@ -3065,6 +3173,7 @@ function createCanvas(
     Canvas.enabled = true;
     document.body.insertBefore(canvas, document.body.childNodes[0]);
     ctx = canvas.getContext("2d");
+    Draw.ctx = ctx;
     ctx.imageSmoothingEnabled = false;
     Canvas.lineWidth = ctx.lineWidth;
     Canvas.fillStyle = ctx.fillStyle;
@@ -3140,6 +3249,65 @@ function pixelDensity(val) {
         backGround(255);
     } else {
         return densityVal;
+    }
+}
+// #endregion
+
+// #region Draw
+const Draw = {
+    ctx: undefined,
+    Polygon(vertices, close) {
+        ctx.beginPath();
+        ctx.moveTo(vertices[0], vertices[1]);
+        for (var i = 2; i < vertices.length; i += 2) {
+            ctx.lineTo(vertices[i], vertices[i + 1]);
+        }
+        if (close == CLOSE) {
+            //console.log(close);
+            ctx.lineTo(vertices[0], vertices[1]);
+            ctx.closePath();
+        }
+        if (CANVAS_FILL_MODE_ENABLED && close == CLOSE) {
+            ctx.fill();
+        }
+        if (CANVAS_STROKE_MODE_ENABLED) {
+            ctx.stroke();
+        }
+    },
+    IndexedLines(verticesArrayXY, indices, fill = false) {
+        this.ctx.beginPath();
+        for (var i = 0; i < indices.length; i += 2) {
+            let ai = indices[i];
+            let bi = indices[i + 1];
+            if (i > 0 && ai == indices[i - 1]) {
+                this.ctx.lineTo(verticesArrayXY[ai * 2], verticesArrayXY[ai * 2 + 1]);
+                //console.log(ai, indices[i - 1]);
+                continue;
+            }
+            this.ctx.moveTo(verticesArrayXY[ai * 2], verticesArrayXY[ai * 2 + 1]);
+            this.ctx.lineTo(verticesArrayXY[bi * 2], verticesArrayXY[bi * 2 + 1]);
+        }
+        this.ctx.closePath();
+        if (fill) {
+            ctx.fill();
+        }
+        ctx.stroke();
+    },
+    Circle: function (...args) { // x, y, r, startAngle?, endAngle?
+        circle(...args);
+    },
+    Circles(circleDataArray) {
+        for (let circleData of circleDataArray) {
+            this.Circle(...circleData);
+        }
+    },
+    Rect(x, y, w, h) {
+        rect(x, y, w, h);
+    },
+    Rects(rectDatas) {
+        for (let rectData of rectDatas) {
+            this.Rect(...rectData);
+        }
     }
 }
 // #endregion
@@ -3612,7 +3780,7 @@ on.pointerdown.bind(function (button, x, y, event) {
     }
 });
 on.pointerup.bind(function (x, y, dx, dy, event) {
-    UI.UnClick();
+    return UI.UnClick();
 });
 class UIElement {
     static Selected = false;
@@ -4079,7 +4247,8 @@ class Slider extends UIElement {
 
         noStroke();
         super.draw();
-        let name = this._name();
+        const name = "" + this._name(this);
+        //console.log(name);
         if (name.length > 0) {
             ctx.save();
             fill(0);
@@ -4089,6 +4258,7 @@ class Slider extends UIElement {
                 this.a.x + this.nameoffsetx,
                 this.a.y + this.nameoffsety
             );
+            //console.log(name, this.a.x + this.nameoffsetx, this.a.y + this.nameoffsety);
             ctx.restore();
         }
     }
@@ -4115,6 +4285,7 @@ const UI = {
             UIElement.Selected.clicked = false;
             UIElement.Selected = false;
             Gizmo.Selected = false;
+            return EVENT_PREVENT_DEFAULT;
         }
     },
     Draw: function () {

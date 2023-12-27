@@ -1,12 +1,14 @@
 <html>
+
 <head>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
         let p = new Gizmo(200, 200);
-        let a = new Gizmo(100, 300, color());
+        let a = new Gizmo(100, 300);
         let b = new Gizmo(300, 100);
         function setUp() {
             createCanvas(400, 400);
@@ -22,9 +24,8 @@
             //circle(vec.x, vec.y, 5);
             //line(vec.x, vec.y, p.x, p.y);
 
-            let pt = distance.Vector.line2(a.position, b.position, p.position);
-            circle(pt.x, pt.y, 5);
-            pt = distance.Vector.line(a.position, b.position, p.position);
+            let pt = distance.Vector.line(a.localPosition, b.localPosition, p.localPosition).point;
+            //console.log(pt);
             circle(pt.x, pt.y, 5);
         }
         function side(a, b, p) {
@@ -44,4 +45,5 @@
     </script>
 
 </body>
+
 </html>

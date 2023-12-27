@@ -13,7 +13,7 @@ class Grid extends Array2D {
         this.cellwidth = CanvasWidth / this.width;
         this.cellheight = CanvasHeight / this.height;
 
-        this.forEach(function (i, j) {
+        this.setEach(function (i, j) {
             return new Cell(i, j, this);
         }, true);
 

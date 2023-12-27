@@ -47,165 +47,31 @@ class Grid extends Array2D {
         let pos = Random.element(possibilities);
         this.set(pos.x, pos.y, choice);
     }
-    slide(dim, start, first) {
-        if (this.animation) {
-            this.animation.cancel();
-        }
-        if (first) {
-            if (this.combine1) {
-                this.combine1.cancel();
-            }
-            if (this.combine2) {
-                this.combine2.cancel();
-            }
-        }
-        let grid = this;
-        let toAnimate = [].concat(...this.operate(dim, start, function (arr, positions, dx, dy) {
-            let order = getSortingOrder(arr, slidingZero);
-            let newArr = new Array(order.length).fill(0);
-            let toAnimate = [];
-            for (var i = 0; i < order.length; i++) {
-                let j = order[i];
-                let current = abs(arr[j]);
-                if (i == j || current == 0) {
-                    newArr[i] = current;
-                } else {
-                    //console.log(current, positions[j].x, positions[j].y, positions[i].x, positions[i].y);
-                    newArr[i] = -current;
-                    toAnimate.push([current, positions[j].x, positions[j].y, positions[i].x, positions[i].y]);
-                }
-            }
-            if (first) {
-                let charr = [...newArr];
-                for (var i = 0; i < charr.length - 1; i++) {
-                    if (charr[i] == charr[i + 1] && charr[i] > 0) {
-                        charr[i] = 0;
-                        charr[i + 1] = 0;
-                        let aj = order[i];
-                        let bj = order[i + 1];
-                        this.currentCombining.push(positions[aj], positions[bj]);
-                        grid.combineTwo(positions[aj].x, positions[aj].y, positions[bj].x, positions[bj].y, newArr[i]);
-                    }
-                }
-            }
-            //console.log(newArr);
-            return [newArr, ...toAnimate];
-        }));
-        this.combine1 = this.animateCombinations();
-        this.animation = animate([toAnimate, [...toAnimate]], DURATION, function (t) {
-            let toAnimate = this.data[0];
-            if (toAnimate.length == 0) {
-                this.cancel();
-                return;
-            }
-            for (var i = 0; i < toAnimate.length; i++) {
-                let animation = toAnimate[i];
-                if (grid.get(animation[3], animation[4]) != -animation[0]) {
-                    toAnimate.splice(i, 1);
-                    i--;
-                }
-                grid.cell(
-                    (animation[1] * (1 - t) + animation[3] * t) * grid.cellwidth,
-                    (animation[2] * (1 - t) + animation[4] * t) * grid.cellheight,
-                    animation[0]
-                );
-            }
-        }, function (t) {
-            //console.log(this.data[0]);
-            for (var animation of this.data[0]) {
-                if (grid.get(animation[3], animation[4]) == -animation[0]) {
-                    fill(colors[animation[0]]);
-                    let ax = (animation[1] * (1 - t) + animation[3] * t) * grid.cellwidth;
-                    let ay = (animation[2] * (1 - t) + animation[4] * t) * grid.cellheight;
-                    let w = animation[3] * grid.cellwidth - ax;
-                    let h = animation[4] * grid.cellheight - ay;
-                    if (w == 0) {
-                        w = grid.cellwidth;
-                    } else if (h == 0) {
-                        h = grid.cellheight;
-                    }
-                    rect(
-                        ax,
-                        ay,
-                        w,
-                        h,
-                    );
-                    grid.cell(
-                        animation[3] * grid.cellwidth,
-                        animation[4] * grid.cellheight,
-                        animation[0]
-                    );
-                    grid.set(animation[3], animation[4], animation[0]);
-                }
-            }
-            if (first) {
-                grid.combine(dim, start);
-            } else {
-                grid.addRandom();
-            }
-        });
-    }
-    combineTwo(ax, ay, bx, by, val) {
-        this.combinations.push([val, ax, ay, bx, by]);
-    }
-    animateCombinations(slideAgain = false, dim, start) {
-        if (this.combinations.length > 0) {
-            console.table(this.combinations);
-        }
-        let toAnimate = this.combinations;
-        for (var animation of toAnimate) {
-            this.set(animation[1], animation[2], -animation[0] - 1);
-            this.set(animation[3], animation[4], 0);
-        }
-        this.combinations = [];
-        return animate([toAnimate, this, dim, start], DURATION, function (t) {
-            const [toAnimate, grid] = this.data;
-            if (toAnimate.length == 0) {
-                this.cancel();
-            }
-            for (var animation of toAnimate) {
-                //this.cancel();
-                //grid.cell(animation.);
-            }
-        }, function (t) {
-            const [toAnimate, grid, dim, start] = this.data;
-            for (var animation of toAnimate) {
-                grid.set(animation[1], animation[2], animation[0] + 1);
-                grid.set(animation[3], animation[4], 0);
-            }
-            if (slideAgain) {
+    slide(dim, start) {
 
-                grid.slide(dim, start, false);
-            }
+        this.operate(dim, start, function (arr, positions) {
+            arr = arr.sort(slidingZero);
+            return [arr];
         });
     }
     combine(dim, start) {
         this.operate(dim, start, function (arr, positions) {
             for (var i = 0; i < arr.length - 1; i++) {
                 if (arr[i] == arr[i + 1] && arr[i] > 0) {
-                    let broken = false;
-                    for (var pos of this.currentCombining) {
-                        if (Vector.Equal(pos, positions[i]) || Vector.Equal(pos, positions[i + 1])) {
-                            broken = true;
-                            break;
-                        }
-                    }
-                    if (broken) {
-                        continue;
-                    }
-                    this.combineTwo(positions[i].x, positions[i].y, positions[i + 1].x, positions[i + 1].y, arr[i]);
+                    arr[i + 1] = arr[i] + 1;
+                    arr[i] = 0;
+                    //this.combineTwo(positions[i].x, positions[i].y, positions[i + 1].x, positions[i + 1].y, arr[i]);
                 }
             }
             return [arr];
         });
-        this.currentCombining = [];
-        this.combine2 = this.animateCombinations(true, dim, start);
         //this.addRandom();
     }
     move(dimension, start) {
-        this.currentDim = dimension;
-        this.currentStart = start;
-        this.slide(dimension, start, true);
+        this.slide(dimension, start);
+        this.combine(dimension, start);
+        this.slide(dimension, start);
+        this.addRandom();
         return;
     }
     operate(dimension, start, func) {
@@ -279,6 +145,7 @@ class Grid extends Array2D {
         if (val < 0) {
             val = 0;
         }
+        //console.log(val, colors[val]);
         fill(colors[val]);
         rect(x + pad, y + pad, this.cellwidth - pad * 2, this.cellheight - pad * 2);
         if (val == 0) return;

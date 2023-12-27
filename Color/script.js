@@ -1,11 +1,11 @@
-const test = new test1();
+const colorHandler = new ColorHandler();
 
 function setUp() {
     createCanvas(400, 400);
     frameRate(60);
-    test.init();
+    colorHandler.init();
 }
 function draw() {
     clear();
-    test.update();
+    colorHandler.update();
 }

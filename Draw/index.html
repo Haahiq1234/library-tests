@@ -24,7 +24,7 @@
 
         function setUp() {
             createCanvas(WIDTH + PANEL_WIDTH, HEIGHT);
-            frameRate(60);
+            frameRate(20);
         }
         function draw() {
             clear(WIDTH, 0, CanvasWidth - WIDTH, HEIGHT);
@@ -33,7 +33,9 @@
             if (mousePressed) {
                 if (previously_in_between && !currently_in_between) {
                     ln(Mouse.px, Mouse.py, constraint(Mouse.x, 0, WIDTH), constraint(Mouse.y, 0, HEIGHT));
+                    line(Mouse.px, Mouse.py, Mouse.x, Mouse.y);
                 } else if (currently_in_between && !previously_in_between) {
+                    line(Mouse.px, Mouse.py, Mouse.x, Mouse.y);
                     ln(constraint(Mouse.px, 0, WIDTH), constraint(Mouse.py, 0, HEIGHT), Mouse.x, Mouse.y);
                 } else if (currently_in_between) {
                     ln(Mouse.px, Mouse.py, Mouse.x, Mouse.y);

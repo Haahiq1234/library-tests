@@ -89,7 +89,7 @@ class Shape {
         this.color = Random.element(cols);
     }
     update() {
-        if (Control.FRAME_NO % this.framesPerMovement == 0) {
+        if (Sketch.FRAME_NO % this.framesPerMovement == 0) {
             if (!this.tryMove(this.grid.gravity)) {
                 this.finish();
             }

@@ -3,7 +3,7 @@ const system = new CameraSystem();
 
 function setUp() {
     createCanvas(400, 400);
-    frameRate(10);
+    frameRate(20);
     noStroke();
 }
 function draw() {

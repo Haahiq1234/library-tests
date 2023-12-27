@@ -1,18 +1,26 @@
+///<reference path="../Canvas.js"/>
+///<reference path="../Animator.js"/>
+
+
 const FRAMES_PER_MOVE = 10;
 
-
+let grd;
 class Grid extends Array2D {
     padding = 5;
     running = false;
     constructor(width, height) {
         super(width, height);
         var grid = this;
+        grd = this;
         on.pointerdown.bind((x, y) => grid.onpointerdown(x, y));
     }
-    preview(width, height) {
+    preview(width, height, padding = 5) {
         this.resize(width, height);
-        this.draw();
+        this.draw(padding);
     }
+    /**
+     * @param {Image} im
+     */
     set image(im) {
         this._image = im;
         if (!im) return;
@@ -20,11 +28,11 @@ class Grid extends Array2D {
         this.imagecellheight = this._image.height / this.height;
     }
     resize(width, height) {
-        super.resize(width, height);  
+        super.resize(width, height);
         this.image = this._image;
         this.cellwidth = CanvasWidth / this.width;
         this.cellheight = CanvasHeight / this.height;
-        this.forEach((i, j, val, ind)=>ind);
+        this.setEach((i, j, ind) => ind);
     }
     shuffleGrid(n) {
         for (let i = 0; i < n; i++) {
@@ -71,13 +79,20 @@ class Grid extends Array2D {
 
     }
     move(x, y, animate) {
+        var grid = this;
+        if (animate && this.animation && this.animation.isRunning) { // checking wether the previous animation is still running and if it is, then it just appends it to the next move
+            this.animation.linkEndFunction(function () {
+                grid.move(x, y, animate);
+            });
+            return;
+        }
         let pos = new Vector2(x, y);
-        let dx = x - this.freeSpot.x;                                                                          
+        let dx = x - this.freeSpot.x;
         let dy = y - this.freeSpot.y;
         if (abs(dx) + abs(dy) == 1) {
-            if (this.animation && x == this.animation.data.x && y == this.animation.data.y) {
-                this.animation.cancel();
-            }
+            // if (this.animation && x == this.animation.data.x && y == this.animation.data.y) {
+            //     this.animation.cancel();
+            // }
             let index = this.get(x, y);
             if (index >= this.array.length) {
                 index -= this.array.length;
@@ -88,17 +103,18 @@ class Grid extends Array2D {
                 let b = this.freeSpot;
                 let cw = this.cellwidth;
                 let ch = this.cellheight;
-                var grid = this;
-                this.animation = new Animator(b, FRAMES_PER_MOVE, function (t) {
+                let animation = new AnimationHandler(b, FRAMES_PER_MOVE, function (t) {
                     let pos = new Vector2(
                         ((1 - t) * x + t * b.x) * cw,
                         ((1 - t) * y + t * b.y) * ch
                     );
                     grid.cell(pos.x, pos.y, index);
-                }, function () { 
+                }, function () {
                     grid.cell(b.x * grid.cellwidth, b.y * grid.cellheight, index);
                     grid.set(b.x, b.y, index);
                 });
+                animation.run();
+                this.animation = animation;
             } else {
                 this.set(this.freeSpot.x, this.freeSpot.y, index);
             }
@@ -106,12 +122,12 @@ class Grid extends Array2D {
         }
     }
 
-    draw() {
+    draw(padding = 0) {
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.height; j++) {
                 let val = this.get(i, j);
                 if (val == -1 || val >= this.array.length) continue;
-                this.cell(i * this.cellwidth, j * this.cellheight, val);
+                this.cell(i * this.cellwidth, j * this.cellheight, val, padding);
             }
         }
         if (this.hasEnded() && this.running) {
@@ -119,13 +135,13 @@ class Grid extends Array2D {
         }
         //console.log(running);
     }
-    cell(x, y, val) {
+    cell(x, y, val, padding = 0) {
         if (this._image) {
-            return this.drawImageCell(x, y, val);
+            return this.drawImageCell(x, y, val, padding);
         }
         return this.drawNumberCell(x, y, val);
     }
-    drawImageCell(x, y, val) {
+    drawImageCell(x, y, val, padding = 0) {
         let value = val;
         if (value == -1) return;
         let pos = this.pos(value);
@@ -135,10 +151,10 @@ class Grid extends Array2D {
             pos.y * this.imagecellheight,
             this.imagecellwidth,
             this.imagecellheight,
-            x,
-            y,
-            this.cellwidth,
-            this.cellheight
+            x + padding,
+            y + padding,
+            this.cellwidth - padding * 2,
+            this.cellheight - padding * 2
         );
     }
     drawNumberCell(x, y, val) {

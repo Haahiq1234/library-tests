@@ -1,4 +1,4 @@
-class Animator {
+class AnimationHandler {
     static add() {
 
     }
@@ -6,24 +6,33 @@ class Animator {
     constructor(data, frames, onupdate, onend) {
         this.data = data;
         this.duration = frames;
-        this.startFrame = Control.FRAME_NO;
         this.animationEndCallback = onend;
         this.animationUpdateCallback = onupdate;
-        this.isCancelled = false;
         this.hasEnded = false;
 
-        Animator.animators.push(this);
+    }
+    get isRunning() {
+        return !this.hasEnded;
+    }
+
+    endFunctions = [];
+    run() {
+        this.startFrame = Sketch.FRAME_NO;
+        AnimationHandler.animators.push(this);
+        if (this.onstart && typeof (this.onstart) == 'function') {
+            this.onstart();
+        }
     }
     cancel() {
-        if (this.hasEnded || this.isCancelled) return;
-        this.isCancelled = true;
+        if (this.hasEnded) return;
+        this.hasEnded = true;
         this.end();
     }
     ended() {
-        if (this.isCancelled) {
+        if (this.hasEnded) {
             return true;
         }
-        if (Control.FRAME_NO > this.startFrame + this.duration) {
+        if (Sketch.FRAME_NO > this.startFrame + this.duration) {
             this.hasEnded = true;
             this.end();
             return true;
@@ -31,24 +40,35 @@ class Animator {
         this.draw();
         return false;
     }
+    linkEndFunction(func) {
+        this.endFunctions.push(func);
+    }
     end() {
         this.animationEndCallback(min(this.t(), 1));
+        for (let func of this.endFunctions) {
+            this.f = func;
+            this.f();
+        }
     }
     draw() {
         this.animationUpdateCallback(this.t());
     }
     t() {
-        return (Control.FRAME_NO - this.startFrame) / this.duration;
+        return (Sketch.FRAME_NO - this.startFrame) / this.duration;
+    }
+    addStart(func) {
+        if (typeof (func) != "function") return;
+        this.onstart = func;
     }
 }
 on.draw.bind(function () {
-    for (var i = 0; i < Animator.animators.length; i++) {
-        if (Animator.animators[i].ended()) {
-            Animator.animators.splice(i, 1);
+    for (var i = 0; i < AnimationHandler.animators.length; i++) {
+        if (AnimationHandler.animators[i].ended()) {
+            AnimationHandler.animators.splice(i, 1);
             i--;
         }
     }
 });
 function animate(...args) {
-    return new Animator(...args);
+    return new AnimationHandler(...args);
 }

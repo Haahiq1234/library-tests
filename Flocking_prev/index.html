@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta Flocking="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flocking</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <script src="../Canvas.js"></script>
+    <script src="Boid.js"></script>
+    <script>
+        const flock = [];
+        function setUp() {
+            createCanvas(1000, 600, "black");
+            for (var i = 0; i < 100; i++) {
+                flock.push(new Boid(Random.range(CanvasWidth), Random.range(CanvasHeight)));
+            }
+        }
+        function draw() {
+            clear();
+            for (let boid of flock) {
+                boid.run(flock);
+                if (mousePressed) {
+                    boid.pursue(mouse);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

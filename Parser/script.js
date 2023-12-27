@@ -2,11 +2,11 @@ const TAG_START = "<";
 const TAG_END = ">"
 
 function parseHTML(html) {
-    if (typeof(html) != "string") {
+    if (typeof (html) != "string") { //checking if the argument provided is a string
         console.log("HTML given is not a string");
         return [];
     }
-    if (html.length < 7) {
+    if (html.length < 7) { /// Smallest string is <p></p> which is 7 characters
         console.log("Given String is too small.");
     }
     html = html.split(TAG_START);
@@ -16,7 +16,7 @@ function parseHTML(html) {
         if (str.length == 1) continue;
         list = list.concat(splitElement(str));
     }
-    console.log([...list]);
+    console.log(list);
     reStructure(list);
     let current = new HTMLELement(list[0]);
     for (var i = 1; i < list.length - 1; i++) {
@@ -29,8 +29,9 @@ function parseHTML(html) {
             current = elem;
         } else if (tag.isEnd && current.isStartOf(tag)) {
             current = current.parent;
-        } 
+        }
     }
+    console.log(current);
     //console.log(list);
     return current.construct();
 }
@@ -46,6 +47,7 @@ function splitElement(str) {
     return list;
 }
 function reStructure(list) {
+    //return list.map((item) => new HTMLTag(item));
     for (var i = 0; i < list.length; i++) {
         list[i] = new HTMLTag(list[i]);
     }
@@ -55,7 +57,7 @@ function getAttributes(tag) {
         console.log(tag.elem + " is not an Element.");
         return "";
     }
-    let elem = tag.elem.slice((tag.isStart)? 1: 2, tag.elem.length - 2);
+    let elem = tag.elem.slice((tag.isStart) ? 1 : 2, tag.elem.length - 2);
     let attributelist = splitAttributes(elem);
     if (attributelist.length == 0) return {};
     console.log(attributelist);
@@ -66,7 +68,7 @@ function getAttributes(tag) {
     }
     return attributes;
 }
-function splitAttributes(args, outline="\""){
+function splitAttributes(args, outline = "\"") {
     strings = []
     let in_string = false;
 
@@ -79,7 +81,7 @@ function splitAttributes(args, outline="\""){
             if (arg.includes(outline)) {
                 arg = arg.replace(outline, "");
                 in_string = !in_string;
-                if (in_string) 
+                if (in_string)
                     strings[strings.length - 1] += " " + arg;
                 else
                     strings.push(arg);
@@ -115,7 +117,7 @@ function splitAttributes(args, outline="\""){
                 continue;
             }
             if (!in_start && !in_end && in_prev) {
-                finalstrings[finalstrings.length-1] += str;
+                finalstrings[finalstrings.length - 1] += str;
                 in_prev = false;
                 continue;
             }
@@ -139,18 +141,18 @@ class HTMLTag {
         if (this.isTag) {
             this.isEnd = this.elem[1] == "/";
             this.isStart = this.elem[1] != "/";
-            
+
             this.findName();
 
 
         }
     }
-    findName(log=false) {
+    findName(log = false) {
         if (!this.isTag) {
             console.log(this.elem + " is not an Element.");
             return "";
         }
-        let name = this.elem.slice(this.isStart? 1: 2, this.elem.length - 1).split(" ")[0];
+        let name = this.elem.slice(this.isStart ? 1 : 2, this.elem.length - 1).split(" ")[0];
         if (log) {
             console.log(name);
         }

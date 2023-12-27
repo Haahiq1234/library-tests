@@ -89,7 +89,7 @@ class Grid extends Array2D {
         this.generate();
     }
     generate() {
-        this.forEach(function (i, j, val, index) {
+        this.setEach(function (i, j, val, index) {
             return Random.range(0, 2) < 0.5 ? 1 : 0;
         }, true);
         this.set(this.startPos.x, this.startPos.y, 2);

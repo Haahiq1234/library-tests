@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <style>
     </style>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
@@ -18,7 +20,7 @@
         //ray.setChild(b);
         //a.setParent(ray, true);
         //b.setParent(ray, true);
-        
+
         function setUp() {
             createCanvas(800, 400, color(255));
             //frameRate(60);
@@ -31,14 +33,14 @@
             //ray.constraintToCircle(rayOrigin.position, 100);
             let origin = rayOrigin.position;
             let dir = ray.localPosition;
-            let cast = RayCast.rect(origin.x, origin.y, dir.x, dir.y, 100, 100, 200, 200);
+            let cast = Raycast.rect(origin.x, origin.y, dir.x, dir.y, 100, 100, 200, 200);
             line(origin.x, origin.y, origin.x + dir.x, origin.y + dir.y);
             nofill();
             rect(100, 100, 200, 200);
             if (cast.hit) {
                 circle(cast.point.x, cast.point.y, 5);
             }
-            let cast1 = RayCast.line(origin.x, origin.y, dir.x, dir.y, av.x, av.y, bv.x, bv.y);
+            let cast1 = Raycast.line(origin.x, origin.y, dir.x, dir.y, av.x, av.y, bv.x, bv.y);
             line(av.x, av.y, bv.x, bv.y);
             if (cast1.hit) {
                 circle(cast1.point.x, cast1.point.y, 5);
@@ -60,4 +62,5 @@
     </script>
 
 </body>
+
 </html>

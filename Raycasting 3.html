@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <style>
     </style>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script>
@@ -19,7 +21,7 @@
             frameRate(50);
             particle = new Particle();
             //for (var i = 0; i < 5; i++) {
-               // walls.push(new boundary(Random.range(width), Random.range(height), Random.range(width), Random.range(height)));
+            // walls.push(new boundary(Random.range(width), Random.range(height), Random.range(width), Random.range(height)));
             //}
             walls.push(new boundary(-padding, -padding, width + padding, -padding));
             walls.push(new boundary(-padding, height + padding, width + padding, height + padding));
@@ -67,10 +69,10 @@
                 this.pos.y = constraint(this.pos.y, 0, height);
             }
             get fov() {
-                return this.fovSlider.value;
+                return 60;
             }
             get res() {
-                return this.resSlider.value;
+                return 5;
             }
             get x() {
                 return this.pos.x;
@@ -94,8 +96,8 @@
                     let length2 = Infinity;
                     for (let wall of walls) {
                         let ray = Vector.AngleToVector(this.angle + ang, 5);
-                        let cast1 = RayCast.Vector.line(this.pos, ray, wall.a, wall.b);
-                        if (cast1.intersected) {
+                        let cast1 = Raycast.Vector.line(this.pos, ray, wall.a, wall.b);
+                        if (cast1.hit) {
                             let dist = Vector.dist(cast1.point, this.pos)
                             if (dist < length) {
                                 p = cast1.point;
@@ -112,7 +114,8 @@
                     let x = width + padding + i * this.res;
                     let y = CanvasHeight / 2 - h / 2;
                     fill(255 / (length2 / 20) * 5);
-                    stroke(255 / (length2 / 20));
+                    //stroke(255 / (length2 / 20));
+                    noStroke();
                     rect(x, y, this.res, h * 2);
                     line(p.x, p.y, this.x, this.y);
 
@@ -141,4 +144,5 @@
     </script>
 
 </body>
+
 </html>
