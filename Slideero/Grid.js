@@ -13,6 +13,7 @@ class Grid extends Array2D {
         var grid = this;
         grd = this;
         on.pointerdown.bind((x, y) => grid.onpointerdown(x, y));
+        this.queue = [];
     }
     preview(width, height, padding = 5) {
         this.resize(width, height);
@@ -35,12 +36,17 @@ class Grid extends Array2D {
         this.setEach((i, j, ind) => ind);
     }
     shuffleGrid(n) {
+        let free = this.freeSpot;
+        let prev = new Vector2(-1, -1);
         for (let i = 0; i < n; i++) {
             let neighbour = this.getRandomNeighbour(
-                this.freeSpot.x,
-                this.freeSpot.y
+                free.x,
+                free.y,
+                prev
             );
-            this.move(neighbour.x, neighbour.y, false);
+            prev = free;
+            free = neighbour;
+            this.move(neighbour.x, neighbour.y, true, 3);
         }
     }
     hasEnded() {
@@ -51,7 +57,7 @@ class Grid extends Array2D {
         }
         return true;
     }
-    getRandomNeighbour(x, y) {
+    getRandomNeighbour(x, y, prev) {
         let neighbours = [];
         if (x > 0) {
             neighbours.push(new Vector2(x - 1, y));
@@ -65,6 +71,9 @@ class Grid extends Array2D {
         if (y < this.height - 1) {
             neighbours.push(new Vector2(x, y + 1));
         }
+        //console.log(neighbours);
+        neighbours = neighbours.filter(v => !(v.x == prev.x && v.y == prev.y));
+        //console.log(...neighbours, "prev", this.previousFreeSpot);
         return Random.element(neighbours);
     }
     onpointerdown(x, y) {
@@ -78,12 +87,13 @@ class Grid extends Array2D {
     drawTimer() {
 
     }
-    move(x, y, animate) {
+    move(x, y, animate, animationDuration = FRAMES_PER_MOVE) {
         var grid = this;
         if (animate && this.animation && this.animation.isRunning) { // checking wether the previous animation is still running and if it is, then it just appends it to the next move
-            this.animation.linkEndFunction(function () {
-                grid.move(x, y, animate);
-            });
+            // this.animation.linkEndFunction(function () {
+            //     grid.move(x, y, animate);
+            // });
+            this.queue.push([x, y, animationDuration]);
             return;
         }
         let pos = new Vector2(x, y);
@@ -103,21 +113,29 @@ class Grid extends Array2D {
                 let b = this.freeSpot;
                 let cw = this.cellwidth;
                 let ch = this.cellheight;
-                let animation = new AnimationHandler(b, FRAMES_PER_MOVE, function (t) {
-                    let pos = new Vector2(
-                        ((1 - t) * x + t * b.x) * cw,
-                        ((1 - t) * y + t * b.y) * ch
-                    );
-                    grid.cell(pos.x, pos.y, index);
-                }, function () {
-                    grid.cell(b.x * grid.cellwidth, b.y * grid.cellheight, index);
-                    grid.set(b.x, b.y, index);
-                });
+                let animation = new AnimationHandler(
+                    b,
+                    animationDuration,
+                    function (t) {
+                        let pos = new Vector2(
+                            ((1 - t) * x + t * b.x) * cw,
+                            ((1 - t) * y + t * b.y) * ch
+                        );
+                        grid.cell(pos.x, pos.y, index);
+                    }, function () {
+                        grid.cell(b.x * grid.cellwidth, b.y * grid.cellheight, index);
+                        grid.set(b.x, b.y, index);
+                        if (grid.queue.length > 0) {
+                            let p = grid.queue.shift();
+                            grid.move(p[0], p[1], true, p[2]);
+                        }
+                    });
                 animation.run();
                 this.animation = animation;
             } else {
                 this.set(this.freeSpot.x, this.freeSpot.y, index);
             }
+            this.previousFreeSpot = this.freeSpot;
             this.freeSpot = pos;
         }
     }
@@ -180,8 +198,9 @@ class Grid extends Array2D {
     begin() {
         this.freeSpot = new Vector2(this.width - 1, this.height - 1);
         this.set(this.freeSpot.x, this.freeSpot.y, -1);
-        this.shuffleGrid(((this.width * this.height) ** 2));
+        this.previousFreeSpot = this.freeSpot;
         this.running = true;
+        this.shuffleGrid(((this.width * this.height) ** 2));
     }
     end() {
         this.set(

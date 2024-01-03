@@ -10,38 +10,34 @@ function setUp() {
     console.log(grid);
     noLoop();
     let length = min(CanvasWidth, CanvasHeight) / 4;
-    addSlideEvent(function (ax, ay, bx, by) {
-        let dx = bx - ax;
-        let dy = by - ay;
-        if (abs(dx) > abs(dy)) {
-            console.log("Horizontal move");
-            if (dx > 0) {
-                grid.operate(1, arr => arr.reverse(), grid.width - 1);
-            } else {
-                grid.operate(1, arr => arr, 0);
-            }
-        } else {
-            console.log("Vertical move");
-            if (dy < 0) {
-                grid.operate(0, arr => arr, 0);
-            } else {
-                grid.operate(0, arr => arr.reverse(), grid.height - 1);
-            }
+    addSlideEvent(function (dir) {
+        switch (dir) {
+            case SLIDE_DIRECTION.UP:
+                grid.move(1, 0);
+                break;
+            case SLIDE_DIRECTION.DOWN:
+                grid.move(1, grid.height - 1);
+                break;
+            case SLIDE_DIRECTION.LEFT:
+                grid.move(0, 0);
+                break;
+            case SLIDE_DIRECTION.RIGHT:
+                grid.move(0, grid.height - 1);
+                break;
         }
-    }, length, true);
+    }, length);
 }
 function draw() {
-    clear();
     grid.draw();
 }
 on.keydown.bind(function () {
     if (keyCode == key.down) {
-        grid.operate(0, arr => arr.reverse(), grid.height - 1);
+        grid.move(1, grid.height - 1);
     } else if (keyCode == key.up) {
-        grid.operate(0, arr => arr, 0);
+        grid.move(1, 0);
     } else if (keyCode == key.left) {
-        grid.operate(1, (arr) => arr, 0);
+        grid.move(0, 0);
     } else if (keyCode == key.right) {
-        grid.operate(1, arr => arr.reverse(), grid.width - 1);
+        grid.move(0, grid.width - 1);
     }
 });

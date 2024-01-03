@@ -25,7 +25,6 @@ class AnimationHandler {
     }
     cancel() {
         if (this.hasEnded) return;
-        this.hasEnded = true;
         this.end();
     }
     ended() {
@@ -33,7 +32,6 @@ class AnimationHandler {
             return true;
         }
         if (Sketch.FRAME_NO > this.startFrame + this.duration) {
-            this.hasEnded = true;
             this.end();
             return true;
         }
@@ -44,6 +42,7 @@ class AnimationHandler {
         this.endFunctions.push(func);
     }
     end() {
+        this.hasEnded = true;
         this.animationEndCallback(min(this.t(), 1));
         for (let func of this.endFunctions) {
             this.f = func;

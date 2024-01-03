@@ -60,7 +60,7 @@ class Game {
                     this.keydown(key.right);
                 }
                 this.dx = 0;
-            } else {
+            } else if (abs(dx) > 3) {
                 let reverseDX = -signDx * CanvasWidth + dx;
                 this.dx = reverseDX;
                 this.current = nextI;
