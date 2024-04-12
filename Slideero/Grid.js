@@ -46,7 +46,7 @@ class Grid extends Array2D {
             );
             prev = free;
             free = neighbour;
-            this.move(neighbour.x, neighbour.y, true, 3);
+            this.move(neighbour.x, neighbour.y, false, 3);
         }
     }
     hasEnded() {
