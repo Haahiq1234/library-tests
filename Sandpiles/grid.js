@@ -1,3 +1,5 @@
+/// <reference path="../Canvas.js" />
+
 const PADDING = 0;
 
 const colors = {
@@ -17,16 +19,47 @@ class Grid extends Array2D {
         this.cellWidth = CanvasWidth / this.width;
         this.cellHeight = CanvasHeight / this.height;
 
-        this.array.fill(0);
-        this.set(0, 0, 70); // 140
-        this.set(this.width - 1, this.height - 1, 250); // 1000
-        this.set(this.width / 2, this.height / 2, 125); // 500
+        this.array.fill(1);
+        this.set(0, 0, 140); // 140
+        this.set(this.width - 1, this.height - 1, 1000); // 1000
+        this.set(this.width / 2, this.height / 2, 500); // 500
     }
     update() {
-        this.buffer.array = new Array(this.width * this.height);
-        this.buffer.forEach(function (i, j, value) {
-
+        let grid = this;
+        this.buffer.array.fill(0);
+        this.forEach(function (i, j, value, index) {
+            if (value < 4) {
+                this.buffer.array[index] += value;
+            } else {
+                let toSet = value;
+                if (i > 0) {
+                    toSet--;
+                    let index = this.index(i - 1, j);
+                    this.buffer.array[index]++;
+                }
+                if (j > 0) {
+                    toSet--;
+                    let index = this.index(i, j - 1);
+                    this.buffer.array[index]++;
+                }
+                if (i < (this.width - 1)) {
+                    //console.log(i, j);
+                    toSet--;
+                    let index = this.index(i + 1, j);
+                    this.buffer.array[index]++;
+                }
+                if (j < (this.height - 1)) {
+                    toSet--;
+                    let index = this.index(i, j + 1);
+                    //console.log(index, i, j + 1);
+                    this.buffer.array[index]++;
+                }
+                this.buffer.array[index] += toSet;
+            }
         });
+        let temp = this.buffer.array;
+        this.buffer.array = this.array;
+        this.array = temp;
     }
     draw() {
         for (let i = 0; i < this.width; i++) {

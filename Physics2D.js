@@ -55,9 +55,11 @@ class Physics2DSpring {
     }
     update() {
         let dir = Vector.sub(this.b.pos, this.a.pos);
-        if (dir.mag() > 0) {
-            let x = (dir.mag() - this.rest) * this.ks;
-            let f = dir.setMag(x + this.calculateDampening());
+        let dirLen = dir.mag();
+        if (dirLen > 0) {
+            let x = (dirLen - this.rest) * this.ks;
+            dir.div(dirLen);
+            let f = dir.mult(x + this.calculateDampening(dir));
             this.apply(f);
         }
     }
@@ -65,10 +67,9 @@ class Physics2DSpring {
         this.a.addForce(force);
         this.b.addForce(force.mult(-1));
     }
-    calculateDampening() {
-        let normalizedDirectionVector = Vector.directionVector(this.a.pos, this.b.pos);
+    calculateDampening(normalizedPositionDifference) {
         let velocityDifference = Vector.sub(this.b.vel, this.a.vel);
-        let fd = Vector.dot(normalizedDirectionVector, velocityDifference) * this.kd;
+        let fd = Vector.dot(normalizedPositionDifference, velocityDifference) * this.kd;
         return fd;
     }
 }

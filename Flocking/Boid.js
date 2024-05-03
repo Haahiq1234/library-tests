@@ -48,7 +48,7 @@ class Boid extends Vector2 {
             //boid.tempData = Vector.dist(this, boid);
             boid.tempData = boid.cur_dist;
             let d = boid.tempData;
-            if (boid != this && d < this.perceptionRadius) {
+            if (boid != this && d < PERCEPTION_RADIUS) {
                 force.add(boid.vel);
                 total++;
             }

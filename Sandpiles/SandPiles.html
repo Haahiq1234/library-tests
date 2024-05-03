@@ -84,10 +84,10 @@
                 for (var j = 0; j < res; j++) {
                     let num = grid[i][j];
                     if (num < 4) {
-                        pile[i][j] += grid[i][j];
+                        pile[i][j] += num;
                     } else {
-                        pile[i][j] += grid[i][j];
-                        if (i - 1 >= 0) {
+                        pile[i][j] += num;
+                        if (i > 0) {
                             pile[i - 1][j]++;
                             pile[i][j]--;
                         }
@@ -95,7 +95,7 @@
                             pile[i + 1][j]++;
                             pile[i][j]--;
                         }
-                        if (j - 1 >= 0) {
+                        if (j > 0) {
                             pile[i][j - 1]++;
                             pile[i][j]--;
                         }

@@ -1,6 +1,6 @@
 /// <reference path='..\Canvas.js' />
 
-const grid = new Grid(20, 20);
+const grid = new Grid(80, 80);
 
 function setUp() {
     createCanvas(400, 400);
