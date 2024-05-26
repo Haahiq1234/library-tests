@@ -13,3 +13,7 @@ function draw() {
     clear();
     game.update();
 }
+function lateDraw() {
+    //console.log("After shit has been drawn");
+    game.grid.draw_time();
+}

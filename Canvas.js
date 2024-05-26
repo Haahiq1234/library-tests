@@ -4176,6 +4176,7 @@ class Slider extends UIElement {
         this.min = min;
         this.a = new Vector2(ax, ay);
         this.b = new Vector2(bx, by);
+        this.len = Vector.dist(this.a, this.b);
         this.lineWidth = 5;
         this.setColor(col);
         //console.log(normalize(value, ));
@@ -4196,9 +4197,7 @@ class Slider extends UIElement {
         }
         this.nameSize = size;
     }
-    _name() {
-        return "";
-    }
+    _name;
     update() {
         super.update();
         if (this.clicked) {
@@ -4223,11 +4222,10 @@ class Slider extends UIElement {
         }
     }
     value(accuracy = 1000) {
-        let den = Vector.dist(this.a, this.b);
         let num = Vector.dist(this.localPosition, this.a);
         return (
             Math.round(
-                (this.min + (this.max - this.min) * (num / den)) * accuracy
+                (this.min + (this.max - this.min) * (num / this.len)) * accuracy
             ) / accuracy
         );
     }
@@ -4239,20 +4237,27 @@ class Slider extends UIElement {
     }
     draw() {
         saveLineState();
-        lineCap("round");
+        if (this.shape == UI.CIRCLE) {
+            lineCap("round");
+        } else {
+            lineCap("square");
+        }
         lineWidth(this.lineWidth * 2);
         stroke(this.lineColor);
         line(this.a.x, this.a.y, this.b.x, this.b.y);
         loadLineState();
 
         noStroke();
+        textAlign('center', 'middle');
+
         super.draw();
-        const name = "" + this._name(this);
         //console.log(name);
-        if (name.length > 0) {
+        if (this._name) {
+            const name = "" + this._name(this);
             ctx.save();
             fill(0);
             textSize(this.nameSize);
+            textAlign('center', 'middle');
             text(
                 name,
                 this.a.x + this.nameoffsetx,
