@@ -387,7 +387,7 @@ function downloadFromURL(url, filename = "download") {
     a.click();
 }
 function IsMobile() {
-    return navigator.maxTouchPoints > 0;
+    return navigator.userAgentData.mobile;
 }
 function download(filename, text) {
     var element = document.createElement("a");

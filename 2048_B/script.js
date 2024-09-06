@@ -1,6 +1,10 @@
+///<reference path="../Canvas.js"/>
+///<reference path="Grid.js"/>
+
 const grid = new Grid(4, 4);
 function setUp() {
     if (IsMobile()) {
+        console.log("Setting up for mobile development.")
         createCanvas(innerWidth, innerWidth);
     } else {
         createCanvas(400, 400);
