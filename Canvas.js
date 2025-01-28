@@ -1871,13 +1871,13 @@ function factorize(no) {
     let factors = [1];
     if (no < 0) {
         factors.push(-1);
-        no = -no;
+        no *= -1;
     }
     for (let i = 2; i < no; i++) {
         if (no % i == 0) {
             factors.push(i);
             no /= i;
-            i = 2;
+            i--;
         }
     }
     factors.push(no);
@@ -1903,10 +1903,10 @@ function getLineEq(ax, ay, bx, by) {
     return [a, b, c];
 }
 function HCF(a, b) {
-    while (a % b != 0) {
-        [a, b] = [max(a, b), min(a, b)];
-        console.log(a, b);
-        b = a % b;
+    while (b != 0) {
+        let c = a % b;
+        a = b;
+        b = c;
     }
     return b;
 }
