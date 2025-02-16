@@ -3166,6 +3166,11 @@ function createCanvas(
     color
 ) {
     var canvas = document.createElement("canvas");
+    if (IsMobile()) {
+        let ratio = w / h;
+        w = innerWidth;
+        h = ratio * w;
+    }
     canvas.width = w;
     canvas.height = h;
     CanvasWidth = w;

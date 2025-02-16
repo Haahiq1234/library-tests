@@ -1,11 +1,14 @@
 <html>
+
 <head>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
     <script src="Canvas.js"></script>
     <script src="vec3.js"></script>
     <script>
+        ///<reference path="Canvas.js"/>
         let ds = 6; // V
         var points = [];
         let pts = new Array(2 ** ds);
@@ -52,7 +55,7 @@
             this.persp = function () {
                 let vec = this.copy();
                 for (var i = this.n; i > 3; i--) {
-                    let w = 1 / (slider.value - vec.ds[vec.n - 1]);
+                    let w = 1 / (slider.value() - vec.ds[vec.n - 1]);
                     if (w < 0) {
                         w *= -CanvasHeight;
                     }
@@ -73,14 +76,20 @@
             frameRate(60);
             let speed = 0.05;
             Camera.setSpeed(speed, speed, speed);
-            slider = createSlider(0, 10, 1, 2, "Distance");
-            dSl = createSlider(0, ds, 1, ds, "Dimensions To Draw");
-            Camera2D.translate(CanvasWidth / 2, CanvasHeight / 2);
+            slider = new Slider(50, 350, 50, 50, 0, 2, 2);
+            slider.name("Distance", 15, 0, 20);
+            slider.text((slider) => slider.value(1000), 10);
+            dSl = new Slider(350, 350, 350, 50, 0, ds, ds);
+            dSl.name("Dimensions", 15, 0, 20)
+            dSl.text((slider) => slider.value(1), 15);
+            slider.setShape(UI.RECT, 35, 20);
+
             rotateY(-90);
         }
         function draw() {
             //return null;
             clear();
+            translate(CanvasWidth / 2, CanvasHeight / 2);
             let pts = [];
             //setRotationX(90);
             for (var pt of points) {
@@ -95,7 +104,9 @@
                 pts.push(pt2);
             }
             projected = pts;
-            for (var d = 1; d <= dSl.value; d++) {
+            let current_dims = dSl.value(1);
+            //console.log(current_dims)
+            for (var d = 1; d <= current_dims; d++) {
                 let times = 2 ** (ptds - d);
                 //console.log(times);
                 for (var i = 1; i <= times; i++) {
@@ -116,4 +127,5 @@
     </script>
 
 </body>
+
 </html>
