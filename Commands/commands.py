@@ -1,7 +1,7 @@
 import sys
 import json
 
-sys.path.append("C:/dev/Python")
+sys.path.append("E:/dev/Python")
 import command_line
 import os
 
