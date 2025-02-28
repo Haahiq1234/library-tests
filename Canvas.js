@@ -3163,14 +3163,15 @@ function lineWidth(w = ctx.lineWidth) {
 function createCanvas(
     w = windowWidth,
     h = windowHeight,
-    color
 ) {
     var canvas = document.createElement("canvas");
-    if (IsMobile()) {
-        let ratio = w / h;
-        w = innerWidth;
-        h = ratio * w;
-    }
+    w = min(windowWidth, w);
+    h = min(windowHeight, h);
+    // if (IsMobile()) {
+    //     let ratio = w / h;
+    //     w = innerWidth;
+    //     h = ratio * w;
+    // }
     canvas.width = w;
     canvas.height = h;
     CanvasWidth = w;
@@ -3189,8 +3190,6 @@ function createCanvas(
     ctx.font = Canvas.textFontSize + "px " + Canvas.textFontFamily;
 
     Canvas.canvas = canvas;
-    if (color)
-        canvas.style.backgroundColor = color;
 
     return canvas;
 }

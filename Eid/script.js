@@ -1,3 +1,5 @@
+///<reference path="../Canvas.js"/>
+
 const fireworks = [];
 const FIREWORK_CHANCE = 5;
 const gravity = new Vector2(0, 0.2);
