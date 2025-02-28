@@ -17,7 +17,7 @@ function draw() {
     //text("Eid", CanvasWidth / 2, CanvasHeight * 2.5 / 5);
     //text("Mubarak", CanvasWidth / 2, CanvasHeight / 5 * 3.5);
 
-    text("Eid", CanvasWidth / 2, CanvasHeight / 2 - Canvas.textFontSize / 2);
+    text("Ramadan", CanvasWidth / 2, CanvasHeight / 2 - Canvas.textFontSize / 2);
     text("Mubarak", CanvasWidth / 2, CanvasHeight / 2 + Canvas.textFontSize / 2);
     for (let i = 0; i < fireworks.length; i++) {
         fireworks[i].update();
