@@ -3,6 +3,7 @@
 
 
 const FRAMES_PER_MOVE = 10;
+const slideSound = loadSound("slide.mp3");
 
 class Grid extends Array2D {
     padding = 5;
@@ -33,16 +34,14 @@ class Grid extends Array2D {
         this.draw(padding, true);
     }
     shuffle_grid(n) {
-        let free = this.current;
         let prev = new Vector2(-1, -1);
         for (let i = 0; i < n; i++) {
             let neighbour = this.get_neighbour(
-                free.x,
-                free.y,
+                this.current.x,
+                this.current.y,
                 prev
             );
-            prev = free;
-            free = neighbour;
+            prev = this.current;
             this.move(neighbour.x, neighbour.y, false, 3);
         }
     }
@@ -94,10 +93,12 @@ class Grid extends Array2D {
             }
             this.set(x, y, -1);
             if (animate) {
+                slideSound.play();
                 this.set(this.current.x, this.current.y, index + this.array.length);
                 let b = this.current;
                 let cw = this.cell_width;
                 let ch = this.cell_height;
+
                 let animation = new AnimationHandler(
                     b,
                     animationDuration,
@@ -109,6 +110,8 @@ class Grid extends Array2D {
                         grid.cell(pos.x, pos.y, index);
                     }, function () {
                         grid.cell(b.x * grid.cell_width, b.y * grid.cell_height, index);
+                        slideSound.pause();
+                        slideSound.currentTime = 0;
                         grid.set(b.x, b.y, index);
                         if (grid.queue.length > 0) {
                             let p = grid.queue.shift();

@@ -386,6 +386,11 @@ function downloadFromURL(url, filename = "download") {
     a.href = url;
     a.click();
 }
+function loadSound(filePath) {
+    const file = new Audio(filePath);
+    console.log(file);
+    return file;
+}
 function IsMobile() {
     return navigator.userAgentData.mobile;
 }
