@@ -1,7 +1,7 @@
 import sys
 import json
 
-sys.path.append("E:/dev/Python")
+sys.path.append("C:/dev/Python")
 import command_line
 import os
 
@@ -293,7 +293,7 @@ def index(args, clr):
     i = 0
     while i < len(nfiles):
         file = nfiles[i]
-        if (not file[0] == ".") and (".html" in file or "." not in file):
+        if (not (file[0] == ".")) and (".html" in file or "." not in file):
             if os.path.isfile(file):
                 files.append(file)
             elif os.path.isdir(file) and os.path.exists(

@@ -1,0 +1,45 @@
+/// <reference path='..\Canvas.js' />
+
+const NUM_SCENARIOS = 5;
+
+
+let scenario = -1;
+
+const scenario_slider = new Slider(25, 575, 575, 575, 0, NUM_SCENARIOS - 1, 0);
+scenario_slider.lineWidth = 25;
+scenario_slider.layer = 1;
+scenario_slider.setShape(UI.RECT, 50, 50);
+
+function setUp() {
+    createCanvas(600, 600);
+
+    nofill();
+
+    //load_scenario(0);
+    //frameRate(60);
+}
+function draw() {
+    clear();
+
+    //console.log(scenarios_loaded, scenario);
+    let new_scenario = scenario_slider.value(1);
+    if (new_scenario != scenario) {
+        unload_scenario();
+        load_scenario(new_scenario);
+    }
+}
+
+
+const scenarios_loaded = [];
+const scenario_loaders = [];
+const scenario_unloaders = [];
+function load_scenario(n) {
+    console.log(n);
+    scenario_loaders[n]();
+    UI.Relayer();
+    scenario = n;
+}
+function unload_scenario() {
+    if (scenario == -1) return;
+    scenario_unloaders[scenario]();
+}

@@ -862,12 +862,14 @@ TEXT.CENTER = "center";
 TEXT.MIDDLE = "middle";
 TEXT.RIGHT = "right";
 TEXT.LEFT = "left";
+Object.freeze(TEXT);
 const LINE = {};
 LINE.ROUND = "round";
 LINE.BEVEL = "bevel";
 LINE.MITER = "miter";
 LINE.BUTT = "butt";
 LINE.SQUARE = "square";
+Object.freeze(LINE);
 let DEGREES = 0;
 let RADIANS = 1;
 // #endregion
@@ -4026,8 +4028,8 @@ class Gizmo extends UIElement {
             this.localPosition.sub(this.parent.position);
         }
     }
-    setChild(child) {
-        child.setParent(this);
+    setChild(child, keepOffset = true) {
+        child.setParent(this, keepOffset);
     }
     pair(pair, type, func) {
         this.bind(type, func, pair);
