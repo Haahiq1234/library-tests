@@ -3793,6 +3793,15 @@ on.pointerdown.bind(function (button, x, y, event) {
 on.pointerup.bind(function (x, y, dx, dy, event) {
     return UI.UnClick();
 });
+on.start.bind(function () {
+    if (Gizmo.bounds[0] == -1)
+        Gizmo.bounds = [
+            Gizmo.DEFAULTRADIUS, Gizmo.DEFAULTRADIUS,
+            CanvasWidth - Gizmo.DEFAULTRADIUS, CanvasHeight - Gizmo.DEFAULTRADIUS
+        ];
+});
+
+
 class UIElement {
     static Selected = false;
     localPosition;
@@ -4009,6 +4018,7 @@ class Button extends UIElement {
 class Gizmo extends UIElement {
     static DEFAULTRADIUS = 10;
     static Selected = false;
+    static bounds = [-1];
 
     parent;
     mouseOffset;
@@ -4095,11 +4105,13 @@ class Gizmo extends UIElement {
             this.color = this.hoveredColor;
         }
         if (!this.parent) {
-            this.localPosition = Vector.constraint(
-                this.localPosition,
-                this.a,
-                this.b
-            );
+            // this.localPosition = Vector.constraint(
+            //     this.localPosition,
+            //     this.a,
+            //     this.b
+            // );
+            this.localPosition.x = constraint(this.localPosition.x, Gizmo.bounds[0], Gizmo.bounds[2]);
+            this.localPosition.y = constraint(this.localPosition.y, Gizmo.bounds[1], Gizmo.bounds[3]);
         }
         if (!Vector.Equal(lastPosition, this.localPosition)) {
             let dt = Vector.sub(this.localPosition, lastPosition);
