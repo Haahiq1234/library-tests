@@ -4094,11 +4094,14 @@ class Gizmo extends UIElement {
             //console.log(npos);
             this.localPosition = npos;
             if (this.parent) {
-                this.position = Vector.constraint(
-                    this.position,
-                    this.a,
-                    this.b
-                );
+                // this.position = Vector.constraint(
+                //     this.position,
+                //     this.a,
+                //     this.b
+                // );
+                let pos = this.position;
+                this.localPosition.x += constraint(pos.x, Gizmo.bounds[0], Gizmo.bounds[2]) - pos.x;
+                this.localPosition.y += constraint(pos.y, Gizmo.bounds[1], Gizmo.bounds[3]) - pos.y;
             }
             this.color = this.clickedColor;
         } else if (this.hovered) {

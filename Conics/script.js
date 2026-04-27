@@ -11,7 +11,8 @@ function setUp() {
     if (!IsMobile()) {
         createCanvas(600, 600);
     } else {
-        let cs = min(innerWidth, innerHeight)
+        let cs = min(innerWidth, innerHeight);
+        Gizmo.DEFAULTRADIUS = 20;
         createCanvas(cs, cs);
     }
     scenario_slider = new Slider(
@@ -22,7 +23,9 @@ function setUp() {
     scenario_slider.setShape(UI.RECT, 50, 50);
     scenario_slider.text(silder => silder.value(1), 20);
 
-    Gizmo.bounds = [10, 10, CanvasWidth - 10, CanvasHeight - 60];
+    Gizmo.bounds = [
+        Gizmo.DEFAULTRADIUS, Gizmo.DEFAULTRADIUS,
+        CanvasWidth - Gizmo.DEFAULTRADIUS, CanvasHeight - 50 - Gizmo.DEFAULTRADIUS];
 
     nofill();
 
