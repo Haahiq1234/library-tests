@@ -8,12 +8,12 @@
 
     scenario_loaders[scenario_id] = () => {
         if (!scenarios_loaded[scenario_id]) {
-            circle_AC = new Gizmo(200, 200);
-            circle_AR = new Gizmo(100, 200);
+            circle_AC = new Gizmo(200, 150);
+            circle_AR = new Gizmo(100, 150);
             circle_AC.setChild(circle_AR, true);
 
-            circle_BC = new Gizmo(200, 400);
-            circle_BR = new Gizmo(100, 400);
+            circle_BC = new Gizmo(200, 300);
+            circle_BR = new Gizmo(100, 300);
             circle_BC.setChild(circle_BR, true);
             scenarios_loaded[scenario_id] = true;
         } else {

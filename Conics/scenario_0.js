@@ -9,8 +9,8 @@
     scenario_loaders[scenario_id] = () => {
         if (!scenarios_loaded[scenario_id]) {
             pointA = new Gizmo(200, 200);
-            pointB = new Gizmo(200, 400);
-            pointC = new Gizmo(100, 400);
+            pointB = new Gizmo(200, 300);
+            pointC = new Gizmo(100, 300);
             scenarios_loaded[scenario_id] = true;
         } else {
             pointA.Enable();

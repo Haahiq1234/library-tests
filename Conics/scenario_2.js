@@ -41,6 +41,12 @@
         }
     });
 
+    function chord_of_circle_from_tangent_intersections(h, k, r, x1, y1) {
+        let x2 = x1 - h;
+        let y2 = y1 - k;
+        let c = -x2 * h - y2 * k - r * r;
+        return [[x2, y2, c]];
+    }
     function tangents_of_circle(h, k, r, x1, y1) {
         let x2 = h - x1;
         let y2 = k - y1;
@@ -49,14 +55,19 @@
         let b = -2 * x2 * y2;
         let c = y2 * y2 - r * r;
 
+        let tangents;
         if (a == 0) {
             let m1 = - c / b;
-            return [[m1, -1, y1 - m1 * x1], [1, 0, -x1]];
+            tangents = [[m1, -1, y1 - m1 * x1], [1, 0, -x1]];
+        } else {
+            let ms = QuadraticFormula(a, b, c);
+            tangents = ms.map((m) => { return [m, -1, y1 - m * x1]; });
         }
 
         //console.log(a, b, c);
-        let ms = QuadraticFormula(a, b, c);
-        let tangents = ms.map((m) => { return [m, -1, y1 - m * x1]; });
+        if (dist(x1, y1, h, k) >= r) {
+            tangents.push([-x2, -y2, h * x2 + k * y2 - r * r]);
+        }
 
         return tangents;
     }

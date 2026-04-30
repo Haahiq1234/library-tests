@@ -6,6 +6,7 @@ const NUM_SCENARIOS = 5;
 let scenario = -1;
 
 let scenario_slider;
+let scenario_show_button;
 
 function setUp() {
     if (!IsMobile()) {
@@ -15,9 +16,10 @@ function setUp() {
         Gizmo.DEFAULTRADIUS = 20;
         createCanvas(cs, cs);
     }
+
     scenario_slider = new Slider(
         25, CanvasHeight - 25, CanvasWidth - 25, CanvasHeight - 25,
-        0, NUM_SCENARIOS - 1, 4);
+        0, NUM_SCENARIOS - 1, 2);
     scenario_slider.lineWidth = 25;
     scenario_slider.layer = 1;
     scenario_slider.setShape(UI.RECT, 50, 50);
@@ -34,6 +36,7 @@ function setUp() {
 function draw() {
     clear();
 
+    text(CanvasWidth, 10, 10);
     //console.log(scenarios_loaded, scenario);
     let new_scenario = scenario_slider.value(1);
     if (new_scenario != scenario) {
@@ -52,7 +55,13 @@ function load_scenario(n) {
     UI.Relayer();
     scenario = n;
 }
-function unload_scenario() {
+function unload_scenario(n) {
     if (scenario == -1) return;
     scenario_unloaders[scenario]();
+}
+function show_scenario() {
+    load_scenario(scenario);
+}
+function hide_scenario() {
+    unload_scenario();
 }

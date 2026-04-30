@@ -11,9 +11,9 @@
     scenario_loaders[scenario_id] = function () {
         if (!scenarios_loaded[scenario_id]) {
             circle_A = new Gizmo(200, 200);
-            circle_B = new Gizmo(400, 200);
-            line_A = new Gizmo(200, 400);
-            line_B = new Gizmo(400, 400);
+            circle_B = new Gizmo(300, 200);
+            line_A = new Gizmo(200, 300);
+            line_B = new Gizmo(300, 300);
             scenarios_loaded[scenario_id] = true;
         } else {
             circle_A.Enable();

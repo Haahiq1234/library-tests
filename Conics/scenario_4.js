@@ -11,9 +11,9 @@
 
     scenario_loaders[scenario_id] = () => {
         if (!scenarios_loaded[scenario_id]) {
-            pointA = new Gizmo(200, 300);
-            pointB = new Gizmo(400, 400);
-            line_control = new Gizmo(300, 500);
+            pointA = new Gizmo(100, 200);
+            pointB = new Gizmo(300, 300);
+            line_control = new Gizmo(350, 310);
             line_control.setParent(pointB, true);
             scenarios_loaded[scenario_id] = true;
         } else {
