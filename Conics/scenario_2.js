@@ -7,23 +7,23 @@
 
     scenario_loaders[scenario_id] = () => {
         if (!scenarios_loaded[scenario_id]) {
-            circle_C = new Gizmo(200, 200);
-            circle_R = new Gizmo(100, 200);
+            circle_C = new Gizmo(0, 0);
+            circle_R = new Gizmo(3, 0);
             circle_C.setChild(circle_R, true);
-            point_P = new Gizmo(300, 300);
+            point_P = new Gizmo(-6, 2);
             scenarios_loaded[scenario_id] = true;
         } else {
             circle_C.Enable();
             circle_R.Enable();
             point_P.Enable();
         }
-    }
+    };
     scenario_unloaders[scenario_id] = () => {
         if (!scenarios_loaded[scenario_id]) return;
         circle_C.Disable();
         circle_R.Disable();
         point_P.Disable();
-    }
+    };
 
     on.draw.bind(() => {
         if (scenario != scenario_id || !scenarios_loaded[scenario_id]) return;
@@ -37,7 +37,7 @@
         let ts = tangents_of_circle(cx, cy, radius, px, py);
         //console.log(ts);
         for (let i = 0; i < ts.length; i++) {
-            lineFromEq(...ts[i])
+            lineFromEq(...ts[i]);
         }
     });
 
@@ -57,11 +57,16 @@
 
         let tangents;
         if (a == 0) {
-            let m1 = - c / b;
-            tangents = [[m1, -1, y1 - m1 * x1], [1, 0, -x1]];
+            let m1 = -c / b;
+            tangents = [
+                [m1, -1, y1 - m1 * x1],
+                [1, 0, -x1],
+            ];
         } else {
             let ms = QuadraticFormula(a, b, c);
-            tangents = ms.map((m) => { return [m, -1, y1 - m * x1]; });
+            tangents = ms.map((m) => {
+                return [m, -1, y1 - m * x1];
+            });
         }
 
         //console.log(a, b, c);

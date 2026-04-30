@@ -6,16 +6,15 @@ function getLineEq(x1, y1, x2, y2) {
     return [a, b, c];
 }
 
-
 function lineFromEq(a, b, c) {
     if (b == 0) {
-        line(-c / a, 0, -c / a, CanvasHeight);
+        line(-c / a, -max_x, -c / a, max_x);
         return;
     }
     if (Math.abs(a / b) > 1) {
-        line(-c / a, 0, -(b * CanvasHeight + c) / a, CanvasHeight);
+        line(-(-b * max_x + c) / a, -max_x, -(b * max_x + c) / a, max_x);
     } else {
-        line(0, -c / b, CanvasWidth, -(a * CanvasWidth + c) / b);
+        line(-max_x, -(-a * max_x + c) / b, max_x, -(a * max_x + c) / b);
     }
 }
 
