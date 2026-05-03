@@ -34,7 +34,8 @@ function setUp() {
         -x,
         0,
         NUM_SCENARIOS - 1,
-        NUM_SCENARIOS - 1,
+        1,
+        //NUM_SCENARIOS - 1,
     );
     scenario_slider.lineWidth = slider_height / 2;
     scenario_slider.layer = 1;
@@ -52,7 +53,7 @@ function setUp() {
 function draw() {
     clear();
 
-    text(CanvasWidth, -max_x + sl, max_x - sl);
+    //text(CanvasWidth, -max_x + sl, max_x - sl);
     //return;
     //console.log(scenarios_loaded, scenario);
     let new_scenario = scenario_slider.value(1);

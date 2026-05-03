@@ -67,9 +67,9 @@
         }
 
         //console.log(a, b, c);
-        if (dist(x1, y1, h, k) >= r) {
-            tangents.push([-x2, -y2, h * x2 + k * y2 - r * r]);
-        }
+        // if (dist(x1, y1, h, k) >= r) {
+        //     tangents.push([-x2, -y2, h * x2 + k * y2 - r * r]);
+        // }
 
         return tangents;
     }

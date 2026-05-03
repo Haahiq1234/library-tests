@@ -9,9 +9,10 @@
 
     scenario_inits[scenario_id] = function () {
         circle_A = new Gizmo(2, 0);
-        circle_B = new Gizmo(0, 2);
+        circle_B = new Gizmo(2, 2);
         line_A = new Gizmo(-2, 0);
         line_B = new Gizmo(0, -3);
+        line_B.setParent(line_A, true);
     };
 
     scenario_loaders[scenario_id] = function () {
@@ -41,43 +42,49 @@
             c,
         );
         for (let i = 0; i < cs.length; i++) {
-            //circle(cs[i][0], cs[i][1], cs[i][2]);
+            circle(cs[i][0], cs[i][1], cs[i][2]);
         }
     };
     function getCirclesFromScenario1(x1, y1, x2, y2, a, b, c) {
         let a1 = 2 * (x2 - x1);
         let b1 = 2 * (y2 - y1);
         let c1 = x1 * x1 - x2 * x2 + y1 * y1 - y2 * y2;
-        lineFromEq(a1, b1, c1);
+        let ab_sq = a * a + b * b;
+        //lineFromEq(a1, b1, c1);
 
         if (a1 == 0) {
-            console.log("Shut ur ass up");
+            let k = -c1 / b1;
+
+            let t = (y1 - k) ** 2;
+            let s = c + b * k;
+
+            let a2 = ab_sq - a * a;
+            let b2 = -2 * (ab_sq * x1 + a * s);
+            let c2 = ab_sq * (x1 * x1 + t) - s * s;
+            let hs = QuadraticFormula(a2, b2, c2);
+            let cs = hs.map((h) => [h, k, dist(h, k, x1, y1)]);
+            //line(-10, k, 10, k);
+            return cs;
         }
-        let a2 = -b1 / a1;
-        let b2 = -c1 / a1;
 
-        let a3 = a2 * a2 + 1;
-        let b3 = 2 * (a2 * b2 - x1 * a1 - y1);
-        let c3 = b2 * b2 - 2 * x1 * b2 + x1 * x1 + y1 * y1;
-        let d3 = a * a2 + b;
-        let e3 = a * b2 + c;
-        let f3 = a * a + b * b;
+        let a2 = b1 * b1 + a1 * a1;
+        let b2 = 2 * x1 * a1 * b1 + 2 * b1 * c1 - 2 * y1 * a1 * a1;
+        let c2 = (y1 * y1 + x1 * x1) * a1 * a1 + c1 * c1 + 2 * x1 * a1 * c1;
+        let d2 = a1 * b - b1 * a;
+        let e2 = a1 * c - c1 * a;
 
-        let a4 = f3 * a3 - d3 * d3;
-        let b4 = f3 * b3 - 2 * d3 * e3;
-        let c4 = f3 * c3 - e3 * e3;
+        let a3 = ab_sq * a2 - d2 * d2;
+        let b3 = ab_sq * b2 - 2 * d2 * e2;
+        let c3 = ab_sq * c2 - e2 * e2;
 
-        //lineFromEq(a4, b4, c4);
-
-        let ks = QuadraticFormula(a4, b4, c4);
-        let circles = [];
-        for (let i = 0; i < ks.length; i++) {
-            let k = ks[i];
-            line(0, k, CanvasWidth, k);
-            let h = a2 * k + b2;
-            let r = Math.sqrt((h - x1) ** 2 + (k - x1) ** 2);
-            circles.push([h, k, r]);
-        }
-        return circles;
+        let ks = QuadraticFormula(a3, b3, c3);
+        let cs = ks.map((k) => {
+            let h = (-b1 * k - c1) / a1;
+            return [h, k, dist(h, k, x1, y1)];
+        });
+        // for (let k in ks) {
+        //     line(-10, k, 10, k);
+        // }
+        return cs;
     }
 }
