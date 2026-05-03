@@ -3,33 +3,30 @@
 // Getting two points and a tangent to the circle at the second point
 //
 {
-    const scenario_id = 4;
+    const scenario_id = next_scenario();
     let pointA;
     let pointB;
     let line_control;
 
+    scenario_inits[scenario_id] = () => {
+        pointA = new Gizmo(1, 2);
+        pointB = new Gizmo(-3, -3);
+        line_control = new Gizmo(4, -1);
+        line_control.setParent(pointB, true);
+    };
+
     scenario_loaders[scenario_id] = () => {
-        if (!scenarios_loaded[scenario_id]) {
-            pointA = new Gizmo(1, 2);
-            pointB = new Gizmo(-3, -3);
-            line_control = new Gizmo(4, -1);
-            line_control.setParent(pointB, true);
-            scenarios_loaded[scenario_id] = true;
-        } else {
-            pointA.Enable();
-            pointB.Enable();
-            line_control.Enable();
-        }
+        pointA.Enable();
+        pointB.Enable();
+        line_control.Enable();
     };
     scenario_unloaders[scenario_id] = () => {
-        if (!scenarios_loaded[scenario_id]) return;
         pointA.Disable();
         pointB.Disable();
         line_control.Disable();
     };
 
-    on.draw.bind(() => {
-        if (!scenarios_loaded[scenario_id] || scenario != scenario_id) return;
+    scenario_draws[scenario_id] = () => {
         const [a, b, c] = getLineEq(
             pointB.x,
             pointB.y,
@@ -47,7 +44,7 @@
             c,
         );
         circle(h, k, r);
-    });
+    };
 
     function solve_scenario_5(x1, y1, x2, y2, a, b, c) {
         if (a == 0) {

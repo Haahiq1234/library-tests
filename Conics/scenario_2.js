@@ -1,32 +1,29 @@
 /// <reference path='..\Canvas.js' />
 {
-    const scenario_id = 2;
+    const scenario_id = next_scenario();
     let circle_C;
     let circle_R;
     let point_P;
 
+    scenario_inits[scenario_id] = () => {
+        circle_C = new Gizmo(0, 0);
+        circle_R = new Gizmo(3, 0);
+        circle_C.setChild(circle_R, true);
+        point_P = new Gizmo(-6, 2);
+    };
+
     scenario_loaders[scenario_id] = () => {
-        if (!scenarios_loaded[scenario_id]) {
-            circle_C = new Gizmo(0, 0);
-            circle_R = new Gizmo(3, 0);
-            circle_C.setChild(circle_R, true);
-            point_P = new Gizmo(-6, 2);
-            scenarios_loaded[scenario_id] = true;
-        } else {
-            circle_C.Enable();
-            circle_R.Enable();
-            point_P.Enable();
-        }
+        circle_C.Enable();
+        circle_R.Enable();
+        point_P.Enable();
     };
     scenario_unloaders[scenario_id] = () => {
-        if (!scenarios_loaded[scenario_id]) return;
         circle_C.Disable();
         circle_R.Disable();
         point_P.Disable();
     };
 
-    on.draw.bind(() => {
-        if (scenario != scenario_id || !scenarios_loaded[scenario_id]) return;
+    scenario_draws[scenario_id] = () => {
         let cx = circle_C.x;
         let cy = circle_C.y;
         let radius = Vector.dist(circle_C, circle_R);
@@ -39,7 +36,7 @@
         for (let i = 0; i < ts.length; i++) {
             lineFromEq(...ts[i]);
         }
-    });
+    };
 
     function chord_of_circle_from_tangent_intersections(h, k, r, x1, y1) {
         let x2 = x1 - h;

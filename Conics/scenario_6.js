@@ -34,29 +34,19 @@
         circle(c[0], c[1], c[2]);
     };
 
-    function three_points_to_circle(a, b, c, d, e, f) {
-        line(a, b, c, d);
-        line(c, d, e, f);
-        line(a, b, e, f);
+    function three_points_to_circle(ax, ay, bx, by, cx, cy) {
+        line(ax, ay, bx, by);
+        line(ax, ay, cx, cy);
+        line(bx, by, cx, cy);
 
-        let a1 = 2 * (c - a);
-        let b1 = 2 * (d - b);
-        let c1 = a * a + b * b - c * c - d * d;
-
-        let a2 = 2 * (c - e);
-        let b2 = 2 * (d - f);
-        let c2 = e * e + f * f - c * c - d * d;
-
-        let den = a2 * b1 - a1 * b2;
-        if (den == 0) {
-            console.log("Points are collinear");
-            return [0, 0, 0];
-        }
-        let h = (c1 * b2 - c2 * b1) / den;
-        let k = (a1 * c2 - a2 * c1) / den;
-
+        let a = dist(bx, by, cx, cy);
+        let b = dist(ax, ay, cx, cy);
+        let c = dist(ax, ay, bx, by);
         //circle(c, d, 1);
 
-        return [h, k, dist(h, k, a, b)];
+        let h = (a * ax + b * bx + c * cx) / (a + b + c);
+        let k = (a * ay + b * by + c * cy) / (a + b + c);
+
+        return [h, k, distance.line(ax, ay, bx, by, h, k, true)];
     }
 }
