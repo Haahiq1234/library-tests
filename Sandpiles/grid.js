@@ -21,7 +21,7 @@ class Grid extends Array2D {
 
         this.array.fill(1);
         this.set(0, 0, 140); // 140
-        this.set(this.width - 1, this.height - 1, 2000); // 1000
+        this.set(this.width - 1, this.height - 1, 2500); // 1000
         this.set(this.width / 2, this.height / 2, 500); // 500
     }
     update() {
