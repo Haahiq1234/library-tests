@@ -4,9 +4,7 @@ let NUM_SCENARIOS = 0;
 let scenario = -1;
 
 let scenario_slider;
-let scenario_show_button;
-
-let scenario_controls_visible = true;
+let scenario_controls_hide;
 
 let max_xy;
 
@@ -39,15 +37,18 @@ function init_scenario_system(
         default_n,
         //NUM_SCENARIOS - 1,
     );
-    scenario_show_button = new Button(x, -x, sl, sl);
-    scenario_show_button.text("X", 20);
-    scenario_show_button.onclick.bind(function () {
-        if (scenario_controls_visible) {
+    scenario_controls_hide = new CheckBox(x, -x); //, sl, sl);
+    scenario_controls_hide.setShape(UI.RECT, sl, sl);
+    scenario_controls_hide.text("X", 20);
+    scenario_controls_hide.onclick.bind(function (self) {
+        if (self.checked) {
             hide_scenario();
         } else {
             show_scenario();
         }
     });
+    scenario_controls_hide.setCheckedColor(color(202, 52, 53));
+    scenario_controls_hide.setNormalColor(color(51, 153, 51));
     scenario_slider.lineWidth = slider_height / 2;
     scenario_slider.layer = 1;
     scenario_slider.setShape(UI.RECT, sl, sl);
@@ -88,13 +89,13 @@ function load_scenario(n) {
     //console.log(n);
     scenario = n;
     if (!scenarios_loaded[n]) init_scenario(n);
-    else if (scenario_controls_visible) show_scenario();
+    else if (!scenario_controls_hide.checked) show_scenario();
 }
 function init_scenario(n) {
     if (scenario_inits[n]) scenario_inits[n]();
     scenarios_loaded[n] = true;
     UI.Relayer();
-    if (!scenario_controls_visible) {
+    if (scenario_controls_hide.checked) {
         hide_scenario();
     }
 }
