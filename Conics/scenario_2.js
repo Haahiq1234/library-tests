@@ -1,3 +1,4 @@
+/// <reference path='..\Scenario.js' />
 /// <reference path='..\Canvas.js' />
 {
     const scenario_id = next_scenario();

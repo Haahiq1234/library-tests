@@ -1230,6 +1230,15 @@ function floorDiv(n, d) {
     return floor(n / d);
 }
 function QuadraticFormula(a, b, c) {
+    if (a == 0) return [-c / b];
+    if (b == 0) {
+        let x = Math.sqrt(c / a);
+        if (isNaN(x)) return [];
+        return [x, -x];
+    }
+    if (c == 0) {
+        return [0, -b / a];
+    }
     let disc = b ** 2 - 4 * a * c;
     if (disc < 0) return [];
     let s1 = (-b + disc ** 0.5) / (2 * a);
@@ -1317,6 +1326,9 @@ function atan2(y, x) {
 }
 function cos(ang) {
     return Math.cos(Angle.angleModeToRadians(ang));
+}
+function tan(ang) {
+    return Math.tan(Angle.angleModeToRadians(ang));
 }
 function AngleMode(mode) {
     Angle.angleMode = mode;
@@ -1984,14 +1996,27 @@ function floor(no, floore = 1) {
     return Math.floor(no / floore) * floore;
     //return no - (no % floore);
 }
-function getLineEq(ax, ay, bx, by) {
-    let a = by - ay;
-    let b = ax - bx;
-    let hcf = HCF(a, b);
-    a /= hcf;
-    b /= hcd;
-    let c = a * bx + b * by;
+function getLineEq(x1, y1, x2, y2) {
+    let a = y1 - y2;
+    let b = x2 - x1;
+    let c = x1 * y2 - y1 * x2;
+
     return [a, b, c];
+}
+function lineFromEq(a, b, c) {
+    if (b == 0) {
+        line(-c / a, -max_x, -c / a, max_x);
+        return;
+    }
+    if (Math.abs(a / b) > 1) {
+        line(-(-b * max_x + c) / a, -max_x, -(b * max_x + c) / a, max_x);
+    } else {
+        line(-max_x, -(-a * max_x + c) / b, max_x, -(a * max_x + c) / b);
+    }
+}
+
+function slope(ax, ay, bx, by) {
+    return (by - ay) / (bx - ax);
 }
 function HCF(a, b) {
     while (b != 0) {
@@ -3068,6 +3093,49 @@ function circle(x, y, r, arca = 0, arcb = 360) {
         ctx.stroke();
     }
 }
+function hyperbola(h, k, a_2, b_2, res = 10) {
+    [h, k] = Camera2D.convertPos(h, k);
+    a_2 *= Math.abs(Camera2D.scaleX);
+    b_2 *= Math.abs(Camera2D.scaleY);
+    let inc = Angle.full / res;
+    ctx.beginPath();
+    if (a_2 < 0) {
+        let a = Math.sqrt(-a_2);
+        let b = Math.sqrt(b_2);
+        //console.log(h, k, a, b);
+        ctx.moveTo(h, k + b);
+        for (let th = inc; th < Angle.half / 2; th += inc) {
+            let x = h + a * tan(th);
+            let y = k + b / cos(th);
+            ctx.lineTo(x, y);
+        }
+        ctx.moveTo(h, k + b);
+        for (let th = inc; th < Angle.half / 2; th += inc) {
+            let x = h - a * tan(th);
+            let y = k + b / cos(th);
+            ctx.lineTo(x, y);
+        }
+        ctx.moveTo(h, k - b);
+        for (let th = inc; th < Angle.half / 2; th += inc) {
+            let x = h + a * tan(th);
+            let y = k - b / cos(th);
+            ctx.lineTo(x, y);
+        }
+        ctx.moveTo(h, k - b);
+        for (let th = inc; th < Angle.half / 2; th += inc) {
+            let x = h - a * tan(th);
+            let y = k - b / cos(th);
+            ctx.lineTo(x, y);
+        }
+    }
+    ctx.closePath();
+    if (CANVAS_FILL_MODE_ENABLED) {
+        ctx.fill();
+    }
+    if (CANVAS_STROKE_MODE_ENABLED) {
+        ctx.stroke();
+    }
+}
 function ellipse(x, y, a, b, arca = 0, arcb = 360) {
     [x, y] = Camera2D.convertPos(x, y);
     var c = ctx.strokeStyle;
@@ -3076,8 +3144,8 @@ function ellipse(x, y, a, b, arca = 0, arcb = 360) {
     ctx.ellipse(
         x,
         y,
-        a,
-        b,
+        Math.abs(a * Camera2D.scaleX),
+        Math.abs(b * Camera2D.scaleY),
         0,
         Angle.angleModeToRadians(arca),
         Angle.angleModeToRadians(arcb),
@@ -3256,6 +3324,11 @@ function lineWidth(w = ctx.lineWidth) {
     return w;
 }
 function createCanvas(w = windowWidth, h = windowHeight) {
+    if (IsMobile()) {
+        let cs = min(innerWidth, innerHeight);
+        w = cs;
+        h = cs;
+    }
     var canvas = document.createElement("canvas");
     w = min(windowWidth, w);
     h = min(windowHeight, h);
@@ -3983,10 +4056,23 @@ class Gizmo extends UIElement {
     static Selected = false;
     static bounds = [-1];
 
+    static SETALLRADIUS(rad) {
+        for (let i = 0; i < UI.Elements.length; i++) {
+            if (
+                UI.Elements[i].ui_type == UI.GIZMO &&
+                UI.Elements[i].shape == UI.CIRCLE
+            ) {
+                console.log(rad);
+                UI.Elements[i].size = [rad, rad];
+            }
+        }
+    }
+
     parent;
     mouseOffset;
     lastPosition;
     children = [];
+    ui_type = UI.GIZMO;
 
     setColor(col) {
         this.baseColor = col;
@@ -4030,6 +4116,12 @@ class Gizmo extends UIElement {
         return Vector.add(this.localPosition, this.parentPosition);
     }
     set position(pos) {
+        this.localPosition = Vector.sub(pos, this.parentPosition);
+    }
+    get pos() {
+        return Vector.add(this.localPosition, this.parentPosition);
+    }
+    set pos(pos) {
         this.localPosition = Vector.sub(pos, this.parentPosition);
     }
     get parentPosition() {
@@ -4091,7 +4183,7 @@ class Gizmo extends UIElement {
         }
         if (!Vector.Equal(lastPosition, this.localPosition)) {
             let dt = Vector.sub(this.localPosition, lastPosition);
-            this.onmove.Fire(dt);
+            this.onmove.Fire(this, dt);
         }
         return this;
     }
@@ -4175,7 +4267,6 @@ class Slider extends UIElement {
         this.min = min;
         this.a = new Vector2(ax, ay);
         this.b = new Vector2(bx, by);
-        console.log(this.a, this.b);
         this.len = Vector.dist(this.a, this.b);
         this.lineWidth = 5;
         this.setColor(col);
@@ -4271,6 +4362,7 @@ class Slider extends UIElement {
     }
 }
 const UI = {
+    GIZMO: 1,
     Elements: [],
     DEFAULT_RADIUS: 10,
     Relayer: function () {

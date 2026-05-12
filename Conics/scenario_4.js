@@ -1,3 +1,4 @@
+/// <reference path='..\Scenario.js' />
 /// <reference path='..\Canvas.js' />
 
 // Getting two points and a tangent to the circle at the second point
