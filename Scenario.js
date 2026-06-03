@@ -63,8 +63,8 @@ function init_scenario_system(
             scenarios_loaded[i] = false;
         } else {
             scenarios_loaded[i] = true;
+            scenario_unloaders[i]();
         }
-        scenario_unloaders[i]();
     }
 }
 function update_scenario_system() {

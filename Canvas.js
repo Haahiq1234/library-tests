@@ -1988,8 +1988,8 @@ function factorize(no) {
         return no < 2
             ? 1
             : (saved[no] ?? false)
-              ? saved[no]
-              : factorial(no - 1) * no;
+                ? saved[no]
+                : factorial(no - 1) * no;
     }
 }
 function floor(no, floore = 1) {
@@ -3136,7 +3136,7 @@ function hyperbola(h, k, a_2, b_2, res = 10) {
         ctx.stroke();
     }
 }
-function ellipse(x, y, a, b, arca = 0, arcb = 360) {
+function ellipse(x, y, a, b, rot = 0, arca = 0, arcb = 360) {
     [x, y] = Camera2D.convertPos(x, y);
     var c = ctx.strokeStyle;
     //ctx.strokeStyle = ctx.fillStyle;
@@ -3146,7 +3146,7 @@ function ellipse(x, y, a, b, arca = 0, arcb = 360) {
         y,
         Math.abs(a * Camera2D.scaleX),
         Math.abs(b * Camera2D.scaleY),
-        0,
+        Angle.angleModeToRadians(rot),
         Angle.angleModeToRadians(arca),
         Angle.angleModeToRadians(arcb),
     );
@@ -3702,7 +3702,7 @@ class CImage {
     onload(func) {
         var ths = this;
         this.image.onload = function () {
-            ths.image.onload = function () {};
+            ths.image.onload = function () { };
             func(ths);
         };
     }
@@ -3761,7 +3761,7 @@ class CImage {
         img.src = CImage.ctx.canvas.toDataURL();
         let im = new CImage(img);
         img.onload = function () {
-            img.onload = () => {};
+            img.onload = () => { };
             if (cb) {
                 cb(im);
             }
@@ -3783,7 +3783,7 @@ class CImage {
             myImage.height = height;
         }
         myImage.onload = function () {
-            myImage.onload = () => {};
+            myImage.onload = () => { };
             im.width = myImage.width;
             im.height = myImage.height;
             if (cb) {
@@ -3913,7 +3913,7 @@ class UIElement {
         this.getHoveredInfo();
         this.update();
     }
-    update() {}
+    update() { }
     drawUI() {
         saveColor();
         fill(this.color);
@@ -4318,7 +4318,7 @@ class Slider extends UIElement {
         return (
             Math.round(
                 (this.min + (this.max - this.min) * (num / this.len)) *
-                    accuracy,
+                accuracy,
             ) / accuracy
         );
     }
